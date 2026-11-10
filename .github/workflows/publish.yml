@@ -1,0 +1,32 @@
+name: Publish release to PyPI
+
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  publish:
+    if: github.ref_type == 'tag' && startsWith(github.ref_name, 'v')
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/h3-image-mlx/
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Verify the tested release distributions
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          gh release download "$RELEASE_TAG" --dir dist --pattern '*.whl' --pattern '*.tar.gz'
+          cd dist
+          sha256sum --strict --check "../releases/$RELEASE_TAG.sha256"
+      - uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # release/v1
