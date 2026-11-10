@@ -151,4 +151,4 @@ MiniMax developed [H3 Image](https://huggingface.co/MiniMaxAI/MiniMax-H3-Image) 
 
 ## About
 
-I'm [anionex](https://anionex.me/), an AI-native developer who once ranked No. 4 on GitHub's global developer trending list, with more than 18.7k stars across my projects. If you would like to follow my future work, [follow me on X](https://x.com/anion_ex) or [GitHub](https://github.com/Anionex).
+I'm [anionex](https://anionex.me/), an AI-native developer who once ranked No. 3 on GitHub's global developer trending list, with more than 18.7k stars across my projects. If you would like to follow my future work, [follow me on X](https://x.com/anion_ex) or [GitHub](https://github.com/Anionex).
