@@ -30,6 +30,19 @@ If you find this repository useful, feel free to 🌟 & fork~
 
 For reference, in our 1024×1024 generation benchmark, streaming reduced the peak inference-process footprint from **21.07 GB to 2.67 GB**, with median runtime increasing from **22.31 s to 30.90 s**. [Benchmark conditions and results](#benchmark-results)
 
+### Community baseline: ComfyUI + MPS INT8
+
+Compared with [pratikgx's community benchmark](https://huggingface.co/datasets/pratikgx/minimax-h3-image-m5-pro-mac-mini-bench), using ComfyUI + ComfyUI-MPS-INT8. Both use Comfy-Org INT8 ConvRot weights and six sampling steps.
+
+| Resolution | Our DiT mode | Community time (s) | Our time (s) | Speed ratio | Community memory (GB) | Our memory (GB) |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| 1024×1024 | `resident` | 89.55 | **22.31** | **4.01×** | 31.42 | **21.07** |
+| 1024×1024 | `stream` | 89.55 | **30.90** | **2.90×** | 31.42 | **2.67** |
+| 2048×2048 | `resident` | 164.90 | **65.54** | **2.52×** | 36.21 | **22.04** |
+| 4096×4096 | `stream` | 547.31 | **356.84** | **1.53×** | 48.78 | **6.86** |
+
+<sub>Memory is peak process footprint, converted to decimal GB. Speed ratio = community time ÷ our time.</sub>
+
 ### Rainy-night watchmaker
 
 [![A watchmaker lifts a brass gear above an open watch, with a rain-streaked window behind him.](assets/watchmaker-preview.jpg)](assets/watchmaker-4096.png)
