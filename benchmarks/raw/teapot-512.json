@@ -1,0 +1,36 @@
+{
+  "width": 512,
+  "height": 512,
+  "seed": 42,
+  "prompt": "A close-up product photograph of one bright yellow enamel teapot with a black arched handle and a round lid, standing on a blue wooden table. One small white ceramic cup sits immediately to its right. The background is plain warm beige. Soft morning window light falls from the left. Realistic enamel, clear silhouettes, no text.",
+  "swap_before": "total = 0.00M  used = 0.00M  free = 0.00M  (encrypted)",
+  "stages": [
+    {
+      "stage": "text",
+      "seconds": 5.1805164580000564,
+      "kernel_calls": 350,
+      "mlx_peak_bytes": 559806904,
+      "physical_peak_bytes": 1194575384,
+      "swap": "total = 0.00M  used = 0.00M  free = 0.00M  (encrypted)"
+    },
+    {
+      "stage": "dit",
+      "seconds": 10.287156417000006,
+      "kernel_calls": 1200,
+      "mlx_peak_bytes": 19701943664,
+      "physical_peak_bytes": 20560706536,
+      "swap": "total = 0.00M  used = 0.00M  free = 0.00M  (encrypted)"
+    },
+    {
+      "stage": "vae",
+      "seconds": 0.3709162920004019,
+      "kernel_calls": 0,
+      "mlx_peak_bytes": 862299030,
+      "physical_peak_bytes": 998556944,
+      "swap": "total = 0.00M  used = 0.00M  free = 0.00M  (encrypted)"
+    }
+  ],
+  "status": "generated",
+  "swap_after": "total = 0.00M  used = 0.00M  free = 0.00M  (encrypted)",
+  "seconds": 16.50183591700079
+}

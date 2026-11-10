@@ -1,0 +1,106 @@
+{
+  "size": 1024,
+  "seed": 42,
+  "steps": 6,
+  "prompt": "A close-up product photograph of one bright yellow enamel teapot with a black arched handle and a round lid, standing on a blue wooden table. One small white ceramic cup sits immediately to its right. The background is plain warm beige. Soft morning window light falls from the left. Realistic enamel, clear silhouettes, no text.",
+  "pairs": 3,
+  "modes": {
+    "resident": {
+      "median_seconds": 22.312447083000734,
+      "max_peak_bytes": 21073411312,
+      "median_dit_seconds": 16.84537300000011
+    },
+    "stream": {
+      "median_seconds": 30.895741333999467,
+      "max_peak_bytes": 2670773976,
+      "median_dit_seconds": 25.441815500000303
+    }
+  },
+  "all_pixels_equal": true,
+  "runs": [
+    {
+      "name": "1-resident-1",
+      "mode": "resident",
+      "seconds": 22.285006874999453,
+      "dit_seconds": 16.84537300000011,
+      "peak_bytes": 21047262472,
+      "swap_before_mib": 0.25,
+      "swap_peak_mib": 0.25,
+      "swap_end_mib": 0.25,
+      "swapins": 0,
+      "swapouts": 0,
+      "rgb_sha256": "97d3c28bc44c4a740d9841882b62080ab21e5ed6c898f5894aa25020c3a6f4f1",
+      "app_overlap": false
+    },
+    {
+      "name": "1-stream-1",
+      "mode": "stream",
+      "seconds": 30.898609957999724,
+      "dit_seconds": 25.562272832999952,
+      "peak_bytes": 2608662808,
+      "swap_before_mib": 0.25,
+      "swap_peak_mib": 0.25,
+      "swap_end_mib": 0.25,
+      "swapins": 0,
+      "swapouts": 0,
+      "rgb_sha256": "97d3c28bc44c4a740d9841882b62080ab21e5ed6c898f5894aa25020c3a6f4f1",
+      "app_overlap": false
+    },
+    {
+      "name": "2-resident-1",
+      "mode": "resident",
+      "seconds": 22.312447083000734,
+      "dit_seconds": 16.759567875000357,
+      "peak_bytes": 20992146696,
+      "swap_before_mib": 0.25,
+      "swap_peak_mib": 0.25,
+      "swap_end_mib": 0.25,
+      "swapins": 0,
+      "swapouts": 0,
+      "rgb_sha256": "97d3c28bc44c4a740d9841882b62080ab21e5ed6c898f5894aa25020c3a6f4f1",
+      "app_overlap": false
+    },
+    {
+      "name": "2-stream-1",
+      "mode": "stream",
+      "seconds": 30.353636707999613,
+      "dit_seconds": 25.021609084000374,
+      "peak_bytes": 2670773976,
+      "swap_before_mib": 0.25,
+      "swap_peak_mib": 0.25,
+      "swap_end_mib": 0.25,
+      "swapins": 0,
+      "swapouts": 0,
+      "rgb_sha256": "97d3c28bc44c4a740d9841882b62080ab21e5ed6c898f5894aa25020c3a6f4f1",
+      "app_overlap": false
+    },
+    {
+      "name": "3-resident-1",
+      "mode": "resident",
+      "seconds": 24.579805917001067,
+      "dit_seconds": 19.108394584000052,
+      "peak_bytes": 21073411312,
+      "swap_before_mib": 0.25,
+      "swap_peak_mib": 0.25,
+      "swap_end_mib": 0.25,
+      "swapins": 0,
+      "swapouts": 0,
+      "rgb_sha256": "97d3c28bc44c4a740d9841882b62080ab21e5ed6c898f5894aa25020c3a6f4f1",
+      "app_overlap": false
+    },
+    {
+      "name": "3-stream-1",
+      "mode": "stream",
+      "seconds": 30.895741333999467,
+      "dit_seconds": 25.441815500000303,
+      "peak_bytes": 2524858744,
+      "swap_before_mib": 0.25,
+      "swap_peak_mib": 0.25,
+      "swap_end_mib": 0.25,
+      "swapins": 0,
+      "swapouts": 0,
+      "rgb_sha256": "97d3c28bc44c4a740d9841882b62080ab21e5ed6c898f5894aa25020c3a6f4f1",
+      "app_overlap": false
+    }
+  ]
+}

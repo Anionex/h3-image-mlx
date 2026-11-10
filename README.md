@@ -124,6 +124,8 @@ To compare compute backends on an M5 Pro, run the same prompt with `--backend w8
 
 ### Benchmark results
 
+[Markdown data table and source JSON](BENCHMARKS.md)
+
 ![M5 Pro text-to-image benchmarks from 512×512 to 4096×4096. At 1024×1024, streaming reduced the peak process footprint from 21.07 GB to 2.67 GB.](assets/benchmark-blue-en.png)
 
 We used the same teapot prompt, seed 42 and six steps for this table. The 1024×1024 rows report the median time and highest process peak across three runs per mode. Each other row records one run. The 4096×4096 row (356.84 s, 6.86 GB) is the teapot run. Times include text encoding through PNG output.
