@@ -15,7 +15,7 @@
 
 在 Apple Silicon Mac 上用 MiniMax H3 Image 生图、编辑图片。以尽可能快的速度推理；能够在最低7G峰值内存下生成4K超高清图像；提供命令行和 Python API。开箱即用。
 
-如果这个仓库对你有用，欢迎 star & fork~
+如果这个仓库对你有用，欢迎 🌟 & fork~
 
 ## 亮点
 
