@@ -148,3 +148,7 @@ On the M5 Pro (48 GB), the six 1024×1024 outputs matched pixel for pixel across
 ## Credits and licenses
 
 MiniMax developed [H3 Image](https://huggingface.co/MiniMaxAI/MiniMax-H3-Image) and supplies the [VAE configuration](https://huggingface.co/MiniMaxAI/MiniMax-H3-Image/blob/492fd8c4eca666f1085f57e30738c1e0d86b3439/vae/config.json). [Comfy-Org](https://huggingface.co/Comfy-Org/MiniMax-H3-Image) provides the quantized weights. The three W8A8 Metal kernel files come from [mlx-serve](https://github.com/ddalcu/mlx-serve/tree/9191fbdf697df333cac19ec7a93eaa1098ce3ad5/src/kernels) and retain their [MIT license](src/h3_image_mlx/kernels/LICENSE). This project’s runtime code uses [Apache-2.0](LICENSE).
+
+## About
+
+I'm [anionex](https://anionex.me/), an AI-native developer who once ranked No. 4 on GitHub's global developer trending list, with more than 16k stars across my projects. If you would like to follow my future work, [follow me on X](https://x.com/anion_ex) or [GitHub](https://github.com/Anionex).

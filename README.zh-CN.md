@@ -143,3 +143,7 @@ tokenizer.json
 ## 致谢与许可
 
 MiniMax 开发了 [H3 Image](https://huggingface.co/MiniMaxAI/MiniMax-H3-Image) 并提供 [VAE 配置](https://huggingface.co/MiniMaxAI/MiniMax-H3-Image/blob/492fd8c4eca666f1085f57e30738c1e0d86b3439/vae/config.json)。[Comfy-Org](https://huggingface.co/Comfy-Org/MiniMax-H3-Image) 提供量化权重。三份 W8A8 Metal 内核源码来自 [mlx-serve](https://github.com/ddalcu/mlx-serve/tree/9191fbdf697df333cac19ec7a93eaa1098ce3ad5/src/kernels)，沿用其 [MIT 许可](src/h3_image_mlx/kernels/LICENSE)。本项目编写的运行时代码采用 [Apache-2.0 许可](LICENSE)。
+
+## 关于作者
+
+我是 [anionex](https://anionex.me/)，一名 AI 原生开发者，曾上榜 GitHub 全球开发者趋势榜第 4 名，总 Star 数超过 16k。如果你想了解我后续的更多工作，欢迎在 [X](https://x.com/anion_ex) 或 [GitHub](https://github.com/Anionex) 关注我～
