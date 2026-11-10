@@ -128,7 +128,7 @@ To compare compute backends on an M5 Pro, run the same prompt with `--backend w8
 
 We used the same teapot prompt, seed 42 and six steps for this table. The 1024×1024 rows report the median time and highest process peak across three runs per mode. Each other row records one run. The 4096×4096 row (356.84 s, 6.86 GB) is the teapot run. Times include text encoding through PNG output.
 
-On the M5 Pro (48 GB), the six 1024×1024 outputs matched pixel for pixel across the two loading modes. The separate 4096×4096 watchmaker example took 6 min 10 s. Its peak inference-process footprint was 6.88 GB, and system-wide swap peaked at 9.57 GiB.
+On the M5 Pro (48 GB), the six 1024×1024 outputs matched pixel for pixel across the two loading modes. The separate 4096×4096 watchmaker example took 6 min 10 s. Its peak inference-process footprint was 6.88 GB.
 
 ## Credits and licenses
 
