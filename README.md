@@ -18,7 +18,7 @@
 
 [Quick start](#generate-your-first-image) · [Image editing](#edit-with-reference-images) · [How it works](#how-it-works) · [Benchmarks](#benchmark-results)
 
-Generate and edit images on an Apple Silicon Mac with MiniMax H3 Image. Optimized for fast inference, with 4K generation using as little as 7 GB of peak inference-process memory. Available through a CLI and Python API.
+Generate and edit images on an Apple Silicon Mac with MiniMax H3 Image. Optimized for fast inference, with 4K generation using as little as 7 GB of peak inference-process memory. Available through a CLI and Python API, ready to use out of the box.
 
 ## Highlights
 
