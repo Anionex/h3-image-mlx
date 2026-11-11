@@ -2,10 +2,11 @@
 
 import itertools
 import json
+import os
 import time
 
 import numpy as np
-from .core import Weights, attention, heads, mx, norm, rope, swiglu
+from .core import Weights, attention, flag, heads, mx, norm, rope, swiglu
 
 
 def qkv_attention(w, prefix, x, angles=None):
@@ -104,7 +105,10 @@ def denoise(
 ):
     if min(width, height) < 32 or width % 32 or height % 32:
         raise ValueError("Image dimensions must be positive multiples of 32")
+    began = time.perf_counter()
     w = Weights(path, resident)
+    # H3_ASYNC: queue each block on the GPU and read the next block's weights meanwhile.
+    pipelined, profile = bool(flag("H3_ASYNC")), dict(steps=[], eval_s=0.0)
     config = json.loads(w.header["__metadata__"]["config"])["transformer"]
     sigmas = config["pdd_sigmas"]
     coords = curve_coordinates(w, sigmas[:-1])
@@ -116,7 +120,7 @@ def denoise(
     text = prepare_text(w, text)
     mx.eval(text, final_mod, *mods)
     # The text refiner and compressed AdaLN projections are used only during setup.
-    w.cache.clear()
+    w.release()
     mx.clear_cache()
     rows, cols = height // 32, width // 32
     ntext = text.shape[0]
@@ -146,12 +150,17 @@ def denoise(
         .transpose(1, 3, 0, 2, 4)
         .reshape(rows * cols, 96)
     )
+    profile["setup_s"] = time.perf_counter() - began
+    last = len(sigmas) - 2
     for step, (sigma, next_sigma) in enumerate(itertools.pairwise(sigmas)):
         start = time.monotonic()
+        previous = None
         x = mx.concatenate(
             [prefix, w.linear("video_patch_proj", patches).astype(text.dtype)]
         )
         for i, b in enumerate(blocks):
+            if i < 49 or step < last:
+                w.ahead(blocks[(i + 1) % 50], keep=(b,))
             tab = mods[i][step]
             if refs:
                 tab = mx.concatenate([tab, mods[i][-1, :1]])
@@ -161,7 +170,16 @@ def denoise(
             )
             h = shifted(norm(x, w[b + ".norm2.weight"]), tab[:, 4], tab[:, 3], segments)
             x = x + modulate(mlp(w, b + ".mlp", h), tab[:, 5], segments)
-            mx.eval(x)
+            t = time.perf_counter()
+            if pipelined:
+                # At most two blocks of weights are alive: one running, one queued.
+                mx.async_eval(x)
+                if previous is not None:
+                    mx.eval(previous)
+                previous = x
+            else:
+                mx.eval(x)
+            profile["eval_s"] += time.perf_counter() - t
         shift, scale = final_mod[step, 0]
         x = (
             norm(x[target_start:], w["final_layer.norm.weight"]).astype(mx.float32)
@@ -175,6 +193,7 @@ def denoise(
             ww, bb = ww + head[step], bb + bias[step]
         patches = patches + (sigma - next_sigma) * (x @ ww.T + bb)
         mx.eval(patches)
+        profile["steps"].append(time.monotonic() - start)
         if progress:
             progress(step + 1, time.monotonic() - start)
     latent = (
@@ -182,4 +201,9 @@ def denoise(
         .transpose(2, 0, 3, 1, 4)
         .reshape(24, rows * 2, cols * 2)
     )
+    if os.environ.get("H3_PROFILE"):
+        profile.update(w.stats, total_s=time.perf_counter() - began, tokens=int(x.shape[0]) + target_start,
+                       peak_mlx_gb=mx.get_peak_memory() / 1e9)
+        with open(os.environ["H3_PROFILE"], "w") as out:
+            json.dump(profile, out)
     return latent, w.int8_calls

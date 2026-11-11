@@ -1,8 +1,11 @@
 """H3 Image inference primitives. Metal GEMM from ddalcu/mlx-serve @ 9191fbdf."""
 
+import fcntl
 import json
 import os
 import struct
+import time
+from concurrent.futures import ThreadPoolExecutor
 from contextvars import ContextVar
 from functools import cache
 from pathlib import Path
@@ -32,6 +35,14 @@ H4 = np.ones((4, 4), dtype=np.float32)
 np.fill_diagonal(H4[:, ::-1], -1)
 H256 = mx.array(np.kron(np.kron(H4, H4), np.kron(H4, H4)) / 16)
 DTYPES = {"I8": "i1", "U8": "u1", "F16": "<f2", "BF16": "<u2", "F32": "<f4"}
+
+
+def flag(name):
+    """Opt-in tuning knob read from the environment; unset or invalid means off."""
+    try:
+        return float(os.environ.get(name) or 0)
+    except ValueError:
+        return 0.0
 
 
 @mx.compile
@@ -73,6 +84,35 @@ class Weights:
         self.cache = {}
         self.int8_calls = 0
         self.validated_projections = set()
+        # Opt-in knobs. None of them changes a single weight byte or the op graph.
+        self.pool = ThreadPoolExecutor(1) if flag("H3_PREFETCH") else None
+        self.pending = {}
+        self.stats = dict(read_s=0.0, read_bytes=0, convert_s=0.0, wait_s=0.0)
+    def release(self):
+        self.cache.clear()
+
+    def ahead(self, group, keep=()):
+        """Start reading one block's tensors on a worker thread (raw bytes only)."""
+        for name in [g for g in self.pending if g != group and g not in keep]:
+            del self.pending[name]
+        if not self.pool or group in self.pending:
+            return
+        spans = [
+            (key, *spec["data_offsets"])
+            for key, spec in self.header.items()
+            if key.startswith(group + ".")
+            and key not in self.cache
+            and "adaln_proj" not in key
+            and not key.endswith((".comfy_quant", ".config"))
+        ]
+        fd, start = self.file.fileno(), self.start
+
+        def job():
+            t = time.perf_counter()
+            out = {key: os.pread(fd, b - a, start + a) for key, a, b in spans}
+            return out, time.perf_counter() - t
+
+        self.pending[group] = self.pool.submit(job)
 
     def _read(self, key, row=None):
         spec = self.header[key]
@@ -83,10 +123,25 @@ class Weights:
             a += int(row) * stride
             b = a + stride
             shape = shape[1:]
-        buf = os.pread(self.file.fileno(), b - a, self.start + a)
+        buf = None
+        t = time.perf_counter()
+        future = row is None and self.pending.get(".".join(key.split(".")[:2]))
+        if future:
+            fetched, seconds = future.result()
+            buf = fetched.pop(key, None)
+            if "counted" not in fetched:
+                fetched["counted"] = True
+                self.stats["read_s"] += seconds
+            self.stats["wait_s"] += time.perf_counter() - t
+        if buf is None:
+            buf = os.pread(self.file.fileno(), b - a, self.start + a)
+            self.stats["read_s"] += time.perf_counter() - t
+        self.stats["read_bytes"] += len(buf)
+        t = time.perf_counter()
         data = mx.array(np.frombuffer(buf, DTYPES[spec["dtype"]]).reshape(shape))
         if spec["dtype"] == "BF16":
             data = data.view(mx.bfloat16)
+        self.stats["convert_s"] += time.perf_counter() - t
         return data
 
     def __getitem__(self, key):
