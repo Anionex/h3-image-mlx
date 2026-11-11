@@ -91,6 +91,20 @@ def shifted(x, scale, shift, segments):
     )
 
 
+def head_mix(grid, sigma, sigma_next):
+    """Which PDD heads a step from sigma to sigma_next uses, as (head index, weight) offsets on head 0.
+
+    Mirrors ComfyUI's _pdd_head: a step that spans several intervals of the checkpoint's own
+    sigma grid takes the dt-weighted mean of their heads. On the stock grid this is one head.
+    """
+    n = len(grid) - 1
+    start, stop = (min(range(n + 1), key=lambda k: abs(grid[k] - s)) for s in (sigma, sigma_next))
+    start = min(start, n - 1)
+    stop = max(stop, start + 1)
+    dt = [grid[k] - grid[k + 1] for k in range(start, stop)]
+    return [(k, dt[k - start] / sum(dt)) for k in range(max(start, 1), stop)]
+
+
 def patchify(latent):
     c, h, width = latent.shape
     return (
@@ -110,7 +124,14 @@ def denoise(
     # H3_ASYNC: queue each block on the GPU and read the next block's weights meanwhile.
     pipelined, profile = bool(flag("H3_ASYNC")), dict(steps=[], eval_s=0.0)
     config = json.loads(w.header["__metadata__"]["config"])["transformer"]
-    sigmas = config["pdd_sigmas"]
+    grid = sigmas = config["pdd_sigmas"]
+    # Opt-in few-step mode: H3_LORA=<file> beside the quantized weights, H3_STEPS on a shifted uniform grid.
+    if os.environ.get("H3_LORA"):
+        w.lora = Weights(os.environ["H3_LORA"])
+    steps = int(flag("H3_STEPS"))
+    if steps:
+        shift = flag("H3_SHIFT") or 12.0
+        sigmas = [shift * t / (1 + (shift - 1) * t) for t in (1 - k / steps for k in range(steps + 1))]
     coords = curve_coordinates(w, sigmas[:-1])
     if refs:
         coords = np.concatenate([coords, curve_coordinates(w, [0.001])])
@@ -189,7 +210,10 @@ def denoise(
         head = w["final_layer.video_out.weight"].reshape(6, 96, -1)
         bias = w["final_layer.video_out.bias"].reshape(6, 96)
         ww, bb = head[0], bias[0]
-        if step:
+        if steps:
+            for k, part in head_mix(grid, sigma, next_sigma):
+                ww, bb = ww + part * head[k], bb + part * bias[k]
+        elif step:
             ww, bb = ww + head[step], bb + bias[step]
         patches = patches + (sigma - next_sigma) * (x @ ww.T + bb)
         mx.eval(patches)
