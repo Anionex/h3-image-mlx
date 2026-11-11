@@ -1,0 +1,88 @@
+{
+ "size": 1024,
+ "seed": 42,
+ "steps": 6,
+ "prompt": "A close-up product photograph of one bright yellow enamel teapot with a black arched handle and a round lid, standing on a blue wooden table. One small white ceramic cup sits immediately to its right. The background is plain warm beige. Soft morning window light falls from the left. Realistic enamel, clear silhouettes, no text.",
+ "dit_mode": "stream (auto: <32 GiB RAM)",
+ "backend": "w8a8 (auto)",
+ "hardware": "MacBook Air (Mac17,3), Apple M5, 10-core CPU, 8-core GPU, 16 GB",
+ "runs": [
+  {
+   "name": "1024-stream-1",
+   "seconds": 59.84627987500062,
+   "dit_seconds": 52.2,
+   "peak_bytes": 2480000000,
+   "stages": {
+    "text": {
+     "seconds": 6.3,
+     "peak_gb": 1.16
+    },
+    "dit": {
+     "seconds": 52.2,
+     "peak_gb": 2.48
+    },
+    "vae": {
+     "seconds": 1.24,
+     "peak_gb": 1.03
+    }
+   },
+   "swap_before_mib": 1106.12,
+   "swap_end_mib": 1106.12,
+   "rgb_sha256": "97d3c28bc44c4a740d9841882b62080ab21e5ed6c898f5894aa25020c3a6f4f1"
+  },
+  {
+   "name": "1024-stream-2",
+   "seconds": 70.50823491600022,
+   "dit_seconds": 62.24,
+   "peak_bytes": 2480000000,
+   "stages": {
+    "text": {
+     "seconds": 5.83,
+     "peak_gb": 1.16
+    },
+    "dit": {
+     "seconds": 62.24,
+     "peak_gb": 2.48
+    },
+    "vae": {
+     "seconds": 2.3,
+     "peak_gb": 1.03
+    }
+   },
+   "swap_before_mib": 1106.12,
+   "swap_end_mib": 1106.5,
+   "rgb_sha256": "97d3c28bc44c4a740d9841882b62080ab21e5ed6c898f5894aa25020c3a6f4f1"
+  },
+  {
+   "name": "1024-stream-3",
+   "seconds": 83.2847972089985,
+   "dit_seconds": 73.45,
+   "peak_bytes": 2480000000,
+   "stages": {
+    "text": {
+     "seconds": 7.83,
+     "peak_gb": 1.16
+    },
+    "dit": {
+     "seconds": 73.45,
+     "peak_gb": 2.48
+    },
+    "vae": {
+     "seconds": 1.84,
+     "peak_gb": 1.03
+    }
+   },
+   "swap_before_mib": 1106.5,
+   "swap_end_mib": 1106.5,
+   "rgb_sha256": "97d3c28bc44c4a740d9841882b62080ab21e5ed6c898f5894aa25020c3a6f4f1"
+  }
+ ],
+ "median_seconds": 70.50823491600022,
+ "max_peak_bytes": 2480000000,
+ "all_pixels_equal": true,
+ "macos": "26.6.2",
+ "mlx": "0.32.4",
+ "h3_image_mlx_commit": "64df997",
+ "peak_method": "max over stage processes of lifetime max phys_footprint reported by /usr/bin/time -l",
+ "notes": "Everyday apps open during runs; ~1.1 GB swap already in use before the runs and unchanged after. Runs were back to back."
+}
