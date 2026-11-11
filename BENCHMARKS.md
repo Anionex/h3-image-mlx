@@ -6,16 +6,16 @@ Results from our **M5 Pro MacBook (48 GB)**, [arielfikru](https://github.com/ari
 
 | Device / memory | Pipeline | DiT mode | Resolution | Time (s) | Process peak (GB) | Source |
 | --- | --- | --- | --- | ---: | ---: | --- |
-| M5 Pro MacBook / 48 GB | H3 Image MLX | `resident` | 512×512 | 16.50 | 20.56 | [Anionex](benchmarks/raw/teapot-512.json) |
-| M5 Pro MacBook / 48 GB | H3 Image MLX | `resident` | 1024×1024 | 22.31 | 21.07 | [Anionex](benchmarks/raw/teapot-1024-ab.json) |
-| M5 Pro MacBook / 48 GB | H3 Image MLX | `stream` | 1024×1024 | **30.90** | **2.67** | [Anionex](benchmarks/raw/teapot-1024-ab.json) |
-| M5 Pro MacBook / 48 GB | H3 Image MLX | `resident` | 2048×2048 | 65.54 | 22.04 | [Anionex](benchmarks/raw/teapot-2048.json) |
-| M5 Pro MacBook / 48 GB | H3 Image MLX | `stream` | 4096×4096 | **356.84** | **6.86** | [Anionex](benchmarks/raw/teapot-4096.json) |
-| M5 MacBook Air / 16 GB | H3 Image MLX | `stream` | 1024×1024 | **70.51** | **2.48** | [arielfikru](benchmarks/raw/teapot-1024-m5-air-16gb.json) |
-| M5 MacBook Air / 16 GB | H3 Image MLX | `stream` | 2048×2048 | **240.78** | **2.78** | [arielfikru](benchmarks/raw/teapot-2048-m5-air-16gb.json) |
-| M5 Pro Mac mini / 64 GB | ComfyUI + MPS INT8 | — | 1024×1024 | 89.55 | 31.42 | [pratikgx](https://huggingface.co/datasets/pratikgx/minimax-h3-image-m5-pro-mac-mini-bench) |
-| M5 Pro Mac mini / 64 GB | ComfyUI + MPS INT8 | — | 2048×2048 | 164.90 | 36.21 | [pratikgx](https://huggingface.co/datasets/pratikgx/minimax-h3-image-m5-pro-mac-mini-bench) |
-| M5 Pro Mac mini / 64 GB | ComfyUI + MPS INT8 | — | 4096×4096 | 547.31 | 48.78 | [pratikgx](https://huggingface.co/datasets/pratikgx/minimax-h3-image-m5-pro-mac-mini-bench) |
+| <sub>M5 Pro MacBook / 48 GB</sub> | H3 Image MLX | `resident` | 512×512 | 16.50 | 20.56 | [Anionex](benchmarks/raw/teapot-512.json) |
+| <sub>M5 Pro MacBook / 48 GB</sub> | H3 Image MLX | `resident` | 1024×1024 | 22.31 | 21.07 | [Anionex](benchmarks/raw/teapot-1024-ab.json) |
+| <sub>M5 Pro MacBook / 48 GB</sub> | H3 Image MLX | `stream` | 1024×1024 | **30.90** | **2.67** | [Anionex](benchmarks/raw/teapot-1024-ab.json) |
+| <sub>M5 Pro MacBook / 48 GB</sub> | H3 Image MLX | `resident` | 2048×2048 | 65.54 | 22.04 | [Anionex](benchmarks/raw/teapot-2048.json) |
+| <sub>M5 Pro MacBook / 48 GB</sub> | H3 Image MLX | `stream` | 4096×4096 | **356.84** | **6.86** | [Anionex](benchmarks/raw/teapot-4096.json) |
+| <sub>M5 MacBook Air / 16 GB</sub> | H3 Image MLX | `stream` | 1024×1024 | **70.51** | **2.48** | [arielfikru](benchmarks/raw/teapot-1024-m5-air-16gb.json) |
+| <sub>M5 MacBook Air / 16 GB</sub> | H3 Image MLX | `stream` | 2048×2048 | **240.78** | **2.78** | [arielfikru](benchmarks/raw/teapot-2048-m5-air-16gb.json) |
+| <sub>M5 Pro Mac mini / 64 GB</sub> | ComfyUI + MPS INT8 | — | 1024×1024 | 89.55 | 31.42 | [pratikgx](https://huggingface.co/datasets/pratikgx/minimax-h3-image-m5-pro-mac-mini-bench) |
+| <sub>M5 Pro Mac mini / 64 GB</sub> | ComfyUI + MPS INT8 | — | 2048×2048 | 164.90 | 36.21 | [pratikgx](https://huggingface.co/datasets/pratikgx/minimax-h3-image-m5-pro-mac-mini-bench) |
+| <sub>M5 Pro Mac mini / 64 GB</sub> | ComfyUI + MPS INT8 | — | 4096×4096 | 547.31 | 48.78 | [pratikgx](https://huggingface.co/datasets/pratikgx/minimax-h3-image-m5-pro-mac-mini-bench) |
 
 `resident` keeps denoiser weights in memory between steps; `stream` reads them block by block.
 
