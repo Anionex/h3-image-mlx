@@ -1,5 +1,6 @@
 """Private stage entry point. Each child releases its weights on exit."""
 import json
+import os
 import re
 import sys
 from pathlib import Path
@@ -49,7 +50,8 @@ def main(stage, work):
         mode = request["dit_mode"]
         resident = mode == "resident" or (mode == "auto" and backend == "w8a8" and
                     info["memory_size"] >= 32 * 1024**3 and rows <= 8192)
-        z, _ = denoise(models / DIT, inputs["embedding"], width, height, request["seed"], resident, zs, inputs["tags"])
+        # H3_DIT=<file>: use another DiT checkpoint with the same layout (e.g. one with a LoRA merged in).
+        z, _ = denoise(os.environ.get("H3_DIT") or models / DIT, inputs["embedding"], width, height, request["seed"], resident, zs, inputs["tags"])
         mx.save_safetensors(result, {"latent": z})
     elif stage == "vae":
         from .vae import decode
