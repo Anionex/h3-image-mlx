@@ -125,7 +125,7 @@ Streaming trades additional weight reads for a smaller memory footprint. Peak us
 
 | Chip | Default compute backend | Hardware tests |
 | --- | --- | --- |
-| M5 family | W8A8 Metal TensorOps | Text-to-image, single- and two-reference edits on M5 Pro (48 GB) |
+| M5 family | W8A8 Metal TensorOps | Text-to-image, single- and two-reference edits on M5 Pro (48 GB); text-to-image and a single-reference edit on M5 MacBook Air (16 GB), see [benchmarks](BENCHMARKS.md#community-run-macbook-air-m5-16-gb) |
 | M1–M4 | Portable MLX (experimental) | Portable backend exercised on M5 Pro. M1–M4 tests pending. |
 | M6 family | W8A8 Metal TensorOps | Pending |
 

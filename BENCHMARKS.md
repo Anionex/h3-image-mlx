@@ -68,6 +68,29 @@ The comparison tables convert units and calculate ratios from the source values.
 
 Source: [paired-run JSON](benchmarks/raw/teapot-1024-ab.json), including full-precision timings, byte counts and output RGB hashes.
 
+## Community run: MacBook Air M5, 16 GB
+
+A contributed run on the base M5 chip with 16 GB, a configuration not covered above. It uses the same teapot prompt, seed 42 and six steps, with default settings. On this machine `auto` selects the `w8a8` backend and `stream` loading.
+
+| Resolution | DiT loading | Runs | End-to-end time (s) | Peak process memory (GB) | Source |
+| --- | --- | ---: | ---: | ---: | --- |
+| 1024×1024 | `stream` | 3 | 70.51 | 2.48 | [JSON](benchmarks/raw/teapot-1024-m5-air-16gb.json) |
+| 2048×2048 | `stream` | 1 | 240.78 | 2.78 | [JSON](benchmarks/raw/teapot-2048-m5-air-16gb.json) |
+
+| Run | Text (s) | DiT (s) | VAE (s) | End-to-end (s) |
+| --- | ---: | ---: | ---: | ---: |
+| 1024×1024 run 1 | 6.30 | 52.20 | 1.24 | 59.85 |
+| 1024×1024 run 2 | 5.83 | 62.24 | 2.30 | 70.51 |
+| 1024×1024 run 3 | 7.83 | 73.45 | 1.84 | 83.28 |
+| 2048×2048 run 1 | 8.25 | 225.38 | 7.02 | 240.78 |
+
+- **Identical output across chips.** All three 1024×1024 runs have RGB SHA-256 `97d3c28bc44c4a740d9841882b62080ab21e5ed6c898f5894aa25020c3a6f4f1`, the same as every M5 Pro run in the paired-run JSON.
+- **Sustained runs slow down.** The three back-to-back 1024×1024 runs took 59.85 s, 70.51 s and 83.28 s; nearly all of the increase is in the DiT stage. The MacBook Air has no fan, so this is likely thermal throttling. Expect longer times in batches than in a single run.
+- **No swap growth.** About 1.1 GB of swap was already in use from other apps; it did not grow during any run.
+- **Reference editing also fits.** A single-reference edit at 2048×1152 (reference image of the same size) completed in 391 s with a peak of 3.59 GB. That run used a different prompt and is not part of the table.
+
+Hardware: MacBook Air (Mac17,3), Apple M5, 10-core CPU, 8-core GPU, 16 GB, macOS 26.6.2, MLX 0.32.4, commit `64df997`. Peak memory is the highest lifetime peak physical footprint among the stage processes, as reported by `/usr/bin/time -l`. Everyday apps were open during the runs.
+
 ## Prompt
 
 ```text
