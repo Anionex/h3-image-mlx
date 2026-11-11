@@ -25,24 +25,30 @@
 
 作为参考，实测中 1024×1024 生图的推理进程峰值占用可从 **21.07 GB 降至 2.67 GB**，对应耗时中位数从 **22.31 秒增至 30.90 秒**。[测试条件与完整数据](#实测数据)
 
-### 社区基线：ComfyUI + MPS INT8
+### 实测数据
 
-对照 [pratikgx 的社区实测](https://huggingface.co/datasets/pratikgx/minimax-h3-image-m5-pro-mac-mini-bench)，其使用 ComfyUI + ComfyUI-MPS-INT8。双方均使用 Comfy-Org INT8 ConvRot 权重和六步采样。
+| 设备 / 内存 | 推理方案 | DiT 模式 | 分辨率 | 耗时（秒） | 进程峰值（GB） | 来源 |
+| --- | --- | --- | --- | ---: | ---: | --- |
+| M5 Pro MacBook / 48 GB | H3 Image MLX | `resident` | 512×512 | 16.50 | 20.56 | [Anionex](benchmarks/raw/teapot-512.json) |
+| M5 Pro MacBook / 48 GB | H3 Image MLX | `resident` | 1024×1024 | 22.31 | 21.07 | [Anionex](benchmarks/raw/teapot-1024-ab.json) |
+| M5 Pro MacBook / 48 GB | H3 Image MLX | `stream` | 1024×1024 | 30.90 | 2.67 | [Anionex](benchmarks/raw/teapot-1024-ab.json) |
+| M5 Pro MacBook / 48 GB | H3 Image MLX | `resident` | 2048×2048 | 65.54 | 22.04 | [Anionex](benchmarks/raw/teapot-2048.json) |
+| M5 Pro MacBook / 48 GB | H3 Image MLX | `stream` | 4096×4096 | 356.84 | 6.86 | [Anionex](benchmarks/raw/teapot-4096.json) |
+| M5 MacBook Air / 16 GB | H3 Image MLX | `stream` | 1024×1024 | 70.51 | 2.48 | [arielfikru](benchmarks/raw/teapot-1024-m5-air-16gb.json) |
+| M5 MacBook Air / 16 GB | H3 Image MLX | `stream` | 2048×2048 | 240.78 | 2.78 | [arielfikru](benchmarks/raw/teapot-2048-m5-air-16gb.json) |
+| M5 Pro Mac mini / 64 GB | ComfyUI + MPS INT8 | — | 1024×1024 | 89.55 | 31.42 | [pratikgx](https://huggingface.co/datasets/pratikgx/minimax-h3-image-m5-pro-mac-mini-bench) |
+| M5 Pro Mac mini / 64 GB | ComfyUI + MPS INT8 | — | 2048×2048 | 164.90 | 36.21 | [pratikgx](https://huggingface.co/datasets/pratikgx/minimax-h3-image-m5-pro-mac-mini-bench) |
+| M5 Pro Mac mini / 64 GB | ComfyUI + MPS INT8 | — | 4096×4096 | 547.31 | 48.78 | [pratikgx](https://huggingface.co/datasets/pratikgx/minimax-h3-image-m5-pro-mac-mini-bench) |
 
-| 分辨率 | 我们的 DiT 模式 | 社区耗时（秒） | 我们耗时（秒） | 速度倍数 | 社区内存（GB） | 我们内存（GB） |
-| --- | --- | ---: | ---: | ---: | ---: | ---: |
-| 1024×1024 | `resident` | 89.55 | **22.31** | **4.01×** | 31.42 | **21.07** |
-| 1024×1024 | `stream` | 89.55 | **30.90** | **2.90×** | 31.42 | **2.67** |
-| 2048×2048 | `resident` | 164.90 | **65.54** | **2.52×** | 36.21 | **22.04** |
-| 4096×4096 | `stream` | 547.31 | **356.84** | **1.53×** | 48.78 | **6.86** |
-
-<sub>内存均为推理进程峰值，统一换算为十进制 GB。速度倍数 = 社区耗时 ÷ 我们耗时。</sub>
+<sub>耗时为三轮中位数或单次结果；内存为进程物理占用峰值，单位为十进制 GB。ComfyUI 使用 ComfyUI-MPS-INT8 插件。测试次数、环境与测量方法见[完整记录](BENCHMARKS.md)。</sub>
 
 ### 雨夜修表铺
 
 [![修表师用镊子夹起一枚黄铜齿轮，下方是敞开的机芯，身后是挂着雨珠的橱窗。](assets/watchmaker-preview.jpg)](assets/watchmaker-4096.png)
 
 [打开 4096×4096 原图（PNG，22.7 MB）](assets/watchmaker-4096.png?raw=true)
+
+在 M5 Pro（48 GB）上生成这张图耗时 6 分 10 秒，推理进程物理内存峰值为 6.88 GB。
 
 ## 生成第一张图
 
@@ -120,8 +126,8 @@ tokenizer.json
 
 | 芯片 | 默认计算后端 | 真机验证 |
 | --- | --- | --- |
-| M5 系列 | W8A8 Metal TensorOps | M5 Pro 48 GB 已完成文生图、单图和双图编辑 |
-| M1–M4 | 通用 MLX（实验性） | 已在 M5 Pro 上强制运行通用后端；M1–M4 待测 |
+| M5 系列 | W8A8 Metal TensorOps | M5 Pro 48 GB 已完成文生图、单图和双图编辑；M5 MacBook Air 16 GB 已完成文生图和单图编辑，见[实测记录](BENCHMARKS.md#community-run-macbook-air-m5-16-gb) |
+| M1–M4 | 通用 MLX | 已在 M5 Pro 上强制运行通用后端；M1–M4 待测 |
 | M6 系列 | W8A8 Metal TensorOps | 待测 |
 
 文本编码、六步去噪和图像解码各用一个进程，完成后释放权重。编辑时，参考图还会经过单独的 VAE 编码阶段。
@@ -129,16 +135,6 @@ tokenizer.json
 显存和系统内存由 Apple Silicon 共享。为其他应用留出空间，可在生成命令中加 `--dit-mode stream`，按块读取去噪权重。内存充足时，`--dit-mode resident` 让权重在六步之间常驻，以缩短耗时。默认的 `auto` 在通用后端、机器内存低于 32 GiB 或输入序列超过 8,192 个 token 位置时选择逐块读取。
 
 要对比两条计算路径，可以在 M5 Pro 上分别传入 `--backend w8a8` 和 `--backend portable`。运行参数与逐像素对照结果见[验收记录](VALIDATION.md)。
-
-### 实测数据
-
-[Markdown 实测数据表与原始 JSON](BENCHMARKS.md)
-
-![M5 Pro 从 512×512 到 4096×4096 的文生图实测。在 1024×1024 下，逐块读取将进程物理内存峰值从 21.07 GB 降到 2.67 GB。](assets/benchmark-blue.png)
-
-表格各行均使用同一条茶壶提示词、seed 42 和六步采样。1024×1024 的每种模式各测三次，取中位耗时和最高进程峰值；其他分辨率各测一次。4096×4096 一行的 356.84 秒和 6.86 GB 对应茶壶图。耗时从文本编码算到 PNG 写入磁盘。
-
-在 M5 Pro（48 GB）上，两种加载模式生成的六张 1024×1024 图片逐像素一致。另一次测试中的 4096×4096《雨夜修表铺》耗时 6 分 10 秒，推理进程物理内存峰值为 6.88 GB。
 
 ## 致谢与许可
 

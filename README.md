@@ -30,24 +30,30 @@ If you find this repository useful, feel free to 🌟 & fork~
 
 For reference, in our 1024×1024 generation benchmark, streaming reduced the peak inference-process footprint from **21.07 GB to 2.67 GB**, with median runtime increasing from **22.31 s to 30.90 s**. [Benchmark conditions and results](#benchmark-results)
 
-### Community baseline: ComfyUI + MPS INT8
+### Benchmark results
 
-Compared with [pratikgx's community benchmark](https://huggingface.co/datasets/pratikgx/minimax-h3-image-m5-pro-mac-mini-bench), using ComfyUI + ComfyUI-MPS-INT8. Both use Comfy-Org INT8 ConvRot weights and six sampling steps.
+| Device / memory | Pipeline | DiT mode | Resolution | Time (s) | Process peak (GB) | Source |
+| --- | --- | --- | --- | ---: | ---: | --- |
+| M5 Pro MacBook / 48 GB | H3 Image MLX | `resident` | 512×512 | 16.50 | 20.56 | [Anionex](benchmarks/raw/teapot-512.json) |
+| M5 Pro MacBook / 48 GB | H3 Image MLX | `resident` | 1024×1024 | 22.31 | 21.07 | [Anionex](benchmarks/raw/teapot-1024-ab.json) |
+| M5 Pro MacBook / 48 GB | H3 Image MLX | `stream` | 1024×1024 | 30.90 | 2.67 | [Anionex](benchmarks/raw/teapot-1024-ab.json) |
+| M5 Pro MacBook / 48 GB | H3 Image MLX | `resident` | 2048×2048 | 65.54 | 22.04 | [Anionex](benchmarks/raw/teapot-2048.json) |
+| M5 Pro MacBook / 48 GB | H3 Image MLX | `stream` | 4096×4096 | 356.84 | 6.86 | [Anionex](benchmarks/raw/teapot-4096.json) |
+| M5 MacBook Air / 16 GB | H3 Image MLX | `stream` | 1024×1024 | 70.51 | 2.48 | [arielfikru](benchmarks/raw/teapot-1024-m5-air-16gb.json) |
+| M5 MacBook Air / 16 GB | H3 Image MLX | `stream` | 2048×2048 | 240.78 | 2.78 | [arielfikru](benchmarks/raw/teapot-2048-m5-air-16gb.json) |
+| M5 Pro Mac mini / 64 GB | ComfyUI + MPS INT8 | — | 1024×1024 | 89.55 | 31.42 | [pratikgx](https://huggingface.co/datasets/pratikgx/minimax-h3-image-m5-pro-mac-mini-bench) |
+| M5 Pro Mac mini / 64 GB | ComfyUI + MPS INT8 | — | 2048×2048 | 164.90 | 36.21 | [pratikgx](https://huggingface.co/datasets/pratikgx/minimax-h3-image-m5-pro-mac-mini-bench) |
+| M5 Pro Mac mini / 64 GB | ComfyUI + MPS INT8 | — | 4096×4096 | 547.31 | 48.78 | [pratikgx](https://huggingface.co/datasets/pratikgx/minimax-h3-image-m5-pro-mac-mini-bench) |
 
-| Resolution | Our DiT mode | Community time (s) | Our time (s) | Speed ratio | Community memory (GB) | Our memory (GB) |
-| --- | --- | ---: | ---: | ---: | ---: | ---: |
-| 1024×1024 | `resident` | 89.55 | **22.31** | **4.01×** | 31.42 | **21.07** |
-| 1024×1024 | `stream` | 89.55 | **30.90** | **2.90×** | 31.42 | **2.67** |
-| 2048×2048 | `resident` | 164.90 | **65.54** | **2.52×** | 36.21 | **22.04** |
-| 4096×4096 | `stream` | 547.31 | **356.84** | **1.53×** | 48.78 | **6.86** |
-
-<sub>Memory is peak process footprint, converted to decimal GB. Speed ratio = community time ÷ our time.</sub>
+<sub>Time is a three-run median or a single run; memory is peak process physical footprint in decimal GB. ComfyUI uses the ComfyUI-MPS-INT8 extension. See the [full records](BENCHMARKS.md) for run counts, environments and measurement methods.</sub>
 
 ### Rainy-night watchmaker
 
 [![A watchmaker lifts a brass gear above an open watch, with a rain-streaked window behind him.](assets/watchmaker-preview.jpg)](assets/watchmaker-4096.png)
 
 [Open the original 4096×4096 PNG (22.7 MB)](assets/watchmaker-4096.png?raw=true)
+
+Generated on the M5 Pro (48 GB) in 6 min 10 s, with a peak inference-process footprint of 6.88 GB.
 
 ## Generate your first image
 
@@ -126,7 +132,7 @@ Streaming trades additional weight reads for a smaller memory footprint. Peak us
 | Chip | Default compute backend | Hardware tests |
 | --- | --- | --- |
 | M5 family | W8A8 Metal TensorOps | Text-to-image, single- and two-reference edits on M5 Pro (48 GB); text-to-image and a single-reference edit on M5 MacBook Air (16 GB), see [benchmarks](BENCHMARKS.md#community-run-macbook-air-m5-16-gb) |
-| M1–M4 | Portable MLX (experimental) | Portable backend exercised on M5 Pro. M1–M4 tests pending. |
+| M1–M4 | Portable MLX | Portable backend exercised on M5 Pro. M1–M4 tests pending. |
 | M6 family | W8A8 Metal TensorOps | Pending |
 
 Text encoding, six-step denoising and image decoding each run in a separate process that releases its weights on exit. Editing adds a VAE encoding stage for the references.
@@ -134,16 +140,6 @@ Text encoding, six-step denoising and image decoding each run in a separate proc
 Apple Silicon shares memory between the CPU and GPU. To leave room for other apps, add `--dit-mode stream` to read the denoiser weights one block at a time. With memory to spare, use `--dit-mode resident` to keep weights between steps and cut generation time. The default, `auto`, streams on the portable backend, below 32 GiB of system memory, or above 8,192 packed token positions.
 
 To compare compute backends on an M5 Pro, run the same prompt with `--backend w8a8` and `--backend portable`. See the [validation notes](VALIDATION.md) for settings and pixel comparisons.
-
-### Benchmark results
-
-[Markdown data table and source JSON](BENCHMARKS.md)
-
-![M5 Pro text-to-image benchmarks from 512×512 to 4096×4096. At 1024×1024, streaming reduced the peak process footprint from 21.07 GB to 2.67 GB.](assets/benchmark-blue-en.png)
-
-We used the same teapot prompt, seed 42 and six steps for this table. The 1024×1024 rows report the median time and highest process peak across three runs per mode. Each other row records one run. The 4096×4096 row (356.84 s, 6.86 GB) is the teapot run. Times include text encoding through PNG output.
-
-On the M5 Pro (48 GB), the six 1024×1024 outputs matched pixel for pixel across the two loading modes. The separate 4096×4096 watchmaker example took 6 min 10 s. Its peak inference-process footprint was 6.88 GB.
 
 ## Credits and licenses
 

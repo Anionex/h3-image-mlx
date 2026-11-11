@@ -17,7 +17,7 @@ H3_IMAGE_TEST_WEIGHTS=/path/to/models .venv/bin/python -m unittest discover -s t
 
 On an M5 Pro with 48 GB of unified memory, two sampled INT8 projections from the actual DiT and text encoder were tested on the portable MLX path. All 16,640 BF16 outputs matched both the native W8A8 path and the CPU implementation using integer dot products. Tests also cover operation when creation of a custom Metal kernel is disabled.
 
-Hardware detection selects the experimental portable path for M1, M2, M3 and M4. The tests described here ran on an M5 Pro. Physical validation on each earlier chip is outstanding.
+Hardware detection selects the portable path for M1, M2, M3 and M4. The tests described here ran on an M5 Pro. Physical validation on each earlier chip is outstanding.
 
 ## End-to-end inference with the installed wheel
 
