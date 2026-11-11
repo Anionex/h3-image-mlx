@@ -1,5 +1,8 @@
 """Text-to-image and ordered multi-reference editing in isolated MLX stages."""
+import hashlib
 import json
+import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -7,7 +10,18 @@ from pathlib import Path
 from typing import Sequence
 
 from PIL import Image
-from .models import check_models
+from .models import TEXT, check_models
+
+
+def embedding_cache(directory, prompt, refs, backend):
+    """Opt-in (H3_EMBED_CACHE=dir): reuse the text-stage output for a repeated prompt + references."""
+    root = os.environ.get("H3_EMBED_CACHE")
+    if not root:
+        return None
+    key = [prompt, backend, (directory / TEXT).stat().st_size, [hashlib.sha256(p.read_bytes()).hexdigest() for p in refs]]
+    name = hashlib.sha256(json.dumps(key).encode()).hexdigest()
+    Path(root).expanduser().mkdir(parents=True, exist_ok=True)
+    return Path(root).expanduser() / f"{name}.safetensors"
 
 
 def generate(prompt: str, *, models: str | Path, width: int = 1024, height: int = 1024,
@@ -38,10 +52,17 @@ def generate(prompt: str, *, models: str | Path, width: int = 1024, height: int 
                     references=[str(p) for p in refs], backend=backend, dit_mode=dit_mode)
         (work / "request.json").write_text(json.dumps(args))
         stages = ["text", *(["references"] if refs else []), "dit", "vae"]
+        cached = embedding_cache(directory, prompt, refs, backend)
+        if cached and cached.is_file():
+            shutil.copy(cached, work / "embedding.safetensors")
+            stages.remove("text")
         for stage in stages:
             proc = subprocess.run([sys.executable, "-m", "h3_image_mlx._stage", stage, tmp],
                                   capture_output=True, text=True)
             if proc.returncode:
                 raise RuntimeError(f"H3 {stage} stage exited with {proc.returncode}: {proc.stderr.strip()}")
+            if stage == "text" and cached:
+                shutil.copy(work / "embedding.safetensors", cached.with_suffix(".tmp"))
+                cached.with_suffix(".tmp").replace(cached)
         with Image.open(work / "image.png") as image:
             return image.convert("RGB")
