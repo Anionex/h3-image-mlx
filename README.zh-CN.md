@@ -11,7 +11,7 @@
 [![需要 Python 3.11 或更高版本](https://img.shields.io/static/v1?label=Python&message=3.11%2B&color=3776AB&style=flat-square&logo=python&logoColor=white)](pyproject.toml)
 [![软件包许可：Apache-2.0 AND MIT](https://img.shields.io/static/v1?label=License&message=Apache-2.0%20AND%20MIT&color=326790&style=flat-square)](pyproject.toml)
 
-[快速开始](#生成第一张图) · [参考图编辑](#用参考图编辑) · [推理原理](#推理原理) · [实测数据](#实测数据)
+[快速开始](#生成第一张图) · [参考图编辑](#用参考图编辑) · [推理原理](#推理原理) · [实测数据](#实测数据) · [使用指南](docs/USAGE.zh-CN.md) · [性能调优](docs/PERFORMANCE.zh-CN.md)
 
 在 Apple Silicon Mac 上用 MiniMax H3 Image 生图、编辑图片。优化本地推理速度，以约 7 GB 的推理进程峰值内存生成 4K 图像；提供命令行和 Python API，开箱即用。
 
@@ -68,7 +68,7 @@
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install 'h3-image-mlx==0.1.0a1'
+python -m pip install 'h3-image-mlx==0.1.0a2'
 
 h3-image-mlx fetch --models ./models
 h3-image-mlx generate --models ./models --output teapot.png \
@@ -76,6 +76,21 @@ h3-image-mlx generate --models ./models --output teapot.png \
 ```
 
 默认输出 1024×1024 的 RGB PNG。用 `--width` 和 `--height` 指定宽高，每边可取 256 到 4096 之间的 32 的倍数。
+
+## 推荐开启分块推理加速
+
+**使用 `--dit-mode stream` 时，推荐尝试同时开启权重预取和异步计算，尤其是 16 GB 的 M5 Mac。两个开关默认关闭。** 它们让读权重与 GPU 计算重叠，仍使用原来的六步采样。贡献者在 M5 Air 上报告，1024×1024 整图耗时从 59.8 秒降至 34.8–43.6 秒，进程峰值仍约 2.5 GB，输出逐像素一致。[测试结果与取舍](docs/PERFORMANCE.zh-CN.md#贡献者实测)
+
+这些开关从 `0.1.0a2` 开始提供；升级后在单次命令中开启：
+
+```bash
+python -m pip install --upgrade 'h3-image-mlx==0.1.0a2'
+H3_ASYNC=1 H3_PREFETCH=1 h3-image-mlx generate \
+  --models ./models --dit-mode stream --output teapot.png \
+  --prompt 'A yellow enamel teapot and a white cup on a blue wooden table.'
+```
+
+[使用指南：命令行、Python 与已有权重](docs/USAGE.zh-CN.md) · [性能调优：开关、缓存与性能记录](docs/PERFORMANCE.zh-CN.md)
 
 ## 用参考图编辑
 
@@ -88,37 +103,6 @@ h3-image-mlx generate --models ./models --output edit.png \
 ```
 
 最多可传入 16 张参考图。M5 Pro 已完成单图和双图编辑实测；16 图测试在六步去噪完成第三步后取消。[验收记录](VALIDATION.md)
-
-## Python
-
-`generate` 返回 Pillow 图像。用 `references` 列表传入参考图，顺序与命令行一致。
-
-```python
-from h3_image_mlx import generate
-
-image = generate(
-    "Replace the cup in <Picture 1> with the bird from <Picture 2>.",
-    models="./models",
-    references=["teapot.png", "bird.png"],
-    seed=42,
-    dit_mode="stream",
-)
-image.save("edit.png")
-```
-
-## 复用已有权重
-
-将 `--models` 指向包含以下文件的目录，也可以用符号链接指向已有文件。
-
-```text
-diffusion_models/minimax_h3_image_pruned_int8_convrot.safetensors
-text_encoders/qwen3vl_32b_minimax_h3_int8_convrot.safetensors
-vae/minimax_h3_image_vae_fp16.safetensors
-vae/config.json
-tokenizer.json
-```
-
-`fetch` 会校验已有文件，并从 ModelScope 下载缺失的文件。如果已经有三个权重文件和 tokenizer，只需再下载 1,826 字节的 VAE 配置。要从 Hugging Face 下载，加上 `--source huggingface`。要按 [SHA-256 清单](src/h3_image_mlx/weights.json) 校验文件，运行 `h3-image-mlx verify --models ./models`。
 
 ## 推理原理
 
@@ -135,17 +119,16 @@ tokenizer.json
 
 ## 硬件与内存
 
-| 芯片 | 默认计算后端 | 真机验证 |
-| --- | --- | --- |
-| M5 系列 | W8A8 Metal TensorOps | M5 Pro 48 GB 已完成文生图、单图和双图编辑；M5 MacBook Air 16 GB 已完成文生图和单图编辑，见[实测记录](BENCHMARKS.md#community-run-macbook-air-m5-16-gb) |
-| M1–M4 | 通用 MLX | 已在 M5 Pro 上强制运行通用后端；M1–M4 待测 |
-| M6 系列 | W8A8 Metal TensorOps | 待测 |
+M5/M6 默认选择 W8A8 Metal TensorOps，M1–M4 使用通用 MLX 后端。需要更低内存占用时使用 `--dit-mode stream`，希望在去噪步骤之间保留权重时使用 `--dit-mode resident`。[硬件验证与自动模式选择](docs/PERFORMANCE.zh-CN.md#硬件与内存)
 
-文本编码、六步去噪和图像解码各用一个进程，完成后释放权重。编辑时，参考图还会经过单独的 VAE 编码阶段。
+## 文档索引
 
-显存和系统内存由 Apple Silicon 共享。为其他应用留出空间，可在生成命令中加 `--dit-mode stream`，按块读取去噪权重。内存充足时，`--dit-mode resident` 让权重在六步之间常驻，以缩短耗时。默认的 `auto` 在通用后端、机器内存低于 32 GiB 或输入序列超过 8,192 个 token 位置时选择逐块读取。
-
-要对比两条计算路径，可以在 M5 Pro 上分别传入 `--backend w8a8` 和 `--backend portable`。运行参数与逐像素对照结果见[验收记录](VALIDATION.md)。
+| 文档 | 内容 |
+| --- | --- |
+| [使用指南](docs/USAGE.zh-CN.md) | 命令行参数、参考图编辑、Python API 与已有权重 |
+| [性能调优](docs/PERFORMANCE.zh-CN.md) | 推荐的分块加速开关、硬件模式、编码缓存与性能分析 |
+| [实测数据](BENCHMARKS.md) | 耗时、内存、测试环境与原始 JSON |
+| [验收记录](VALIDATION.md) | 已完成检查与待测硬件范围 |
 
 ## 致谢与许可
 

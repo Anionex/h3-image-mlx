@@ -16,7 +16,7 @@
 
 
 
-[Quick start](#generate-your-first-image) · [Image editing](#edit-with-reference-images) · [How it works](#how-it-works) · [Benchmarks](#benchmark-results)
+[Quick start](#generate-your-first-image) · [Image editing](#edit-with-reference-images) · [How it works](#how-it-works) · [Benchmarks](#benchmark-results) · [Usage](docs/USAGE.md) · [Performance](docs/PERFORMANCE.md)
 
 Generate and edit images on an Apple Silicon Mac with MiniMax H3 Image. Optimized for fast inference, with 4K generation using around 7 GB of peak inference-process memory. Available through a CLI and Python API, ready to use out of the box.
 
@@ -73,7 +73,7 @@ Use Python 3.11 or later on a Mac with Metal. Allow 49.30 GB of disk space for a
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install 'h3-image-mlx==0.1.0a1'
+python -m pip install 'h3-image-mlx==0.1.0a2'
 
 h3-image-mlx fetch --models ./models
 h3-image-mlx generate --models ./models --output teapot.png \
@@ -81,6 +81,21 @@ h3-image-mlx generate --models ./models --output teapot.png \
 ```
 
 This writes a 1024×1024 RGB PNG. Set `--width` and `--height` to change the size. Each dimension accepts multiples of 32 from 256 through 4096.
+
+## Recommended streaming acceleration
+
+**We recommend trying weight prefetch and asynchronous evaluation when using `--dit-mode stream`, especially on a 16 GB M5 Mac. Both switches are off by default.** They overlap weight reads with GPU work while retaining the six-step sampler. On the contributor's M5 Air, 1024×1024 generation fell from 59.8 s to 34.8–43.6 s, with a reported peak footprint of about 2.5 GB and pixel-identical outputs. [Measurements and trade-offs](docs/PERFORMANCE.md#reported-results)
+
+Available from `0.1.0a2`; upgrade and enable both switches for this command:
+
+```bash
+python -m pip install --upgrade 'h3-image-mlx==0.1.0a2'
+H3_ASYNC=1 H3_PREFETCH=1 h3-image-mlx generate \
+  --models ./models --dit-mode stream --output teapot.png \
+  --prompt 'A yellow enamel teapot and a white cup on a blue wooden table.'
+```
+
+[Usage guide: CLI, Python and existing weights](docs/USAGE.md) · [Performance guide: switches, caching and profiling](docs/PERFORMANCE.md)
 
 ## Edit with reference images
 
@@ -93,37 +108,6 @@ h3-image-mlx generate --models ./models --output edit.png \
 ```
 
 You can pass up to 16 references. On an M5 Pro, we completed one- and two-reference edits. The 16-reference test reached the third of six denoising steps before cancellation. [Validation notes](VALIDATION.md)
-
-## Python
-
-`generate` returns a Pillow image. Pass reference paths in a list, in the same order as in the CLI.
-
-```python
-from h3_image_mlx import generate
-
-image = generate(
-    "Replace the cup in <Picture 1> with the bird from <Picture 2>.",
-    models="./models",
-    references=["teapot.png", "bird.png"],
-    seed=42,
-    dit_mode="stream",
-)
-image.save("edit.png")
-```
-
-## Reuse existing weights
-
-Point `--models` at a directory with this layout. Symlinks work.
-
-```text
-diffusion_models/minimax_h3_image_pruned_int8_convrot.safetensors
-text_encoders/qwen3vl_32b_minimax_h3_int8_convrot.safetensors
-vae/minimax_h3_image_vae_fp16.safetensors
-vae/config.json
-tokenizer.json
-```
-
-`fetch` checks existing files and downloads missing ones from ModelScope. If you already have the three weight files and tokenizer, it downloads just the 1,826-byte VAE configuration. For Hugging Face, add `--source huggingface`. To check the files against the [SHA-256 manifest](src/h3_image_mlx/weights.json), run `h3-image-mlx verify --models ./models`.
 
 ## How it works
 
@@ -140,17 +124,16 @@ Streaming trades additional weight reads for a smaller memory footprint. Peak us
 
 ## Hardware and memory
 
-| Chip | Default compute backend | Hardware tests |
-| --- | --- | --- |
-| M5 family | W8A8 Metal TensorOps | Text-to-image, single- and two-reference edits on M5 Pro (48 GB); text-to-image and a single-reference edit on M5 MacBook Air (16 GB), see [benchmarks](BENCHMARKS.md#community-run-macbook-air-m5-16-gb) |
-| M1–M4 | Portable MLX | Portable backend exercised on M5 Pro. M1–M4 tests pending. |
-| M6 family | W8A8 Metal TensorOps | Pending |
+M5/M6 select W8A8 Metal TensorOps by default; M1–M4 use the portable MLX backend. Use `--dit-mode stream` for lower memory usage or `--dit-mode resident` to retain denoiser weights between steps. [Hardware validation and automatic mode selection](docs/PERFORMANCE.md#hardware-and-memory)
 
-Text encoding, six-step denoising and image decoding each run in a separate process that releases its weights on exit. Editing adds a VAE encoding stage for the references.
+## Documentation
 
-Apple Silicon shares memory between the CPU and GPU. To leave room for other apps, add `--dit-mode stream` to read the denoiser weights one block at a time. With memory to spare, use `--dit-mode resident` to keep weights between steps and cut generation time. The default, `auto`, streams on the portable backend, below 32 GiB of system memory, or above 8,192 packed token positions.
-
-To compare compute backends on an M5 Pro, run the same prompt with `--backend w8a8` and `--backend portable`. See the [validation notes](VALIDATION.md) for settings and pixel comparisons.
+| Document | Contents |
+| --- | --- |
+| [Usage guide](docs/USAGE.md) | CLI parameters, reference editing, Python API and existing weights |
+| [Performance guide](docs/PERFORMANCE.md) | Recommended streaming switches, hardware modes, embedding cache and profiling |
+| [Benchmarks](BENCHMARKS.md) | Measurements, environments and source JSON |
+| [Validation notes](VALIDATION.md) | Completed checks and remaining hardware coverage |
 
 ## Credits and licenses
 
