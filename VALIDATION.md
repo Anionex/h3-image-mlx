@@ -35,3 +35,16 @@ The installed Python API also completed a 1024×1024 edit in 92.61 seconds on th
 ## Public 0.1.0a1 release
 
 The release artifacts contain the runtime and download manifest. Both omit weights and VAE calibration data. The 1,826-byte upstream VAE configuration matches on both download sources and supplies the same 48 normalization values used in the prototype. The installed release wheel passed all nine tests with local weights and completed a 512×512 single-reference edit using the external VAE configuration on M5 Pro. Both artifacts passed strict Twine validation. See [the release hashes](releases/v0.1.0a1.sha256).
+
+## Public 0.1.0a2 release
+
+Validated on 2026-11-12 with Python 3.13.13, MLX 0.32.4 and the existing model files on M5 Pro (48 GB). All nine tests passed against the installed wheel, including the real DiT and text-encoder projection checks. The wheel and source distribution passed strict Twine validation and remain runtime-only. See [the release hashes](releases/v0.1.0a2.sha256).
+
+The installed Python API completed four serial 512×512 checks using W8A8, streaming and seed 42:
+
+- Default generation with all performance switches unset.
+- Generation with `H3_ASYNC=1 H3_PREFETCH=1`, profiling and an initially empty embedding cache.
+- The same request with a cache hit: only the DiT and VAE stages ran.
+- A single-reference edit with both streaming switches enabled.
+
+The first three outputs were pixel-identical (decoded RGB SHA-256: `e36333e6319536ba10bcdd459fd91e0f9b3d6a9485bac911cc48610e2d72e906`). Profiling recorded six denoising steps and nonzero weight reads. The reference edit completed text, reference encoding, DiT and VAE stages and returned a 512×512 RGB image. These were functional release checks; the performance comparisons are documented separately in the [performance guide](docs/PERFORMANCE.md#reported-results).
