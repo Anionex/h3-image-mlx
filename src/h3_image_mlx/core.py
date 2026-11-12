@@ -34,7 +34,7 @@ def tensorops_kernel():
 H4 = np.ones((4, 4), dtype=np.float32)
 np.fill_diagonal(H4[:, ::-1], -1)
 H256 = mx.array(np.kron(np.kron(H4, H4), np.kron(H4, H4)) / 16)
-DTYPES = {"I8": "i1", "U8": "u1", "F16": "<f2", "BF16": "<u2", "F32": "<f4"}
+DTYPES = {"I8": "i1", "U8": "u1", "F16": "<f2", "BF16": "<u2", "F32": "<f4", "I64": "<i8"}
 
 
 def flag(name):
@@ -88,6 +88,27 @@ class Weights:
         self.pool = ThreadPoolExecutor(1) if flag("H3_PREFETCH") else None
         self.pending = {}
         self.stats = dict(read_s=0.0, read_bytes=0, convert_s=0.0, wait_s=0.0)
+        self.lora = None  # optional second Weights holding lora_A / lora_B / alpha per projection
+        self.alphas = {}
+
+    def delta(self, prefix, x):
+        """LoRA side path for one projection: x @ A.T @ B.T * alpha / rank, or None.
+
+        The int8 ConvRot weights are rotated and quantized, so a LoRA cannot be merged into
+        them; it runs beside the quantized GEMM on the unrotated activations instead.
+        """
+        key = "diffusion_model." + prefix
+        if key + ".lora_A.weight" not in self.header:
+            return None
+        a, b = self[key + ".lora_A.weight"], self[key + ".lora_B.weight"]
+        if key not in self.alphas:
+            alpha = self[key + ".alpha"].item() if key + ".alpha" in self.header else a.shape[0]
+            self.alphas[key] = float(alpha) / a.shape[0]
+        low = x.astype(mx.float32) @ a.astype(mx.float32).T
+        return (low @ b.astype(mx.float32).T) * self.alphas[key]
+        if flag("H3_NOCACHE"):
+            fcntl.fcntl(self.file.fileno(), fcntl.F_NOCACHE, 1)
+
     def release(self):
         self.cache.clear()
 
@@ -171,6 +192,10 @@ class Weights:
             y = w8a8(x, w, self[prefix + ".weight_scale"])
         else:
             y = x @ w.astype(x.dtype).T
+        if self.lora is not None:
+            extra = self.lora.delta(prefix, x)
+            if extra is not None:
+                y = y + extra.astype(y.dtype)
         if prefix + ".bias" in self.header:
             y = y + self[prefix + ".bias"].astype(y.dtype)
         return y
