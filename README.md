@@ -73,7 +73,7 @@ Use Python 3.11 or later on a Mac with Metal. Allow 49.30 GB of disk space for a
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install 'h3-image-mlx==0.1.0a2'
+python -m pip install 'h3-image-mlx==0.1.0a3'
 
 h3-image-mlx fetch --models ./models
 h3-image-mlx generate --models ./models --output teapot.png \
@@ -89,7 +89,7 @@ This writes a 1024×1024 RGB PNG. Set `--width` and `--height` to change the siz
 Available from `0.1.0a2`; upgrade and enable both switches for this command:
 
 ```bash
-python -m pip install --upgrade 'h3-image-mlx==0.1.0a2'
+python -m pip install --upgrade 'h3-image-mlx==0.1.0a3'
 H3_ASYNC=1 H3_PREFETCH=1 h3-image-mlx generate \
   --models ./models --dit-mode stream --output teapot.png \
   --prompt 'A yellow enamel teapot and a white cup on a blue wooden table.'

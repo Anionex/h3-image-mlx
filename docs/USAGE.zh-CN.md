@@ -7,7 +7,7 @@
 使用支持 Metal 的 Apple Silicon Mac 和 Python 3.11 或更高版本。首次下载模型需要 49.30 GB 磁盘空间。
 
 ```bash
-python -m pip install --upgrade 'h3-image-mlx==0.1.0a2'
+python -m pip install --upgrade 'h3-image-mlx==0.1.0a3'
 h3-image-mlx fetch --models ./models
 ```
 
@@ -24,7 +24,7 @@ h3-image-mlx generate --models ./models --output edit.png \
   --prompt 'Edit <Picture 1>. Replace the white cup with the bird from <Picture 2>. Keep the teapot and table.'
 ```
 
-参考图按顺序编号：`<Picture 1>` 对应第一个 `--reference`，以此类推。最多传入 16 张 PNG、JPEG 或 WebP 图片。输出始终为 RGB PNG。默认使用六步采样；GitHub `main` 另提供通过环境变量开启的[实验性少步数 LoRA](PERFORMANCE.zh-CN.md#实验性少步数-lora)，PyPI `0.1.0a2` 尚未包含。
+参考图按顺序编号：`<Picture 1>` 对应第一个 `--reference`，以此类推。最多传入 16 张 PNG、JPEG 或 WebP 图片。输出始终为 RGB PNG。默认使用六步采样；`0.1.0a3` 另提供通过环境变量开启的[实验性少步数 LoRA](PERFORMANCE.zh-CN.md#实验性少步数-lora)，默认关闭。
 
 ## 命令行参数
 

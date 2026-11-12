@@ -59,3 +59,9 @@ PR #3 was tested against the 0.1.0a2 baseline on 2026-11-12, using Python 3.13.1
 | Single-reference editing | `9ce85143b531f5c520ac556bd2b8c1503308a070abdcd88fc9895704a07089d5` |
 
 The cache-hit run skipped the text stage and profiling still recorded six steps. These checks verify the existing path with experimental controls disabled. Active-LoRA measurements and their coverage come from the contributor and are documented in the [experimental guide](docs/PERFORMANCE.md#experimental-few-step-lora).
+
+## Public 0.1.0a3 release
+
+Validated on 2026-11-12 with Python 3.13.13, MLX 0.32.4, M5 Pro (48 GB) and the existing local weights. All nine tests passed against the installed final wheel, including real-weight projection checks. Wheel and source distribution passed strict Twine validation; neither contains model weights or VAE calibration data. The source distribution now includes `scripts/merge_lora_int8.py`, verified byte for byte against the repository, and its `--help` entry point was checked. See [the tested artifact hashes](releases/v0.1.0a3.sha256).
+
+Four serial 512×512 installed-wheel checks covered default generation, async/prefetch, embedding-cache reuse and single-reference editing. With experimental controls unset, all four outputs matched the previous release baseline pixel for pixel: the first three use RGB SHA-256 `e36333e6319536ba10bcdd459fd91e0f9b3d6a9485bac911cc48610e2d72e906`; the edit uses `9ce85143b531f5c520ac556bd2b8c1503308a070abdcd88fc9895704a07089d5`. The cache hit skipped text encoding and profiling recorded six steps. Active pDMD generation and full-checkpoint merging remain covered by the contributor's measurements described above.

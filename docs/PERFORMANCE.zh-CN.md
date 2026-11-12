@@ -57,10 +57,10 @@ H3_EMBED_CACHE=./.h3-embedding-cache h3-image-mlx generate \
 
 ## 实验性少步数 LoRA
 
-该功能已进入 GitHub `main`，PyPI `0.1.0a2` 尚未包含。所有实验设置默认关闭；不设置时，生图和编辑仍使用原来的六步链路。体验前安装源码版：
+该功能从 `0.1.0a3` 开始随 PyPI 软件包提供。所有实验设置默认关闭；不设置时，生图和编辑仍使用原来的六步链路。升级后即可体验：
 
 ```bash
-python -m pip install --upgrade 'git+https://github.com/Anionex/h3-image-mlx.git'
+python -m pip install --upgrade 'h3-image-mlx==0.1.0a3'
 ```
 
 ### 直接加载 LoRA
@@ -88,7 +88,7 @@ env -u H3_DIT H3_LORA=./loras/minimax_h3_pdmd_2nfe_comfyui.safetensors \
 
 ### 预合并为 INT8 权重
 
-直接加载会在推理时增加低秩计算，不修改现有模型文件。可选的[合并脚本](../scripts/merge_lora_int8.py) 则在 ConvRot 量化前，把 LoRA 加到 BF16 权重中，另存一份 INT8 权重。在本仓库源码目录中、安装好软件包依赖后运行：
+直接加载会在推理时增加低秩计算，不修改现有模型文件。可选的[合并脚本](../scripts/merge_lora_int8.py) 则在 ConvRot 量化前，把 LoRA 加到 BF16 权重中，另存一份 INT8 权重。在本仓库或解压后的源码包目录中，安装好软件包依赖后运行：
 
 ```bash
 python scripts/merge_lora_int8.py \
