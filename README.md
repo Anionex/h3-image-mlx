@@ -60,13 +60,11 @@ This compares complete pipelines: ComfyUI's default text encoder runs on CPU; ML
 
 <sub>Independent measurements on different machines, retaining contributors' original results. Run counts and measurement methods are in the [full records](BENCHMARKS.md#supplementary-earlier-and-community-results), alongside the earlier M5 Pro runs.</sub>
 
-### Rainy-night watchmaker
+### Generation gallery
 
-[![A watchmaker lifts a brass gear above an open watch, with a rain-streaked window behind him.](assets/watchmaker-preview.jpg)](assets/watchmaker-4096.png)
+[![Six H3 Image MLX examples: a feast, a fox in flight, a celadon tea set, a woodland chapel, a watercolor illustration and a rainy-night watchmaker.](assets/generation-gallery.jpg)](assets/generation-gallery.jpg)
 
-[Open the original 4096×4096 PNG (22.7 MB)](assets/watchmaker-4096.png?raw=true)
-
-Generated on the M5 Pro (48 GB) in 6 min 10 s, with a peak inference-process footprint of 6.88 GB.
+Generated locally with H3 Image MLX: food, wildlife, product photography, architecture, illustration and a 4K watchmaker portrait. Click the collage to view it at full size.
 
 ## Generate your first image
 

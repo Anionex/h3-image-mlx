@@ -55,13 +55,11 @@
 
 <sub>不同机器上的独立测量，保留贡献者原始结果；次数与测量口径见[完整记录](BENCHMARKS.md#supplementary-earlier-and-community-results)。此前 M5 Pro 的单机测试也保留在其中。</sub>
 
-### 雨夜修表铺
+### 生成结果
 
-[![修表师用镊子夹起一枚黄铜齿轮，下方是敞开的机芯，身后是挂着雨珠的橱窗。](assets/watchmaker-preview.jpg)](assets/watchmaker-4096.png)
+[![H3 Image MLX 六图拼图：丰盛餐桌、跃起的狐狸、青瓷茶具、林间教堂、水彩插画和雨夜修表师。](assets/generation-gallery.jpg)](assets/generation-gallery.jpg)
 
-[打开 4096×4096 原图（PNG，22.7 MB）](assets/watchmaker-4096.png?raw=true)
-
-在 M5 Pro（48 GB）上生成这张图耗时 6 分 10 秒，推理进程物理内存峰值为 6.88 GB。
+使用 H3 Image MLX 本地生成，展示美食、野生动物、产品摄影、建筑、插画和 4K 修表师人像。点击拼图可查看完整尺寸。
 
 ## 生成第一张图
 
