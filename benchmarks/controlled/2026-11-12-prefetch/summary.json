@@ -1,0 +1,61 @@
+{
+  "status": "passed",
+  "pixel_identical": true,
+  "reason_for_extra_trials": "Three initial trials showed timing variation; add two counterbalanced resident/prefetch pairs.",
+  "summary": {
+    "resident": {
+      "trials": 5,
+      "seconds": {
+        "median": 23.63006641699758,
+        "min": 21.26838345899887,
+        "max": 29.39518500000122
+      },
+      "dit_seconds": {
+        "median": 18.05496237501211,
+        "min": 16.095382749990677,
+        "max": 23.998951957997633
+      },
+      "peak_process_gb": {
+        "median": 21.073558792,
+        "min": 21.008792912,
+        "max": 21.183560992
+      }
+    },
+    "stream": {
+      "trials": 3,
+      "seconds": {
+        "median": 32.33382250000432,
+        "min": 30.32652129099006,
+        "max": 39.43117570900358
+      },
+      "dit_seconds": {
+        "median": 26.791478958999505,
+        "min": 25.073995124999783,
+        "max": 33.29989445800311
+      },
+      "peak_process_gb": {
+        "median": 2.525170088,
+        "min": 2.51361932,
+        "max": 2.525284752
+      }
+    },
+    "stream-prefetch-async": {
+      "trials": 5,
+      "seconds": {
+        "median": 23.61130208299437,
+        "min": 20.879805959004443,
+        "max": 29.185318832998746
+      },
+      "dit_seconds": {
+        "median": 18.114688708999893,
+        "min": 15.97490149999794,
+        "max": 23.35492533299839
+      },
+      "peak_process_gb": {
+        "median": 2.946697256,
+        "min": 2.525284752,
+        "max": 3.233106032
+      }
+    }
+  }
+}

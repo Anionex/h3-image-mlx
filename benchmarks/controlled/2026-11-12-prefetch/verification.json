@@ -1,0 +1,13 @@
+{
+  "status": "passed",
+  "images_checked": 16,
+  "formal_runs": 13,
+  "pixel_identical": true,
+  "rgb_sha256": "97d3c28bc44c4a740d9841882b62080ab21e5ed6c898f5894aa25020c3a6f4f1",
+  "all_six_steps": true,
+  "flags_verified": true,
+  "statistics_recomputed": true,
+  "time_difference_percent": -0.07940872307371505,
+  "maximum_peak_reduction_percent": 84.73766505442127,
+  "vs_plain_stream_speed_ratio": 1.3694214061702337
+}

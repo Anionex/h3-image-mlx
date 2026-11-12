@@ -1,6 +1,26 @@
 # Benchmarks
 
-The primary comparison is a **same-machine controlled experiment on an M5 Pro MacBook (48 GB)**, completed on November 11, 2026: **11 groups, 33 measured generations and 11 warmups**. Earlier M5 Pro runs and independent community results remain below as supplementary data.
+The November 12 test compares resident inference with streaming, prefetch and asynchronous evaluation. The November 11 **same-machine ComfyUI comparison on an M5 Pro MacBook (48 GB)** follows: **11 groups, 33 measured generations and 11 warmups**. Earlier M5 Pro runs and independent community results remain below as supplementary data.
+
+## Streaming prefetch and async
+
+November 12, 2026, M5 Pro 48 GB, PyPI `h3-image-mlx==0.1.0a3`, MLX 0.32.4, W8A8. At **1024×1024**, streaming with `H3_ASYNC=1 H3_PREFETCH=1` matches resident-mode median generation time while reducing the highest measured process peak by **84.74%**.
+
+| Mode | Measured runs | Median generation (s) | Generation range (s) | Median DiT (s) | Process peak range (GB) |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Resident | 5 | 23.63 | 21.27–29.40 | 18.05 | 21.01–21.18 |
+| Streaming | 3 | 32.33 | 30.33–39.43 | 26.79 | 2.51–2.53 |
+| Streaming + prefetch + async | 5 | **23.61** | 20.88–29.19 | 18.11 | **2.53–3.23** |
+
+All 16 images (13 measured generations and three warmups) have identical RGB pixels. The optimized streaming median is 0.08% below resident mode and 1.37× as fast as plain streaming.
+
+- Same original weight files, [teapot prompt](#prompt), seed 42 and six-step sampler; no LoRA or embedding cache. All three stages execute for every request.
+- One warmup per mode, followed by three interleaved rounds: R→S→P, S→P→R, P→R→S. After observing timing variation, two additional pairs run P→R and R→P. R is resident, S plain streaming, P streaming with prefetch and async. All measured samples are included.
+- Generation timing includes text encoding, denoising, VAE decoding and subprocess startup; it excludes saving the returned PIL image to a final PNG. DiT timing includes subprocess startup. These are a separate experiment from the November 11 ComfyUI comparison below.
+- Process memory is the kernel lifetime physical-footprint peak, taking the maximum across the three isolated stage processes, in decimal GB. Ranges and headline maxima use measured runs only; warmups are excluded.
+- Before this experiment, an idle App model retained about 17.52 GB and a resident trial took 168.21 s under memory pressure. That preliminary batch is excluded. After the App model process exited, all warmups and measurements were restarted; background applications stayed open.
+
+[Configuration](benchmarks/controlled/2026-11-12-prefetch/configuration.json) · [All runs](benchmarks/controlled/2026-11-12-prefetch/runs.json) · [Summary](benchmarks/controlled/2026-11-12-prefetch/summary.json) · [Independent result verification](benchmarks/controlled/2026-11-12-prefetch/verification.json)
 
 ## Same-machine controlled comparison
 

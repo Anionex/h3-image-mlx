@@ -1,0 +1,44 @@
+{
+  "version": "0.1.0a3",
+  "mlx": "0.32.4",
+  "prompt": "A close-up product photograph of one bright yellow enamel teapot with a black arched handle and a round lid, standing on a blue wooden table. One small white ceramic cup sits immediately to its right. The background is plain warm beige. Soft morning window light falls from the left. Realistic enamel, clear silhouettes, no text.",
+  "seed": 42,
+  "steps": 6,
+  "size": 1024,
+  "metric": "maximum kernel lifetime physical footprint across isolated inference stages; decimal GB",
+  "timing": "full pipeline including subprocess startup; excludes saving final returned image",
+  "embedding_cache": false,
+  "machine": "Apple M5 Pro, 48 GB",
+  "measured_trials": {
+    "resident": 5,
+    "stream": 3,
+    "stream-prefetch-async": 5
+  },
+  "warmups_per_mode": 1,
+  "order": [
+    [
+      "resident",
+      "stream",
+      "stream-prefetch-async"
+    ],
+    [
+      "stream",
+      "stream-prefetch-async",
+      "resident"
+    ],
+    [
+      "stream-prefetch-async",
+      "resident",
+      "stream"
+    ],
+    [
+      "stream-prefetch-async",
+      "resident"
+    ],
+    [
+      "resident",
+      "stream-prefetch-async"
+    ]
+  ],
+  "weights_manifest": "src/h3_image_mlx/weights.json"
+}

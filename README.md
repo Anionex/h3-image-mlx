@@ -27,10 +27,23 @@ If you find this repository useful, feel free to 🌟 & fork~
 - **Native Apple Silicon inference.** Built on MLX to take advantage of your Mac's compute capabilities, H3 Image runs locally with text-to-image generation and multi-image editing.
 - **W8A8 quantization and Metal acceleration.** Reduce weight memory usage with a portable MLX inference path, plus W8A8 Metal TensorOps acceleration on supported chips. Compatible with M1–M4.
 - **Staged inference with on-demand block loading.** Each stage runs in a separate process to release its memory on completion. Denoiser weights can be read one block at a time, greatly reducing peak memory usage and leaving more room for other apps.
+- **Overlap weight reads with GPU computation.** Prefetch the next block while evaluating the current one, keeping streaming memory low and reducing time spent waiting for weights. [Enable prefetch and async](#recommended-streaming-acceleration)
 
-For reference, in our 1024×1024 generation benchmark, streaming reduced the peak inference-process footprint from **21.16 GB to 2.53 GB**, with median runtime increasing from **19.90 s to 28.82 s**. [Benchmark conditions and results](#benchmark-results)
+In our 1024×1024 same-machine test, streaming with both switches **matched resident-mode speed**: **23.61 s vs 23.63 s**, with the highest measured process peak falling from **21.18 GB to 3.23 GB — about 85% lower**. Outputs matched pixel for pixel. [Test conditions and results](#streaming-at-resident-speed)
 
 ### Benchmark results
+
+#### Streaming at resident speed
+
+M5 Pro 48 GB, version `0.1.0a3`, 1024×1024, identical weights, prompt and seed, original six-step sampler, no embedding cache.
+
+| Mode | Median generation time | Highest process peak |
+| --- | ---: | ---: |
+| Resident | 23.63 s | 21.18 GB |
+| Streaming | 32.33 s | 2.53 GB |
+| **Streaming + prefetch + async** | **23.61 s** | **3.23 GB** |
+
+<sub>Resident and prefetch+async: five measured runs each; plain streaming: three. Warmups excluded. Memory is the highest kernel-recorded process physical footprint across measured runs, in decimal GB. [Full results and timing ranges](BENCHMARKS.md#streaming-prefetch-and-async) · [Source JSON](benchmarks/controlled/2026-11-12-prefetch/summary.json)</sub>
 
 #### Same-machine controlled comparison
 
@@ -84,7 +97,7 @@ This writes a 1024×1024 RGB PNG. Set `--width` and `--height` to change the siz
 
 ## Recommended streaming acceleration
 
-**We recommend trying weight prefetch and asynchronous evaluation when using `--dit-mode stream`, especially on a 16 GB M5 Mac. Both switches are off by default.** They overlap weight reads with GPU work while retaining the six-step sampler. On the contributor's M5 Air, 1024×1024 generation fell from 59.8 s to 34.8–43.6 s, with a reported peak footprint of about 2.5 GB and pixel-identical outputs. [Measurements and trade-offs](docs/PERFORMANCE.md#reported-results)
+**Use weight prefetch and asynchronous evaluation together with `--dit-mode stream` to reduce weight-loading waits. Both switches are off by default.** The six-step sampler stays unchanged. Our 1024×1024 test matched resident-mode speed with about 85% less peak process memory. [Same-machine results](#streaming-at-resident-speed) · [Contributor measurements](docs/PERFORMANCE.md#reported-results)
 
 Available from `0.1.0a2`; upgrade and enable both switches for this command:
 
@@ -122,7 +135,7 @@ The pipeline reduces memory use at three levels: between model stages, within th
 - **Load denoiser weights as needed.** In `stream` mode, tensors are read from safetensors as each transformer block runs, rather than cached for all six steps. Denoising still operates on the full image's latent sequence. `resident` mode caches weights to reduce repeated reads. The runtime also precomputes the steps' AdaLN modulation values from the compressed curves in Comfy-Org's pruned checkpoint, then releases the setup weights.
 - **Decode in overlapping tiles.** The VAE decodes small groups of latent tiles and blends their overlapping edges into the output image, limiting decoder working memory at high resolutions.
 
-Streaming trades additional weight reads for a smaller memory footprint. Peak usage still includes activations, attention buffers and image buffers, so resolution and reference-image count matter. See the [benchmark results](#benchmark-results) for the measured trade-off.
+Streaming keeps memory low by reading weights on demand. Prefetch and asynchronous evaluation overlap these reads with GPU work to reduce the time cost. Peak usage still includes activations, attention buffers and image buffers, so resolution and reference-image count matter. See the [benchmark results](#benchmark-results) for the measured trade-off.
 
 ## Hardware and memory
 

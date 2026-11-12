@@ -4,7 +4,7 @@
 
 ## Recommended streaming acceleration
 
-Starting with `0.1.0a2`, we recommend trying **both weight prefetch and asynchronous evaluation** in `stream` mode, especially on a 16 GB M5 Mac. They are **off by default** and must be enabled explicitly.
+Starting with `0.1.0a2`, we recommend trying **both weight prefetch and asynchronous evaluation** in `stream` mode. They are **off by default** and must be enabled explicitly.
 
 ```bash
 H3_ASYNC=1 H3_PREFETCH=1 h3-image-mlx generate \
@@ -15,6 +15,18 @@ H3_ASYNC=1 H3_PREFETCH=1 h3-image-mlx generate \
 The GPU evaluates the current transformer block while the next block's weights are read and prepared. The sampler still runs six steps. With asynchronous evaluation, up to two blocks of weights are kept alive instead of waiting for each block before proceeding.
 
 Remove the two environment variables to use the default path. If you previously exported them in your shell, run `unset H3_ASYNC H3_PREFETCH`, or set both to `0` for a single command. CLI and Python calls inherit the same environment variables.
+
+## Same-machine resident comparison
+
+On an M5 Pro 48 GB running `0.1.0a3`, 1024×1024 streaming with both switches matched resident-mode speed while reducing the highest measured process footprint by about 85%. Same prompt, seed and six steps; no embedding cache.
+
+| Mode | Median generation time | Highest process peak |
+| --- | ---: | ---: |
+| Resident | 23.63 s | 21.18 GB |
+| Streaming | 32.33 s | 2.53 GB |
+| **Streaming + prefetch + async** | **23.61 s** | **3.23 GB** |
+
+Five measured runs each for resident and prefetch+async, three for plain streaming, excluding warmups. All outputs were pixel-identical. [Full results, ranges and source JSON](../BENCHMARKS.md#streaming-prefetch-and-async).
 
 ## Reported results
 
