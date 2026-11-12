@@ -92,6 +92,8 @@ H3_ASYNC=1 H3_PREFETCH=1 h3-image-mlx generate \
 
 [使用指南：命令行、Python 与已有权重](docs/USAGE.zh-CN.md) · [性能调优：开关、缓存与性能记录](docs/PERFORMANCE.zh-CN.md)
 
+**实验功能：** GitHub `main` 提供可选的两步／三步 LoRA 推理与预合并 INT8 权重工具，默认关闭。[用法与画质取舍](docs/PERFORMANCE.zh-CN.md#实验性少步数-lora)
+
 ## 用参考图编辑
 
 假设要把 `teapot.png` 里的白杯换成自己照片里的鸟，把鸟的照片保存为 `bird.png`。提示词里的 `<Picture 1>` 和 `<Picture 2>` 对应命令行传入参考图的顺序。

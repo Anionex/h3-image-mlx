@@ -97,6 +97,8 @@ H3_ASYNC=1 H3_PREFETCH=1 h3-image-mlx generate \
 
 [Usage guide: CLI, Python and existing weights](docs/USAGE.md) · [Performance guide: switches, caching and profiling](docs/PERFORMANCE.md)
 
+**Experimental:** optional two-/three-step LoRA inference and LoRA-merged INT8 checkpoints are available on GitHub `main`, off by default. [Usage and quality trade-offs](docs/PERFORMANCE.md#experimental-few-step-lora)
+
 ## Edit with reference images
 
 To replace the cup in `teapot.png` with a bird from your own photo, save the photo as `bird.png`. Number the pictures in your prompt in the order you pass them on the command line.

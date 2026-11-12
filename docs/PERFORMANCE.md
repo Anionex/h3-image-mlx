@@ -55,6 +55,77 @@ The first request writes the cache; a matching request skips text encoding. Deno
 
 Set `H3_PROFILE=./dit-profile.json` on a generation command. The file records setup and per-step times, read bytes and time, conversion time, prefetch wait time, evaluation time and the MLX allocator peak. Overlapped timings are not additive. The allocator peak is a different measurement from process physical footprint. Use a different filename for each result you want to keep.
 
+## Experimental few-step LoRA
+
+Available on GitHub `main`; the PyPI `0.1.0a2` release does not include this feature. All experimental settings are off by default. Without them, generation and editing retain the original six-step path. Install the source version to try it:
+
+```bash
+python -m pip install --upgrade 'git+https://github.com/Anionex/h3-image-mlx.git'
+```
+
+### Load a LoRA directly
+
+Download `minimax_h3_pdmd_2nfe_comfyui.safetensors` from [akhaliq/minimax-h3-image-pdmd-2step](https://huggingface.co/akhaliq/minimax-h3-image-pdmd-2step/tree/main) and save it under `./loras/`. This is the ComfyUI-layout conversion tested in [PR #3](https://github.com/Anionex/h3-image-mlx/pull/3); the upstream adapter uses different tensor names. LoRAs are downloaded separately from `h3-image-mlx fetch`.
+
+```bash
+env -u H3_DIT H3_LORA=./loras/minimax_h3_pdmd_2nfe_comfyui.safetensors \
+  H3_STEPS=2 H3_SHIFT=12 H3_ASYNC=1 H3_PREFETCH=1 \
+  h3-image-mlx generate --models ./models --dit-mode stream \
+  --width 1024 --height 1024 --seed 42 --output teapot-2step.png \
+  --prompt 'A yellow enamel teapot and a white cup on a blue wooden table.'
+```
+
+Set `H3_STEPS=3` and change the output filename to compare three steps. The [upstream pDMD adapter](https://huggingface.co/pdmd2026/pdmd_2NFE_lora) was trained for two steps; three steps are an inference setting tested by the contributor. In their teapot example, two steps left a fine weave on flat areas, while three steps largely removed it. Both can change composition and detail compared with the six-step image, even at the same seed.
+
+| Setting | Effect when explicitly set |
+| --- | --- |
+| `H3_LORA=<file>` | Apply a single ComfyUI-layout adapter alongside the quantized projections |
+| `H3_STEPS=2` or `3` | Use a shifted sampling grid with fewer steps; pair with the matching distilled LoRA or merged checkpoint |
+| `H3_SHIFT=12` | Sampling-grid shift; 12 is used when few-step sampling is enabled and no shift is specified |
+| `H3_DIT=<file>` | Override the DiT checkpoint with another file using the same layout |
+
+The CLI and Python API read the same environment variables. To return to the original six-step checkpoint, run `unset H3_LORA H3_STEPS H3_SHIFT H3_DIT`. The independent `H3_ASYNC` and `H3_PREFETCH` switches may remain enabled.
+
+### Merge the LoRA into an INT8 checkpoint
+
+Direct loading adds low-rank computation at inference time without changing the existing model file. The optional [merge script](../scripts/merge_lora_int8.py) instead applies the adapter to BF16 weights before ConvRot quantization and writes a separate INT8 checkpoint. Run it from a checkout of this repository with the package dependencies installed:
+
+```bash
+python scripts/merge_lora_int8.py \
+  --base ./models/diffusion_models/minimax_h3_image_pruned_int8_convrot.safetensors \
+  --lora ./loras/minimax_h3_pdmd_2nfe_comfyui.safetensors \
+  --out ./models/diffusion_models/minimax_h3_image_pdmd_merged_int8_convrot.safetensors
+```
+
+The script uses macOS APFS cloning and reads roughly 40 GB of upstream BF16 tensors over HTTP without keeping a full BF16 download. Allow space for an additional INT8 checkpoint, roughly 21 GB, as the clone is rewritten. `--rev` can pin the upstream Hugging Face revision. Use a distinct output path, never the base model path; reuse an existing output only when resuming the same base, LoRA and upstream revision. Progress is saved beside the output as `.progress.json`. Wait for `DONE` before using the result; `--limit` is a development option that leaves a partial checkpoint.
+
+```bash
+env -u H3_LORA \
+  H3_DIT=./models/diffusion_models/minimax_h3_image_pdmd_merged_int8_convrot.safetensors \
+  H3_STEPS=3 H3_SHIFT=12 H3_ASYNC=1 H3_PREFETCH=1 \
+  h3-image-mlx generate --models ./models --dit-mode stream \
+  --output teapot-merged.png \
+  --prompt 'A yellow enamel teapot and a white cup on a blue wooden table.'
+```
+
+Do not also load the same `H3_LORA` with a merged checkpoint: that would apply it twice. Quantization makes the merged and direct-LoRA outputs numerically different. `verify --models` continues to verify the original pinned model files, not an `H3_DIT` override.
+
+### Contributor measurements and coverage
+
+[PR #3](https://github.com/Anionex/h3-image-mlx/pull/3) reports these 1024×1024 teapot runs on an M5 MacBook Air with 16 GB, seed 42, W8A8, streaming and both acceleration switches enabled:
+
+| Mode | Complete generation |
+| --- | ---: |
+| Original six steps | 34.8–43.6 s |
+| Direct LoRA, two steps | 23.4 s |
+| Direct LoRA, three steps | 25.7–28.6 s |
+| Direct LoRA, three steps, embedding-cache hit | 18.7 s |
+
+The merged checkpoint reduced DiT-only time from 23.9/23.0 s to 20.3/18.3 s in two interleaved rounds on a warm machine using swap. These are separate measurements from the complete-generation table. No comparable peak-memory figure was supplied for the experimental modes.
+
+The contributor tested one prompt at 1024×1024. Other LoRAs, reference editing with the LoRA, other resolutions, resident mode and the portable backend remain unverified. Our regression checks separately cover existing generation and editing with the experimental settings unset; see [validation notes](../VALIDATION.md#experimental-lora-integration).
+
+
 ## Hardware and memory
 
 | Chip | Default compute backend | Hardware tests |
