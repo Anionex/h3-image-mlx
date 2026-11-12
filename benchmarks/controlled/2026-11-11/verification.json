@@ -1,0 +1,81 @@
+{
+  "status": "passed",
+  "groups": [
+    {
+      "group": "1024-comfy",
+      "measured_runs": 3,
+      "images_verified": 4,
+      "repeat_pixel_identical": true
+    },
+    {
+      "group": "1024-comfy-native",
+      "measured_runs": 3,
+      "images_verified": 4,
+      "repeat_pixel_identical": false
+    },
+    {
+      "group": "1024-mlx-resident",
+      "measured_runs": 3,
+      "images_verified": 4,
+      "repeat_pixel_identical": true
+    },
+    {
+      "group": "1024-mlx-stream",
+      "measured_runs": 3,
+      "images_verified": 4,
+      "repeat_pixel_identical": true
+    },
+    {
+      "group": "2048-comfy",
+      "measured_runs": 3,
+      "images_verified": 4,
+      "repeat_pixel_identical": true
+    },
+    {
+      "group": "2048-comfy-native",
+      "measured_runs": 3,
+      "images_verified": 4,
+      "repeat_pixel_identical": false
+    },
+    {
+      "group": "2048-mlx-resident",
+      "measured_runs": 3,
+      "images_verified": 4,
+      "repeat_pixel_identical": true
+    },
+    {
+      "group": "2048-mlx-stream",
+      "measured_runs": 3,
+      "images_verified": 4,
+      "repeat_pixel_identical": true
+    },
+    {
+      "group": "4096-comfy",
+      "measured_runs": 3,
+      "images_verified": 4,
+      "repeat_pixel_identical": true
+    },
+    {
+      "group": "4096-comfy-native",
+      "measured_runs": 3,
+      "images_verified": 4,
+      "repeat_pixel_identical": false
+    },
+    {
+      "group": "4096-mlx-stream",
+      "measured_runs": 3,
+      "images_verified": 4,
+      "repeat_pixel_identical": true
+    }
+  ],
+  "group_count": 11,
+  "measured_runs": 33,
+  "images_verified": 44,
+  "checks": [
+    "shared prompt, seed, initial noise and sigmas",
+    "complete group statuses and valid clocks",
+    "actual backend calls",
+    "decoded image dimensions and RGB hashes",
+    "MLX repeatability and resident/streaming equivalence"
+  ]
+}

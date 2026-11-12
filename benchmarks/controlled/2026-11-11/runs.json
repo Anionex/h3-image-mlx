@@ -1,0 +1,4673 @@
+{
+  "export_note": "Compact export from result.json records: numeric measurements and RGB hashes are unchanged; local output paths and per-second system telemetry are omitted. Group system-swap maxima remain in summary.json.",
+  "groups": [
+    {
+      "backend": "comfy",
+      "size": 1024,
+      "seed": 42,
+      "steps": 6,
+      "prompt": "A close-up product photograph of one bright yellow enamel teapot with a black arched handle and a round lid, standing on a blue wooden table. One small white ceramic cup sits immediately to its right. The background is plain warm beige. Soft morning window light falls from the left. Realistic enamel, clear silhouettes, no text.",
+      "noise_sha256": "9ed40cd2573bc70f1630a0798d7a463dc1490f1dd805d0075bc6ee7adef2ebae",
+      "sigmas": [
+        1.0,
+        0.9675236940383911,
+        0.8875485062599182,
+        0.75,
+        0.5327739119529724,
+        0.23200887441635132,
+        0.0
+      ],
+      "stock_simple_sigmas": [
+        1.0,
+        0.9676535725593567,
+        0.8877084255218506,
+        0.75,
+        0.5336428284645081,
+        0.23261038959026337,
+        0.0
+      ],
+      "tokens": {
+        "qwen3vl_32b": [
+          [
+            [
+              32,
+              1.0
+            ],
+            [
+              3265,
+              1.0
+            ],
+            [
+              5239,
+              1.0
+            ],
+            [
+              1985,
+              1.0
+            ],
+            [
+              10300,
+              1.0
+            ],
+            [
+              315,
+              1.0
+            ],
+            [
+              825,
+              1.0
+            ],
+            [
+              9906,
+              1.0
+            ],
+            [
+              13753,
+              1.0
+            ],
+            [
+              91748,
+              1.0
+            ],
+            [
+              1013,
+              1.0
+            ],
+            [
+              89901,
+              1.0
+            ],
+            [
+              448,
+              1.0
+            ],
+            [
+              264,
+              1.0
+            ],
+            [
+              3691,
+              1.0
+            ],
+            [
+              796,
+              1.0
+            ],
+            [
+              2397,
+              1.0
+            ],
+            [
+              3705,
+              1.0
+            ],
+            [
+              323,
+              1.0
+            ],
+            [
+              264,
+              1.0
+            ],
+            [
+              4778,
+              1.0
+            ],
+            [
+              26334,
+              1.0
+            ],
+            [
+              11,
+              1.0
+            ],
+            [
+              11259,
+              1.0
+            ],
+            [
+              389,
+              1.0
+            ],
+            [
+              264,
+              1.0
+            ],
+            [
+              6303,
+              1.0
+            ],
+            [
+              22360,
+              1.0
+            ],
+            [
+              1965,
+              1.0
+            ],
+            [
+              13,
+              1.0
+            ],
+            [
+              3776,
+              1.0
+            ],
+            [
+              2613,
+              1.0
+            ],
+            [
+              4158,
+              1.0
+            ],
+            [
+              42024,
+              1.0
+            ],
+            [
+              10525,
+              1.0
+            ],
+            [
+              23011,
+              1.0
+            ],
+            [
+              7069,
+              1.0
+            ],
+            [
+              311,
+              1.0
+            ],
+            [
+              1181,
+              1.0
+            ],
+            [
+              1290,
+              1.0
+            ],
+            [
+              13,
+              1.0
+            ],
+            [
+              576,
+              1.0
+            ],
+            [
+              4004,
+              1.0
+            ],
+            [
+              374,
+              1.0
+            ],
+            [
+              14396,
+              1.0
+            ],
+            [
+              8205,
+              1.0
+            ],
+            [
+              78265,
+              1.0
+            ],
+            [
+              13,
+              1.0
+            ],
+            [
+              24079,
+              1.0
+            ],
+            [
+              6556,
+              1.0
+            ],
+            [
+              3241,
+              1.0
+            ],
+            [
+              3100,
+              1.0
+            ],
+            [
+              17066,
+              1.0
+            ],
+            [
+              504,
+              1.0
+            ],
+            [
+              279,
+              1.0
+            ],
+            [
+              2115,
+              1.0
+            ],
+            [
+              13,
+              1.0
+            ],
+            [
+              8800,
+              1.0
+            ],
+            [
+              4532,
+              1.0
+            ],
+            [
+              91748,
+              1.0
+            ],
+            [
+              11,
+              1.0
+            ],
+            [
+              2797,
+              1.0
+            ],
+            [
+              5437,
+              1.0
+            ],
+            [
+              18166,
+              1.0
+            ],
+            [
+              45903,
+              1.0
+            ],
+            [
+              11,
+              1.0
+            ],
+            [
+              902,
+              1.0
+            ],
+            [
+              1467,
+              1.0
+            ],
+            [
+              13,
+              1.0
+            ]
+          ]
+        ]
+      },
+      "torch_version": "2.15.0",
+      "initialization_seconds": 4.823642124996695,
+      "stock_supports_int8_compute": false,
+      "effective_supports_int8_compute": false,
+      "runs": [
+        {
+          "stages": [
+            {
+              "stage": "text",
+              "seconds": 20.732590292005625,
+              "embedding_shape": [
+                1,
+                69,
+                5120
+              ],
+              "footprint_bytes": 5465830488,
+              "lifetime_peak_bytes": 6266030728,
+              "resident_bytes": 31643107328,
+              "disk_read_bytes": 16749129728
+            },
+            {
+              "stage": "dit",
+              "seconds": 80.23750466699857,
+              "footprint_bytes": 29508509024,
+              "lifetime_peak_bytes": 29511638368,
+              "resident_bytes": 3560669184,
+              "disk_read_bytes": 42296541184
+            },
+            {
+              "stage": "vae",
+              "seconds": 4.522171625001647,
+              "footprint_bytes": 25462512776,
+              "lifetime_peak_bytes": 29511638368,
+              "resident_bytes": 3577806848,
+              "disk_read_bytes": 43476946944
+            }
+          ],
+          "compute_seconds": 105.49311691700132,
+          "native_int8_calls": 0,
+          "output_shape": [
+            1024,
+            1024,
+            3
+          ],
+          "rgb_sha256": "d9b9745dc8689a23389e826d11ada77409727b79f428ec1bd26b44da61e4d70d",
+          "index": 0,
+          "warmup": true,
+          "start_wall": 1794399198.641956,
+          "end_wall": 1794399304.218435,
+          "seconds": 105.57662550000532,
+          "wall_seconds": 105.57647895812988,
+          "process_lifetime": {
+            "footprint_bytes": 25463430280,
+            "lifetime_peak_bytes": 29511638368,
+            "resident_bytes": 3630006272,
+            "disk_read_bytes": 43480559616
+          },
+          "sampled_tree_peak_bytes": 29521452816,
+          "sampled_largest_process_peak_bytes": 29511638368,
+          "timing_valid": true
+        },
+        {
+          "stages": [
+            {
+              "stage": "text",
+              "seconds": 39.133847708995745,
+              "embedding_shape": [
+                1,
+                69,
+                5120
+              ],
+              "footprint_bytes": 26717692000,
+              "lifetime_peak_bytes": 29511638368,
+              "resident_bytes": 15503917056,
+              "disk_read_bytes": 67895980032
+            },
+            {
+              "stage": "dit",
+              "seconds": 46.51750829199591,
+              "footprint_bytes": 31278030944,
+              "lifetime_peak_bytes": 31284977760,
+              "resident_bytes": 8136228864,
+              "disk_read_bytes": 67897122816
+            },
+            {
+              "stage": "vae",
+              "seconds": 0.6470772920001764,
+              "footprint_bytes": 26829676640,
+              "lifetime_peak_bytes": 31284977760,
+              "resident_bytes": 8106737664,
+              "disk_read_bytes": 67897126912
+            }
+          ],
+          "compute_seconds": 86.29869766699994,
+          "native_int8_calls": 0,
+          "output_shape": [
+            1024,
+            1024,
+            3
+          ],
+          "rgb_sha256": "d9b9745dc8689a23389e826d11ada77409727b79f428ec1bd26b44da61e4d70d",
+          "index": 1,
+          "warmup": false,
+          "start_wall": 1794399304.220592,
+          "end_wall": 1794399390.593817,
+          "seconds": 86.37334266700054,
+          "wall_seconds": 86.37322497367859,
+          "process_lifetime": {
+            "footprint_bytes": 26829676640,
+            "lifetime_peak_bytes": 31284977760,
+            "resident_bytes": 8159363072,
+            "disk_read_bytes": 67897139200
+          },
+          "sampled_tree_peak_bytes": 31294677520,
+          "sampled_largest_process_peak_bytes": 31284977760,
+          "timing_valid": true
+        },
+        {
+          "stages": [
+            {
+              "stage": "text",
+              "seconds": 39.918488625000464,
+              "embedding_shape": [
+                1,
+                69,
+                5120
+              ],
+              "footprint_bytes": 26719658080,
+              "lifetime_peak_bytes": 31284977760,
+              "resident_bytes": 15541796864,
+              "disk_read_bytes": 92276830208
+            },
+            {
+              "stage": "dit",
+              "seconds": 47.17711012500513,
+              "footprint_bytes": 31280537696,
+              "lifetime_peak_bytes": 31286157408,
+              "resident_bytes": 7232471040,
+              "disk_read_bytes": 92277334016
+            },
+            {
+              "stage": "vae",
+              "seconds": 0.6808016669965582,
+              "footprint_bytes": 26830823520,
+              "lifetime_peak_bytes": 31286157408,
+              "resident_bytes": 7243563008,
+              "disk_read_bytes": 92277366784
+            }
+          ],
+          "compute_seconds": 87.77667033299804,
+          "native_int8_calls": 0,
+          "output_shape": [
+            1024,
+            1024,
+            3
+          ],
+          "rgb_sha256": "d9b9745dc8689a23389e826d11ada77409727b79f428ec1bd26b44da61e4d70d",
+          "index": 2,
+          "warmup": false,
+          "start_wall": 1794399390.5948958,
+          "end_wall": 1794399478.444948,
+          "seconds": 87.85017250000237,
+          "wall_seconds": 87.85005211830139,
+          "process_lifetime": {
+            "footprint_bytes": 26830823520,
+            "lifetime_peak_bytes": 31286157408,
+            "resident_bytes": 7296122880,
+            "disk_read_bytes": 92277374976
+          },
+          "sampled_tree_peak_bytes": 31295726096,
+          "sampled_largest_process_peak_bytes": 31286026336,
+          "timing_valid": true
+        },
+        {
+          "stages": [
+            {
+              "stage": "text",
+              "seconds": 39.3408297499991,
+              "embedding_shape": [
+                1,
+                69,
+                5120
+              ],
+              "footprint_bytes": 26719690848,
+              "lifetime_peak_bytes": 31286157408,
+              "resident_bytes": 15385264128,
+              "disk_read_bytes": 116658139136
+            },
+            {
+              "stage": "dit",
+              "seconds": 47.065836624999065,
+              "footprint_bytes": 31279161440,
+              "lifetime_peak_bytes": 31286190176,
+              "resident_bytes": 7857192960,
+              "disk_read_bytes": 116659257344
+            },
+            {
+              "stage": "vae",
+              "seconds": 0.6691920840021339,
+              "footprint_bytes": 26830872672,
+              "lifetime_peak_bytes": 31286190176,
+              "resident_bytes": 7868612608,
+              "disk_read_bytes": 116659331072
+            }
+          ],
+          "compute_seconds": 87.07667783299985,
+          "native_int8_calls": 0,
+          "output_shape": [
+            1024,
+            1024,
+            3
+          ],
+          "rgb_sha256": "d9b9745dc8689a23389e826d11ada77409727b79f428ec1bd26b44da61e4d70d",
+          "index": 3,
+          "warmup": false,
+          "start_wall": 1794399478.4459572,
+          "end_wall": 1794399565.5934012,
+          "seconds": 87.14756162499543,
+          "wall_seconds": 87.14744400978088,
+          "process_lifetime": {
+            "footprint_bytes": 26830872672,
+            "lifetime_peak_bytes": 31286190176,
+            "resident_bytes": 7921352704,
+            "disk_read_bytes": 116659380224
+          },
+          "sampled_tree_peak_bytes": 31295775248,
+          "sampled_largest_process_peak_bytes": 31286075488,
+          "timing_valid": true
+        }
+      ]
+    },
+    {
+      "backend": "comfy-native",
+      "size": 1024,
+      "seed": 42,
+      "steps": 6,
+      "prompt": "A close-up product photograph of one bright yellow enamel teapot with a black arched handle and a round lid, standing on a blue wooden table. One small white ceramic cup sits immediately to its right. The background is plain warm beige. Soft morning window light falls from the left. Realistic enamel, clear silhouettes, no text.",
+      "noise_sha256": "9ed40cd2573bc70f1630a0798d7a463dc1490f1dd805d0075bc6ee7adef2ebae",
+      "sigmas": [
+        1.0,
+        0.9675236940383911,
+        0.8875485062599182,
+        0.75,
+        0.5327739119529724,
+        0.23200887441635132,
+        0.0
+      ],
+      "stock_simple_sigmas": [
+        1.0,
+        0.9676535725593567,
+        0.8877084255218506,
+        0.75,
+        0.5336428284645081,
+        0.23261038959026337,
+        0.0
+      ],
+      "tokens": {
+        "qwen3vl_32b": [
+          [
+            [
+              32,
+              1.0
+            ],
+            [
+              3265,
+              1.0
+            ],
+            [
+              5239,
+              1.0
+            ],
+            [
+              1985,
+              1.0
+            ],
+            [
+              10300,
+              1.0
+            ],
+            [
+              315,
+              1.0
+            ],
+            [
+              825,
+              1.0
+            ],
+            [
+              9906,
+              1.0
+            ],
+            [
+              13753,
+              1.0
+            ],
+            [
+              91748,
+              1.0
+            ],
+            [
+              1013,
+              1.0
+            ],
+            [
+              89901,
+              1.0
+            ],
+            [
+              448,
+              1.0
+            ],
+            [
+              264,
+              1.0
+            ],
+            [
+              3691,
+              1.0
+            ],
+            [
+              796,
+              1.0
+            ],
+            [
+              2397,
+              1.0
+            ],
+            [
+              3705,
+              1.0
+            ],
+            [
+              323,
+              1.0
+            ],
+            [
+              264,
+              1.0
+            ],
+            [
+              4778,
+              1.0
+            ],
+            [
+              26334,
+              1.0
+            ],
+            [
+              11,
+              1.0
+            ],
+            [
+              11259,
+              1.0
+            ],
+            [
+              389,
+              1.0
+            ],
+            [
+              264,
+              1.0
+            ],
+            [
+              6303,
+              1.0
+            ],
+            [
+              22360,
+              1.0
+            ],
+            [
+              1965,
+              1.0
+            ],
+            [
+              13,
+              1.0
+            ],
+            [
+              3776,
+              1.0
+            ],
+            [
+              2613,
+              1.0
+            ],
+            [
+              4158,
+              1.0
+            ],
+            [
+              42024,
+              1.0
+            ],
+            [
+              10525,
+              1.0
+            ],
+            [
+              23011,
+              1.0
+            ],
+            [
+              7069,
+              1.0
+            ],
+            [
+              311,
+              1.0
+            ],
+            [
+              1181,
+              1.0
+            ],
+            [
+              1290,
+              1.0
+            ],
+            [
+              13,
+              1.0
+            ],
+            [
+              576,
+              1.0
+            ],
+            [
+              4004,
+              1.0
+            ],
+            [
+              374,
+              1.0
+            ],
+            [
+              14396,
+              1.0
+            ],
+            [
+              8205,
+              1.0
+            ],
+            [
+              78265,
+              1.0
+            ],
+            [
+              13,
+              1.0
+            ],
+            [
+              24079,
+              1.0
+            ],
+            [
+              6556,
+              1.0
+            ],
+            [
+              3241,
+              1.0
+            ],
+            [
+              3100,
+              1.0
+            ],
+            [
+              17066,
+              1.0
+            ],
+            [
+              504,
+              1.0
+            ],
+            [
+              279,
+              1.0
+            ],
+            [
+              2115,
+              1.0
+            ],
+            [
+              13,
+              1.0
+            ],
+            [
+              8800,
+              1.0
+            ],
+            [
+              4532,
+              1.0
+            ],
+            [
+              91748,
+              1.0
+            ],
+            [
+              11,
+              1.0
+            ],
+            [
+              2797,
+              1.0
+            ],
+            [
+              5437,
+              1.0
+            ],
+            [
+              18166,
+              1.0
+            ],
+            [
+              45903,
+              1.0
+            ],
+            [
+              11,
+              1.0
+            ],
+            [
+              902,
+              1.0
+            ],
+            [
+              1467,
+              1.0
+            ],
+            [
+              13,
+              1.0
+            ]
+          ]
+        ]
+      },
+      "torch_version": "2.15.0",
+      "initialization_seconds": 4.406166000000667,
+      "stock_supports_int8_compute": false,
+      "effective_supports_int8_compute": true,
+      "runs": [
+        {
+          "stages": [
+            {
+              "stage": "text",
+              "seconds": 27.349896833999082,
+              "embedding_shape": [
+                1,
+                69,
+                5120
+              ],
+              "footprint_bytes": 5478282304,
+              "lifetime_peak_bytes": 6265883272,
+              "resident_bytes": 28589375488,
+              "disk_read_bytes": 26100752384
+            },
+            {
+              "stage": "dit",
+              "seconds": 85.6618534579975,
+              "footprint_bytes": 26079698200,
+              "lifetime_peak_bytes": 26101292312,
+              "resident_bytes": 1025032192,
+              "disk_read_bytes": 51446059008
+            },
+            {
+              "stage": "vae",
+              "seconds": 2.4234586250022403,
+              "footprint_bytes": 25455057504,
+              "lifetime_peak_bytes": 26101292312,
+              "resident_bytes": 1042907136,
+              "disk_read_bytes": 52022050816
+            }
+          ],
+          "compute_seconds": 115.4355964169954,
+          "native_int8_calls": 1200,
+          "output_shape": [
+            1024,
+            1024,
+            3
+          ],
+          "rgb_sha256": "9e898226a5825ec8c4b5a2b7e626793b2ece971cbb9bc7c341438781ad742b9e",
+          "index": 0,
+          "warmup": true,
+          "start_wall": 1794398794.2523892,
+          "end_wall": 1794398909.773726,
+          "seconds": 115.52138025000022,
+          "wall_seconds": 115.52133679389954,
+          "process_lifetime": {
+            "footprint_bytes": 25456400992,
+            "lifetime_peak_bytes": 26101292312,
+            "resident_bytes": 1096056832,
+            "disk_read_bytes": 52025843712
+          },
+          "sampled_tree_peak_bytes": 26111057608,
+          "sampled_largest_process_peak_bytes": 26101292312,
+          "timing_valid": true
+        },
+        {
+          "stages": [
+            {
+              "stage": "text",
+              "seconds": 38.31231204100186,
+              "embedding_shape": [
+                1,
+                69,
+                5120
+              ],
+              "footprint_bytes": 26718641744,
+              "lifetime_peak_bytes": 26826497616,
+              "resident_bytes": 13833420800,
+              "disk_read_bytes": 76427190272
+            },
+            {
+              "stage": "dit",
+              "seconds": 51.224706875000265,
+              "footprint_bytes": 27864161872,
+              "lifetime_peak_bytes": 27875958352,
+              "resident_bytes": 9301164032,
+              "disk_read_bytes": 76427911168
+            },
+            {
+              "stage": "vae",
+              "seconds": 0.5567718750025961,
+              "footprint_bytes": 26810588752,
+              "lifetime_peak_bytes": 27875958352,
+              "resident_bytes": 9311862784,
+              "disk_read_bytes": 76427939840
+            }
+          ],
+          "compute_seconds": 90.0940907080003,
+          "native_int8_calls": 1200,
+          "output_shape": [
+            1024,
+            1024,
+            3
+          ],
+          "rgb_sha256": "d92282cc6eb7c5e622a49972f7b9615f2a063010366c5324a14c1a5e915eaf23",
+          "index": 1,
+          "warmup": false,
+          "start_wall": 1794398909.774517,
+          "end_wall": 1794398999.955511,
+          "seconds": 90.18541716699838,
+          "wall_seconds": 90.18099403381348,
+          "process_lifetime": {
+            "footprint_bytes": 26810588752,
+            "lifetime_peak_bytes": 27875958352,
+            "resident_bytes": 9364029440,
+            "disk_read_bytes": 76427968512
+          },
+          "sampled_tree_peak_bytes": 27885592576,
+          "sampled_largest_process_peak_bytes": 27875941968,
+          "timing_valid": true
+        },
+        {
+          "stages": [
+            {
+              "stage": "text",
+              "seconds": 41.946208166998986,
+              "embedding_shape": [
+                1,
+                69,
+                5120
+              ],
+              "footprint_bytes": 26718756432,
+              "lifetime_peak_bytes": 27875958352,
+              "resident_bytes": 15056388096,
+              "disk_read_bytes": 100807495680
+            },
+            {
+              "stage": "dit",
+              "seconds": 55.26197554099781,
+              "footprint_bytes": 27858689616,
+              "lifetime_peak_bytes": 27876023888,
+              "resident_bytes": 11231412224,
+              "disk_read_bytes": 100808089600
+            },
+            {
+              "stage": "vae",
+              "seconds": 0.5473379160030163,
+              "footprint_bytes": 26811031120,
+              "lifetime_peak_bytes": 27876023888,
+              "resident_bytes": 11245682688,
+              "disk_read_bytes": 100808151040
+            }
+          ],
+          "compute_seconds": 97.75576866699703,
+          "native_int8_calls": 1200,
+          "output_shape": [
+            1024,
+            1024,
+            3
+          ],
+          "rgb_sha256": "2cd59688fa7f856ec2837120b06fc4045b6d2e92da478cb7a44b1153a6a3c1d8",
+          "index": 2,
+          "warmup": false,
+          "start_wall": 1794398999.956855,
+          "end_wall": 1794399097.7845628,
+          "seconds": 97.82793283299543,
+          "wall_seconds": 97.82770776748657,
+          "process_lifetime": {
+            "footprint_bytes": 26811031120,
+            "lifetime_peak_bytes": 27876023888,
+            "resident_bytes": 11297783808,
+            "disk_read_bytes": 100808163328
+          },
+          "sampled_tree_peak_bytes": 27885658112,
+          "sampled_largest_process_peak_bytes": 27876007504,
+          "timing_valid": true
+        },
+        {
+          "stages": [
+            {
+              "stage": "text",
+              "seconds": 42.57509354099602,
+              "embedding_shape": [
+                1,
+                69,
+                5120
+              ],
+              "footprint_bytes": 26718756432,
+              "lifetime_peak_bytes": 27876023888,
+              "resident_bytes": 14862352384,
+              "disk_read_bytes": 125194563584
+            },
+            {
+              "stage": "dit",
+              "seconds": 51.27595704099804,
+              "footprint_bytes": 27856117328,
+              "lifetime_peak_bytes": 27878956624,
+              "resident_bytes": 12135104512,
+              "disk_read_bytes": 125195059200
+            },
+            {
+              "stage": "vae",
+              "seconds": 0.5622268340011942,
+              "footprint_bytes": 26811014736,
+              "lifetime_peak_bytes": 27878956624,
+              "resident_bytes": 12147032064,
+              "disk_read_bytes": 125195112448
+            }
+          ],
+          "compute_seconds": 94.41368429100112,
+          "native_int8_calls": 1200,
+          "output_shape": [
+            1024,
+            1024,
+            3
+          ],
+          "rgb_sha256": "35ae52317f1bd11f8379bc07a6f61c52f3234345ee52f5233f165a18d3967a83",
+          "index": 3,
+          "warmup": false,
+          "start_wall": 1794399097.785745,
+          "end_wall": 1794399192.272227,
+          "seconds": 94.48662550000154,
+          "wall_seconds": 94.4864821434021,
+          "process_lifetime": {
+            "footprint_bytes": 26811014736,
+            "lifetime_peak_bytes": 27878956624,
+            "resident_bytes": 12194529280,
+            "disk_read_bytes": 125195124736
+          },
+          "sampled_tree_peak_bytes": 27885658112,
+          "sampled_largest_process_peak_bytes": 27876007504,
+          "timing_valid": true
+        }
+      ]
+    },
+    {
+      "backend": "mlx-resident",
+      "size": 1024,
+      "seed": 42,
+      "steps": 6,
+      "prompt": "A close-up product photograph of one bright yellow enamel teapot with a black arched handle and a round lid, standing on a blue wooden table. One small white ceramic cup sits immediately to its right. The background is plain warm beige. Soft morning window light falls from the left. Realistic enamel, clear silhouettes, no text.",
+      "noise_sha256": "9ed40cd2573bc70f1630a0798d7a463dc1490f1dd805d0075bc6ee7adef2ebae",
+      "sigmas": [
+        1.0,
+        0.9675236940383911,
+        0.8875485062599182,
+        0.75,
+        0.5327739119529724,
+        0.23200887441635132,
+        0.0
+      ],
+      "initialization_seconds": 0.10545754200575175,
+      "runs": [
+        {
+          "stages": [
+            {
+              "stage": "text",
+              "seconds": 4.4327378749949276,
+              "wall_seconds": 4.432732105255127,
+              "native_int8_calls": 350,
+              "backend": "w8a8",
+              "mlx_peak_bytes": 559806908,
+              "footprint_bytes": 873825648,
+              "lifetime_peak_bytes": 1321666192,
+              "resident_bytes": 749699072,
+              "disk_read_bytes": 16828878848,
+              "embedding_shape": [
+                69,
+                5120
+              ],
+              "embedding_dtype": "mlx.core.bfloat16"
+            },
+            {
+              "stage": "dit",
+              "seconds": 16.686116999997466,
+              "wall_seconds": 16.68609619140625,
+              "native_int8_calls": 1200,
+              "backend": "w8a8",
+              "mlx_peak_bytes": 20331642500,
+              "footprint_bytes": 8573508400,
+              "lifetime_peak_bytes": 21108391080,
+              "resident_bytes": 5671747584,
+              "disk_read_bytes": 20998868992
+            },
+            {
+              "stage": "vae",
+              "seconds": 0.7258464170008665,
+              "wall_seconds": 0.7258458137512207,
+              "native_int8_calls": 0,
+              "backend": "w8a8",
+              "mlx_peak_bytes": 878295798,
+              "footprint_bytes": 273630072,
+              "lifetime_peak_bytes": 1056572808,
+              "resident_bytes": 160317440,
+              "disk_read_bytes": 817631232
+            }
+          ],
+          "compute_seconds": 21.84470129199326,
+          "output_shape": [
+            1024,
+            1024,
+            3
+          ],
+          "rgb_sha256": "0daf234aa6a5906cb871149f2da34c03e1ca95280db4e8f0c72b3c2157de9be6",
+          "index": 0,
+          "warmup": true,
+          "start_wall": 1794399567.463834,
+          "end_wall": 1794399589.754556,
+          "seconds": 22.290752166998573,
+          "wall_seconds": 22.290721893310547,
+          "process_lifetime": {
+            "footprint_bytes": 80003648,
+            "lifetime_peak_bytes": 106562088,
+            "resident_bytes": 116228096,
+            "disk_read_bytes": 20791296
+          },
+          "sampled_tree_peak_bytes": 20973944528,
+          "sampled_largest_process_peak_bytes": 20899134632,
+          "timing_valid": true
+        },
+        {
+          "stages": [
+            {
+              "stage": "text",
+              "seconds": 4.603873708998435,
+              "wall_seconds": 4.6038689613342285,
+              "native_int8_calls": 350,
+              "backend": "w8a8",
+              "mlx_peak_bytes": 559806908,
+              "footprint_bytes": 873071936,
+              "lifetime_peak_bytes": 1189037616,
+              "resident_bytes": 673464320,
+              "disk_read_bytes": 24407531520,
+              "embedding_shape": [
+                69,
+                5120
+              ],
+              "embedding_dtype": "mlx.core.bfloat16"
+            },
+            {
+              "stage": "dit",
+              "seconds": 15.354166125005577,
+              "wall_seconds": 15.354146003723145,
+              "native_int8_calls": 1200,
+              "backend": "w8a8",
+              "mlx_peak_bytes": 20331642500,
+              "footprint_bytes": 10275626952,
+              "lifetime_peak_bytes": 21092482240,
+              "resident_bytes": 7656964096,
+              "disk_read_bytes": 20985511936
+            },
+            {
+              "stage": "vae",
+              "seconds": 0.6915890000018408,
+              "wall_seconds": 0.6915891170501709,
+              "native_int8_calls": 0,
+              "backend": "w8a8",
+              "mlx_peak_bytes": 878295798,
+              "footprint_bytes": 435012592,
+              "lifetime_peak_bytes": 1055786352,
+              "resident_bytes": 321404928,
+              "disk_read_bytes": 816152576
+            }
+          ],
+          "compute_seconds": 20.649628834005853,
+          "output_shape": [
+            1024,
+            1024,
+            3
+          ],
+          "rgb_sha256": "0daf234aa6a5906cb871149f2da34c03e1ca95280db4e8f0c72b3c2157de9be6",
+          "index": 1,
+          "warmup": false,
+          "start_wall": 1794399589.7553349,
+          "end_wall": 1794399610.775417,
+          "seconds": 21.02011029199639,
+          "wall_seconds": 21.020082235336304,
+          "process_lifetime": {
+            "footprint_bytes": 80020032,
+            "lifetime_peak_bytes": 106562088,
+            "resident_bytes": 116260864,
+            "disk_read_bytes": 20795392
+          },
+          "sampled_tree_peak_bytes": 21048737536,
+          "sampled_largest_process_peak_bytes": 20968717504,
+          "timing_valid": true
+        },
+        {
+          "stages": [
+            {
+              "stage": "text",
+              "seconds": 4.186218082999403,
+              "wall_seconds": 4.186212778091431,
+              "native_int8_calls": 350,
+              "backend": "w8a8",
+              "mlx_peak_bytes": 559806908,
+              "footprint_bytes": 748438848,
+              "lifetime_peak_bytes": 1060079008,
+              "resident_bytes": 661929984,
+              "disk_read_bytes": 24403734528,
+              "embedding_shape": [
+                69,
+                5120
+              ],
+              "embedding_dtype": "mlx.core.bfloat16"
+            },
+            {
+              "stage": "dit",
+              "seconds": 14.708828416005417,
+              "wall_seconds": 14.70880913734436,
+              "native_int8_calls": 1200,
+              "backend": "w8a8",
+              "mlx_peak_bytes": 20331642500,
+              "footprint_bytes": 10545258776,
+              "lifetime_peak_bytes": 21125594424,
+              "resident_bytes": 7720517632,
+              "disk_read_bytes": 20985782272
+            },
+            {
+              "stage": "vae",
+              "seconds": 0.6752064160027658,
+              "wall_seconds": 0.6752049922943115,
+              "native_int8_calls": 0,
+              "backend": "w8a8",
+              "mlx_peak_bytes": 878295798,
+              "footprint_bytes": 434684864,
+              "lifetime_peak_bytes": 1055524136,
+              "resident_bytes": 321110016,
+              "disk_read_bytes": 816021504
+            }
+          ],
+          "compute_seconds": 19.570252915007586,
+          "output_shape": [
+            1024,
+            1024,
+            3
+          ],
+          "rgb_sha256": "0daf234aa6a5906cb871149f2da34c03e1ca95280db4e8f0c72b3c2157de9be6",
+          "index": 2,
+          "warmup": false,
+          "start_wall": 1794399610.776159,
+          "end_wall": 1794399630.674676,
+          "seconds": 19.89854437499889,
+          "wall_seconds": 19.89851689338684,
+          "process_lifetime": {
+            "footprint_bytes": 80052800,
+            "lifetime_peak_bytes": 106562088,
+            "resident_bytes": 116293632,
+            "disk_read_bytes": 20799488
+          },
+          "sampled_tree_peak_bytes": 20979924856,
+          "sampled_largest_process_peak_bytes": 20899872056,
+          "timing_valid": true
+        },
+        {
+          "stages": [
+            {
+              "stage": "text",
+              "seconds": 4.037246874999255,
+              "wall_seconds": 4.03724217414856,
+              "native_int8_calls": 350,
+              "backend": "w8a8",
+              "mlx_peak_bytes": 559806908,
+              "footprint_bytes": 742687968,
+              "lifetime_peak_bytes": 1187841584,
+              "resident_bytes": 661536768,
+              "disk_read_bytes": 24403730432,
+              "embedding_shape": [
+                69,
+                5120
+              ],
+              "embedding_dtype": "mlx.core.bfloat16"
+            },
+            {
+              "stage": "dit",
+              "seconds": 14.474150667003414,
+              "wall_seconds": 14.474132061004639,
+              "native_int8_calls": 1200,
+              "backend": "w8a8",
+              "mlx_peak_bytes": 20331642500,
+              "footprint_bytes": 10663158040,
+              "lifetime_peak_bytes": 21162048728,
+              "resident_bytes": 7990575104,
+              "disk_read_bytes": 20985597952
+            },
+            {
+              "stage": "vae",
+              "seconds": 0.6789154170037364,
+              "wall_seconds": 0.6789150238037109,
+              "native_int8_calls": 0,
+              "backend": "w8a8",
+              "mlx_peak_bytes": 878295798,
+              "footprint_bytes": 272712520,
+              "lifetime_peak_bytes": 1055622464,
+              "resident_bytes": 159416320,
+              "disk_read_bytes": 815923200
+            }
+          ],
+          "compute_seconds": 19.190312959006405,
+          "output_shape": [
+            1024,
+            1024,
+            3
+          ],
+          "rgb_sha256": "0daf234aa6a5906cb871149f2da34c03e1ca95280db4e8f0c72b3c2157de9be6",
+          "index": 3,
+          "warmup": false,
+          "start_wall": 1794399630.6752799,
+          "end_wall": 1794399650.1850939,
+          "seconds": 19.50984150000295,
+          "wall_seconds": 19.509814023971558,
+          "process_lifetime": {
+            "footprint_bytes": 80069184,
+            "lifetime_peak_bytes": 106562088,
+            "resident_bytes": 116310016,
+            "disk_read_bytes": 20803584
+          },
+          "sampled_tree_peak_bytes": 21050244888,
+          "sampled_largest_process_peak_bytes": 20970175704,
+          "timing_valid": true
+        }
+      ]
+    },
+    {
+      "backend": "mlx-stream",
+      "size": 1024,
+      "seed": 42,
+      "steps": 6,
+      "prompt": "A close-up product photograph of one bright yellow enamel teapot with a black arched handle and a round lid, standing on a blue wooden table. One small white ceramic cup sits immediately to its right. The background is plain warm beige. Soft morning window light falls from the left. Realistic enamel, clear silhouettes, no text.",
+      "noise_sha256": "9ed40cd2573bc70f1630a0798d7a463dc1490f1dd805d0075bc6ee7adef2ebae",
+      "sigmas": [
+        1.0,
+        0.9675236940383911,
+        0.8875485062599182,
+        0.75,
+        0.5327739119529724,
+        0.23200887441635132,
+        0.0
+      ],
+      "initialization_seconds": 0.08524929099803558,
+      "runs": [
+        {
+          "stages": [
+            {
+              "stage": "text",
+              "seconds": 4.032475499996508,
+              "wall_seconds": 4.032469987869263,
+              "native_int8_calls": 350,
+              "backend": "w8a8",
+              "mlx_peak_bytes": 559806908,
+              "footprint_bytes": 742917392,
+              "lifetime_peak_bytes": 1187907144,
+              "resident_bytes": 661733376,
+              "disk_read_bytes": 24395845632,
+              "embedding_shape": [
+                69,
+                5120
+              ],
+              "embedding_dtype": "mlx.core.bfloat16"
+            },
+            {
+              "stage": "dit",
+              "seconds": 23.309373916999903,
+              "wall_seconds": 23.309342861175537,
+              "native_int8_calls": 1200,
+              "backend": "w8a8",
+              "mlx_peak_bytes": 1744732160,
+              "footprint_bytes": 1365181856,
+              "lifetime_peak_bytes": 2524776848,
+              "resident_bytes": 919584768,
+              "disk_read_bytes": 20979470336
+            },
+            {
+              "stage": "vae",
+              "seconds": 0.6736873330009985,
+              "wall_seconds": 0.673687219619751,
+              "native_int8_calls": 0,
+              "backend": "w8a8",
+              "mlx_peak_bytes": 878295798,
+              "footprint_bytes": 434684888,
+              "lifetime_peak_bytes": 1055491416,
+              "resident_bytes": 321093632,
+              "disk_read_bytes": 808701952
+            }
+          ],
+          "compute_seconds": 28.01553674999741,
+          "output_shape": [
+            1024,
+            1024,
+            3
+          ],
+          "rgb_sha256": "0daf234aa6a5906cb871149f2da34c03e1ca95280db4e8f0c72b3c2157de9be6",
+          "index": 0,
+          "warmup": true,
+          "start_wall": 1794399650.431454,
+          "end_wall": 1794399678.6993349,
+          "seconds": 28.26792050000222,
+          "wall_seconds": 28.26788091659546,
+          "process_lifetime": {
+            "footprint_bytes": 70435344,
+            "lifetime_peak_bytes": 106660392,
+            "resident_bytes": 106676224,
+            "disk_read_bytes": 7680000
+          },
+          "sampled_tree_peak_bytes": 2553793416,
+          "sampled_largest_process_peak_bytes": 2478950752,
+          "timing_valid": true
+        },
+        {
+          "stages": [
+            {
+              "stage": "text",
+              "seconds": 4.169614624996029,
+              "wall_seconds": 4.16960883140564,
+              "native_int8_calls": 350,
+              "backend": "w8a8",
+              "mlx_peak_bytes": 559806908,
+              "footprint_bytes": 748340520,
+              "lifetime_peak_bytes": 1193313816,
+              "resident_bytes": 661848064,
+              "disk_read_bytes": 24403730432,
+              "embedding_shape": [
+                69,
+                5120
+              ],
+              "embedding_dtype": "mlx.core.bfloat16"
+            },
+            {
+              "stage": "dit",
+              "seconds": 23.57196645899967,
+              "wall_seconds": 23.57193374633789,
+              "native_int8_calls": 1200,
+              "backend": "w8a8",
+              "mlx_peak_bytes": 1744732160,
+              "footprint_bytes": 1356940680,
+              "lifetime_peak_bytes": 2525235624,
+              "resident_bytes": 812220416,
+              "disk_read_bytes": 20979326976
+            },
+            {
+              "stage": "vae",
+              "seconds": 0.6766537919975235,
+              "wall_seconds": 0.6766541004180908,
+              "native_int8_calls": 0,
+              "backend": "w8a8",
+              "mlx_peak_bytes": 878295798,
+              "footprint_bytes": 272728952,
+              "lifetime_peak_bytes": 1055606104,
+              "resident_bytes": 159399936,
+              "disk_read_bytes": 808718336
+            }
+          ],
+          "compute_seconds": 28.41823487599322,
+          "output_shape": [
+            1024,
+            1024,
+            3
+          ],
+          "rgb_sha256": "0daf234aa6a5906cb871149f2da34c03e1ca95280db4e8f0c72b3c2157de9be6",
+          "index": 1,
+          "warmup": false,
+          "start_wall": 1794399678.6999848,
+          "end_wall": 1794399707.37202,
+          "seconds": 28.672075208000024,
+          "wall_seconds": 28.672035217285156,
+          "process_lifetime": {
+            "footprint_bytes": 60736016,
+            "lifetime_peak_bytes": 106660392,
+            "resident_bytes": 96993280,
+            "disk_read_bytes": 7684096
+          },
+          "sampled_tree_peak_bytes": 2364984032,
+          "sampled_largest_process_peak_bytes": 2294532304,
+          "timing_valid": true
+        },
+        {
+          "stages": [
+            {
+              "stage": "text",
+              "seconds": 4.20159154200519,
+              "wall_seconds": 4.201586961746216,
+              "native_int8_calls": 350,
+              "backend": "w8a8",
+              "mlx_peak_bytes": 559806908,
+              "footprint_bytes": 873973032,
+              "lifetime_peak_bytes": 1188873824,
+              "resident_bytes": 670072832,
+              "disk_read_bytes": 24403730432,
+              "embedding_shape": [
+                69,
+                5120
+              ],
+              "embedding_dtype": "mlx.core.bfloat16"
+            },
+            {
+              "stage": "dit",
+              "seconds": 23.89033758300502,
+              "wall_seconds": 23.890305995941162,
+              "native_int8_calls": 1200,
+              "backend": "w8a8",
+              "mlx_peak_bytes": 1744732160,
+              "footprint_bytes": 1117750640,
+              "lifetime_peak_bytes": 2524629392,
+              "resident_bytes": 813989888,
+              "disk_read_bytes": 20980068352
+            },
+            {
+              "stage": "vae",
+              "seconds": 0.6770553329988616,
+              "wall_seconds": 0.6770548820495605,
+              "native_int8_calls": 0,
+              "backend": "w8a8",
+              "mlx_peak_bytes": 878295798,
+              "footprint_bytes": 434963392,
+              "lifetime_peak_bytes": 1055737176,
+              "resident_bytes": 321388544,
+              "disk_read_bytes": 808869888
+            }
+          ],
+          "compute_seconds": 28.768984458009072,
+          "output_shape": [
+            1024,
+            1024,
+            3
+          ],
+          "rgb_sha256": "0daf234aa6a5906cb871149f2da34c03e1ca95280db4e8f0c72b3c2157de9be6",
+          "index": 2,
+          "warmup": false,
+          "start_wall": 1794399707.372654,
+          "end_wall": 1794399736.392401,
+          "seconds": 29.019786374999967,
+          "wall_seconds": 29.019747018814087,
+          "process_lifetime": {
+            "footprint_bytes": 60752400,
+            "lifetime_peak_bytes": 106660392,
+            "resident_bytes": 97009664,
+            "disk_read_bytes": 7688192
+          },
+          "sampled_tree_peak_bytes": 2384202488,
+          "sampled_largest_process_peak_bytes": 2323450088,
+          "timing_valid": true
+        },
+        {
+          "stages": [
+            {
+              "stage": "text",
+              "seconds": 4.17920724999567,
+              "wall_seconds": 4.179202079772949,
+              "native_int8_calls": 350,
+              "backend": "w8a8",
+              "mlx_peak_bytes": 559806908,
+              "footprint_bytes": 748455232,
+              "lifetime_peak_bytes": 1319503528,
+              "resident_bytes": 661946368,
+              "disk_read_bytes": 24403746816,
+              "embedding_shape": [
+                69,
+                5120
+              ],
+              "embedding_dtype": "mlx.core.bfloat16"
+            },
+            {
+              "stage": "dit",
+              "seconds": 23.71338754199678,
+              "wall_seconds": 23.71335506439209,
+              "native_int8_calls": 1200,
+              "backend": "w8a8",
+              "mlx_peak_bytes": 1744732160,
+              "footprint_bytes": 1263633776,
+              "lifetime_peak_bytes": 2524858792,
+              "resident_bytes": 818823168,
+              "disk_read_bytes": 20979888128
+            },
+            {
+              "stage": "vae",
+              "seconds": 0.6728870000006282,
+              "wall_seconds": 0.6728870868682861,
+              "native_int8_calls": 0,
+              "backend": "w8a8",
+              "mlx_peak_bytes": 878295798,
+              "footprint_bytes": 434865088,
+              "lifetime_peak_bytes": 1055704408,
+              "resident_bytes": 321290240,
+              "disk_read_bytes": 808701952
+            }
+          ],
+          "compute_seconds": 28.56548179199308,
+          "output_shape": [
+            1024,
+            1024,
+            3
+          ],
+          "rgb_sha256": "0daf234aa6a5906cb871149f2da34c03e1ca95280db4e8f0c72b3c2157de9be6",
+          "index": 3,
+          "warmup": false,
+          "start_wall": 1794399736.393041,
+          "end_wall": 1794399765.2131898,
+          "seconds": 28.820189000005485,
+          "wall_seconds": 28.820148944854736,
+          "process_lifetime": {
+            "footprint_bytes": 60768784,
+            "lifetime_peak_bytes": 106660392,
+            "resident_bytes": 97026048,
+            "disk_read_bytes": 7692288
+          },
+          "sampled_tree_peak_bytes": 2084046936,
+          "sampled_largest_process_peak_bytes": 2023278152,
+          "timing_valid": true
+        }
+      ]
+    },
+    {
+      "backend": "comfy",
+      "size": 2048,
+      "seed": 42,
+      "steps": 6,
+      "prompt": "A close-up product photograph of one bright yellow enamel teapot with a black arched handle and a round lid, standing on a blue wooden table. One small white ceramic cup sits immediately to its right. The background is plain warm beige. Soft morning window light falls from the left. Realistic enamel, clear silhouettes, no text.",
+      "noise_sha256": "9cf954d9372059f2cd3c2671be1105b9f7c0b389896d56d7c4bca89122354cd2",
+      "sigmas": [
+        1.0,
+        0.9675236940383911,
+        0.8875485062599182,
+        0.75,
+        0.5327739119529724,
+        0.23200887441635132,
+        0.0
+      ],
+      "stock_simple_sigmas": [
+        1.0,
+        0.9676535725593567,
+        0.8877084255218506,
+        0.75,
+        0.5336428284645081,
+        0.23261038959026337,
+        0.0
+      ],
+      "tokens": {
+        "qwen3vl_32b": [
+          [
+            [
+              32,
+              1.0
+            ],
+            [
+              3265,
+              1.0
+            ],
+            [
+              5239,
+              1.0
+            ],
+            [
+              1985,
+              1.0
+            ],
+            [
+              10300,
+              1.0
+            ],
+            [
+              315,
+              1.0
+            ],
+            [
+              825,
+              1.0
+            ],
+            [
+              9906,
+              1.0
+            ],
+            [
+              13753,
+              1.0
+            ],
+            [
+              91748,
+              1.0
+            ],
+            [
+              1013,
+              1.0
+            ],
+            [
+              89901,
+              1.0
+            ],
+            [
+              448,
+              1.0
+            ],
+            [
+              264,
+              1.0
+            ],
+            [
+              3691,
+              1.0
+            ],
+            [
+              796,
+              1.0
+            ],
+            [
+              2397,
+              1.0
+            ],
+            [
+              3705,
+              1.0
+            ],
+            [
+              323,
+              1.0
+            ],
+            [
+              264,
+              1.0
+            ],
+            [
+              4778,
+              1.0
+            ],
+            [
+              26334,
+              1.0
+            ],
+            [
+              11,
+              1.0
+            ],
+            [
+              11259,
+              1.0
+            ],
+            [
+              389,
+              1.0
+            ],
+            [
+              264,
+              1.0
+            ],
+            [
+              6303,
+              1.0
+            ],
+            [
+              22360,
+              1.0
+            ],
+            [
+              1965,
+              1.0
+            ],
+            [
+              13,
+              1.0
+            ],
+            [
+              3776,
+              1.0
+            ],
+            [
+              2613,
+              1.0
+            ],
+            [
+              4158,
+              1.0
+            ],
+            [
+              42024,
+              1.0
+            ],
+            [
+              10525,
+              1.0
+            ],
+            [
+              23011,
+              1.0
+            ],
+            [
+              7069,
+              1.0
+            ],
+            [
+              311,
+              1.0
+            ],
+            [
+              1181,
+              1.0
+            ],
+            [
+              1290,
+              1.0
+            ],
+            [
+              13,
+              1.0
+            ],
+            [
+              576,
+              1.0
+            ],
+            [
+              4004,
+              1.0
+            ],
+            [
+              374,
+              1.0
+            ],
+            [
+              14396,
+              1.0
+            ],
+            [
+              8205,
+              1.0
+            ],
+            [
+              78265,
+              1.0
+            ],
+            [
+              13,
+              1.0
+            ],
+            [
+              24079,
+              1.0
+            ],
+            [
+              6556,
+              1.0
+            ],
+            [
+              3241,
+              1.0
+            ],
+            [
+              3100,
+              1.0
+            ],
+            [
+              17066,
+              1.0
+            ],
+            [
+              504,
+              1.0
+            ],
+            [
+              279,
+              1.0
+            ],
+            [
+              2115,
+              1.0
+            ],
+            [
+              13,
+              1.0
+            ],
+            [
+              8800,
+              1.0
+            ],
+            [
+              4532,
+              1.0
+            ],
+            [
+              91748,
+              1.0
+            ],
+            [
+              11,
+              1.0
+            ],
+            [
+              2797,
+              1.0
+            ],
+            [
+              5437,
+              1.0
+            ],
+            [
+              18166,
+              1.0
+            ],
+            [
+              45903,
+              1.0
+            ],
+            [
+              11,
+              1.0
+            ],
+            [
+              902,
+              1.0
+            ],
+            [
+              1467,
+              1.0
+            ],
+            [
+              13,
+              1.0
+            ]
+          ]
+        ]
+      },
+      "torch_version": "2.15.0",
+      "initialization_seconds": 4.484930165999685,
+      "stock_supports_int8_compute": false,
+      "effective_supports_int8_compute": false,
+      "runs": [
+        {
+          "stages": [
+            {
+              "stage": "text",
+              "seconds": 23.749077874999784,
+              "embedding_shape": [
+                1,
+                69,
+                5120
+              ],
+              "footprint_bytes": 5560104024,
+              "lifetime_peak_bytes": 6267751072,
+              "resident_bytes": 31738888192,
+              "disk_read_bytes": 23278821376
+            },
+            {
+              "stage": "dit",
+              "seconds": 118.37242300000071,
+              "footprint_bytes": 35681017184,
+              "lifetime_peak_bytes": 35692354912,
+              "resident_bytes": 3571499008,
+              "disk_read_bytes": 46409351168
+            },
+            {
+              "stage": "vae",
+              "seconds": 4.439463333001186,
+              "footprint_bytes": 25449159840,
+              "lifetime_peak_bytes": 35692354912,
+              "resident_bytes": 3590684672,
+              "disk_read_bytes": 47001223168
+            }
+          ],
+          "compute_seconds": 146.56132904200058,
+          "native_int8_calls": 0,
+          "output_shape": [
+            2048,
+            2048,
+            3
+          ],
+          "rgb_sha256": "9aa24a54c1ba8b182672271f365aa09303fd53573f625891d096a45ab4208665",
+          "index": 0,
+          "warmup": true,
+          "start_wall": 1794400765.9517481,
+          "end_wall": 1794400912.799527,
+          "seconds": 146.84791699999914,
+          "wall_seconds": 146.84777879714966,
+          "process_lifetime": {
+            "footprint_bytes": 25561029864,
+            "lifetime_peak_bytes": 35692354912,
+            "resident_bytes": 3787177984,
+            "disk_read_bytes": 47005040640
+          },
+          "sampled_tree_peak_bytes": 35702152976,
+          "sampled_largest_process_peak_bytes": 35692354912,
+          "timing_valid": true
+        },
+        {
+          "stages": [
+            {
+              "stage": "text",
+              "seconds": 37.48222770800203,
+              "embedding_shape": [
+                1,
+                69,
+                5120
+              ],
+              "footprint_bytes": 26833281000,
+              "lifetime_peak_bytes": 35692354912,
+              "resident_bytes": 17135583232,
+              "disk_read_bytes": 71421394944
+            },
+            {
+              "stage": "dit",
+              "seconds": 96.62193787499564,
+              "footprint_bytes": 38190587880,
+              "lifetime_peak_bytes": 38212165608,
+              "resident_bytes": 2747269120,
+              "disk_read_bytes": 71427383296
+            },
+            {
+              "stage": "vae",
+              "seconds": 2.172668999999587,
+              "footprint_bytes": 28012666880,
+              "lifetime_peak_bytes": 38212165608,
+              "resident_bytes": 2764849152,
+              "disk_read_bytes": 71427653632
+            }
+          ],
+          "compute_seconds": 136.2772869170003,
+          "native_int8_calls": 0,
+          "output_shape": [
+            2048,
+            2048,
+            3
+          ],
+          "rgb_sha256": "9aa24a54c1ba8b182672271f365aa09303fd53573f625891d096a45ab4208665",
+          "index": 1,
+          "warmup": false,
+          "start_wall": 1794400912.802163,
+          "end_wall": 1794401049.370752,
+          "seconds": 136.5687152909959,
+          "wall_seconds": 136.56858921051025,
+          "process_lifetime": {
+            "footprint_bytes": 28012158976,
+            "lifetime_peak_bytes": 38212165608,
+            "resident_bytes": 2961883136,
+            "disk_read_bytes": 71427702784
+          },
+          "sampled_tree_peak_bytes": 38220292504,
+          "sampled_largest_process_peak_bytes": 38210609128,
+          "timing_valid": true
+        },
+        {
+          "stages": [
+            {
+              "stage": "text",
+              "seconds": 35.46400329100288,
+              "embedding_shape": [
+                1,
+                69,
+                5120
+              ],
+              "footprint_bytes": 27908169728,
+              "lifetime_peak_bytes": 38212165608,
+              "resident_bytes": 17402331136,
+              "disk_read_bytes": 95821156352
+            },
+            {
+              "stage": "dit",
+              "seconds": 96.30037483300111,
+              "footprint_bytes": 37115240448,
+              "lifetime_peak_bytes": 38212165608,
+              "resident_bytes": 3423911936,
+              "disk_read_bytes": 95821262848
+            },
+            {
+              "stage": "vae",
+              "seconds": 2.118390957999509,
+              "footprint_bytes": 28026003456,
+              "lifetime_peak_bytes": 38212165608,
+              "resident_bytes": 3452813312,
+              "disk_read_bytes": 95821414400
+            }
+          ],
+          "compute_seconds": 133.8830740830017,
+          "native_int8_calls": 0,
+          "output_shape": [
+            2048,
+            2048,
+            3
+          ],
+          "rgb_sha256": "9aa24a54c1ba8b182672271f365aa09303fd53573f625891d096a45ab4208665",
+          "index": 2,
+          "warmup": false,
+          "start_wall": 1794401049.372998,
+          "end_wall": 1794401183.542111,
+          "seconds": 134.16923716599558,
+          "wall_seconds": 134.1691129207611,
+          "process_lifetime": {
+            "footprint_bytes": 28026003456,
+            "lifetime_peak_bytes": 38212165608,
+            "resident_bytes": 3650142208,
+            "disk_read_bytes": 95821418496
+          },
+          "sampled_tree_peak_bytes": 37147419056,
+          "sampled_largest_process_peak_bytes": 37137735680,
+          "timing_valid": true
+        },
+        {
+          "stages": [
+            {
+              "stage": "text",
+              "seconds": 36.102796917002706,
+              "embedding_shape": [
+                1,
+                69,
+                5120
+              ],
+              "footprint_bytes": 27908546560,
+              "lifetime_peak_bytes": 38212165608,
+              "resident_bytes": 16728965120,
+              "disk_read_bytes": 120203235328
+            },
+            {
+              "stage": "dit",
+              "seconds": 95.40526512499491,
+              "footprint_bytes": 35892139872,
+              "lifetime_peak_bytes": 38212165608,
+              "resident_bytes": 4618518528,
+              "disk_read_bytes": 120204414976
+            },
+            {
+              "stage": "vae",
+              "seconds": 2.1688887080017594,
+              "footprint_bytes": 25843472224,
+              "lifetime_peak_bytes": 38212165608,
+              "resident_bytes": 4645781504,
+              "disk_read_bytes": 120204615680
+            }
+          ],
+          "compute_seconds": 133.67727658300282,
+          "native_int8_calls": 0,
+          "output_shape": [
+            2048,
+            2048,
+            3
+          ],
+          "rgb_sha256": "9aa24a54c1ba8b182672271f365aa09303fd53573f625891d096a45ab4208665",
+          "index": 3,
+          "warmup": false,
+          "start_wall": 1794401183.543621,
+          "end_wall": 1794401317.5089438,
+          "seconds": 133.9604047920002,
+          "wall_seconds": 133.96532273292542,
+          "process_lifetime": {
+            "footprint_bytes": 26036180976,
+            "lifetime_peak_bytes": 38212165608,
+            "resident_bytes": 4843028480,
+            "disk_read_bytes": 120204701696
+          },
+          "sampled_tree_peak_bytes": 35924220176,
+          "sampled_largest_process_peak_bytes": 35914536800,
+          "timing_valid": true
+        }
+      ]
+    },
+    {
+      "backend": "comfy-native",
+      "size": 2048,
+      "seed": 42,
+      "steps": 6,
+      "prompt": "A close-up product photograph of one bright yellow enamel teapot with a black arched handle and a round lid, standing on a blue wooden table. One small white ceramic cup sits immediately to its right. The background is plain warm beige. Soft morning window light falls from the left. Realistic enamel, clear silhouettes, no text.",
+      "noise_sha256": "9cf954d9372059f2cd3c2671be1105b9f7c0b389896d56d7c4bca89122354cd2",
+      "sigmas": [
+        1.0,
+        0.9675236940383911,
+        0.8875485062599182,
+        0.75,
+        0.5327739119529724,
+        0.23200887441635132,
+        0.0
+      ],
+      "stock_simple_sigmas": [
+        1.0,
+        0.9676535725593567,
+        0.8877084255218506,
+        0.75,
+        0.5336428284645081,
+        0.23261038959026337,
+        0.0
+      ],
+      "tokens": {
+        "qwen3vl_32b": [
+          [
+            [
+              32,
+              1.0
+            ],
+            [
+              3265,
+              1.0
+            ],
+            [
+              5239,
+              1.0
+            ],
+            [
+              1985,
+              1.0
+            ],
+            [
+              10300,
+              1.0
+            ],
+            [
+              315,
+              1.0
+            ],
+            [
+              825,
+              1.0
+            ],
+            [
+              9906,
+              1.0
+            ],
+            [
+              13753,
+              1.0
+            ],
+            [
+              91748,
+              1.0
+            ],
+            [
+              1013,
+              1.0
+            ],
+            [
+              89901,
+              1.0
+            ],
+            [
+              448,
+              1.0
+            ],
+            [
+              264,
+              1.0
+            ],
+            [
+              3691,
+              1.0
+            ],
+            [
+              796,
+              1.0
+            ],
+            [
+              2397,
+              1.0
+            ],
+            [
+              3705,
+              1.0
+            ],
+            [
+              323,
+              1.0
+            ],
+            [
+              264,
+              1.0
+            ],
+            [
+              4778,
+              1.0
+            ],
+            [
+              26334,
+              1.0
+            ],
+            [
+              11,
+              1.0
+            ],
+            [
+              11259,
+              1.0
+            ],
+            [
+              389,
+              1.0
+            ],
+            [
+              264,
+              1.0
+            ],
+            [
+              6303,
+              1.0
+            ],
+            [
+              22360,
+              1.0
+            ],
+            [
+              1965,
+              1.0
+            ],
+            [
+              13,
+              1.0
+            ],
+            [
+              3776,
+              1.0
+            ],
+            [
+              2613,
+              1.0
+            ],
+            [
+              4158,
+              1.0
+            ],
+            [
+              42024,
+              1.0
+            ],
+            [
+              10525,
+              1.0
+            ],
+            [
+              23011,
+              1.0
+            ],
+            [
+              7069,
+              1.0
+            ],
+            [
+              311,
+              1.0
+            ],
+            [
+              1181,
+              1.0
+            ],
+            [
+              1290,
+              1.0
+            ],
+            [
+              13,
+              1.0
+            ],
+            [
+              576,
+              1.0
+            ],
+            [
+              4004,
+              1.0
+            ],
+            [
+              374,
+              1.0
+            ],
+            [
+              14396,
+              1.0
+            ],
+            [
+              8205,
+              1.0
+            ],
+            [
+              78265,
+              1.0
+            ],
+            [
+              13,
+              1.0
+            ],
+            [
+              24079,
+              1.0
+            ],
+            [
+              6556,
+              1.0
+            ],
+            [
+              3241,
+              1.0
+            ],
+            [
+              3100,
+              1.0
+            ],
+            [
+              17066,
+              1.0
+            ],
+            [
+              504,
+              1.0
+            ],
+            [
+              279,
+              1.0
+            ],
+            [
+              2115,
+              1.0
+            ],
+            [
+              13,
+              1.0
+            ],
+            [
+              8800,
+              1.0
+            ],
+            [
+              4532,
+              1.0
+            ],
+            [
+              91748,
+              1.0
+            ],
+            [
+              11,
+              1.0
+            ],
+            [
+              2797,
+              1.0
+            ],
+            [
+              5437,
+              1.0
+            ],
+            [
+              18166,
+              1.0
+            ],
+            [
+              45903,
+              1.0
+            ],
+            [
+              11,
+              1.0
+            ],
+            [
+              902,
+              1.0
+            ],
+            [
+              1467,
+              1.0
+            ],
+            [
+              13,
+              1.0
+            ]
+          ]
+        ]
+      },
+      "torch_version": "2.15.0",
+      "initialization_seconds": 4.77124433300196,
+      "stock_supports_int8_compute": false,
+      "effective_supports_int8_compute": true,
+      "runs": [
+        {
+          "stages": [
+            {
+              "stage": "text",
+              "seconds": 39.4009721669936,
+              "embedding_shape": [
+                1,
+                69,
+                5120
+              ],
+              "footprint_bytes": 4783535456,
+              "lifetime_peak_bytes": 6263851656,
+              "resident_bytes": 27706408960,
+              "disk_read_bytes": 26631319552
+            },
+            {
+              "stage": "dit",
+              "seconds": 218.29548220799916,
+              "footprint_bytes": 31704964400,
+              "lifetime_peak_bytes": 31730998576,
+              "resident_bytes": 3809869824,
+              "disk_read_bytes": 49003712512
+            },
+            {
+              "stage": "vae",
+              "seconds": 5.992006874999788,
+              "footprint_bytes": 25361521776,
+              "lifetime_peak_bytes": 31730998576,
+              "resident_bytes": 3831447552,
+              "disk_read_bytes": 50183225344
+            }
+          ],
+          "compute_seconds": 263.6889767920002,
+          "native_int8_calls": 1200,
+          "output_shape": [
+            2048,
+            2048,
+            3
+          ],
+          "rgb_sha256": "16f7d5a789b8082448e6b4f10e3efdfd50bf892ab762c40eb2de72f3b8b7f747",
+          "index": 0,
+          "warmup": true,
+          "start_wall": 1794399791.149445,
+          "end_wall": 1794400055.128007,
+          "seconds": 263.9789359999995,
+          "wall_seconds": 263.97856187820435,
+          "process_lifetime": {
+            "footprint_bytes": 25476881592,
+            "lifetime_peak_bytes": 31730998576,
+            "resident_bytes": 4027432960,
+            "disk_read_bytes": 50186821632
+          },
+          "sampled_tree_peak_bytes": 31740698336,
+          "sampled_largest_process_peak_bytes": 31730998576,
+          "timing_valid": true
+        },
+        {
+          "stages": [
+            {
+              "stage": "text",
+              "seconds": 39.910730625000724,
+              "embedding_shape": [
+                1,
+                69,
+                5120
+              ],
+              "footprint_bytes": 26772922296,
+              "lifetime_peak_bytes": 31730998576,
+              "resident_bytes": 16306307072,
+              "disk_read_bytes": 74606055424
+            },
+            {
+              "stage": "dit",
+              "seconds": 194.8318274580015,
+              "footprint_bytes": 34717327288,
+              "lifetime_peak_bytes": 34741821368,
+              "resident_bytes": 4928782336,
+              "disk_read_bytes": 74606563328
+            },
+            {
+              "stage": "vae",
+              "seconds": 2.154860833994462,
+              "footprint_bytes": 27944951736,
+              "lifetime_peak_bytes": 34741821368,
+              "resident_bytes": 4956553216,
+              "disk_read_bytes": 74606858240
+            }
+          ],
+          "compute_seconds": 236.89774391600076,
+          "native_int8_calls": 1200,
+          "output_shape": [
+            2048,
+            2048,
+            3
+          ],
+          "rgb_sha256": "8cc331c7cd9cd40ae1f1cc387cefecf8588941098cdf40006bbffb62907d3eac",
+          "index": 1,
+          "warmup": false,
+          "start_wall": 1794400055.130969,
+          "end_wall": 1794400292.321193,
+          "seconds": 237.188327207994,
+          "wall_seconds": 237.19022393226624,
+          "process_lifetime": {
+            "footprint_bytes": 27944951736,
+            "lifetime_peak_bytes": 34741821368,
+            "resident_bytes": 5154373632,
+            "disk_read_bytes": 74606891008
+          },
+          "sampled_tree_peak_bytes": 34751406440,
+          "sampled_largest_process_peak_bytes": 34741821368,
+          "timing_valid": true
+        },
+        {
+          "stages": [
+            {
+              "stage": "text",
+              "seconds": 37.6831397499991,
+              "embedding_shape": [
+                1,
+                69,
+                5120
+              ],
+              "footprint_bytes": 27847483320,
+              "lifetime_peak_bytes": 34741821368,
+              "resident_bytes": 16660135936,
+              "disk_read_bytes": 98988851200
+            },
+            {
+              "stage": "dit",
+              "seconds": 193.33229641700018,
+              "footprint_bytes": 34599100344,
+              "lifetime_peak_bytes": 34741821368,
+              "resident_bytes": 4868587520,
+              "disk_read_bytes": 98988978176
+            },
+            {
+              "stage": "vae",
+              "seconds": 2.3821707499955664,
+              "footprint_bytes": 27943673784,
+              "lifetime_peak_bytes": 34741821368,
+              "resident_bytes": 4894179328,
+              "disk_read_bytes": 98989101056
+            }
+          ],
+          "compute_seconds": 233.39795654200134,
+          "native_int8_calls": 1200,
+          "output_shape": [
+            2048,
+            2048,
+            3
+          ],
+          "rgb_sha256": "642afc9a3cce96a12e034b20b2dba542e7468b0402a68c70b8e6d3254f070bb6",
+          "index": 2,
+          "warmup": false,
+          "start_wall": 1794400292.322199,
+          "end_wall": 1794400526.00987,
+          "seconds": 233.68784358300036,
+          "wall_seconds": 233.68767094612122,
+          "process_lifetime": {
+            "footprint_bytes": 27943673784,
+            "lifetime_peak_bytes": 34741821368,
+            "resident_bytes": 5091360768,
+            "disk_read_bytes": 98989125632
+          },
+          "sampled_tree_peak_bytes": 34634490216,
+          "sampled_largest_process_peak_bytes": 34624905144,
+          "timing_valid": true
+        },
+        {
+          "stages": [
+            {
+              "stage": "text",
+              "seconds": 38.00629137500073,
+              "embedding_shape": [
+                1,
+                69,
+                5120
+              ],
+              "footprint_bytes": 27847499704,
+              "lifetime_peak_bytes": 34741821368,
+              "resident_bytes": 16262823936,
+              "disk_read_bytes": 123382591488
+            },
+            {
+              "stage": "dit",
+              "seconds": 193.14521666599467,
+              "footprint_bytes": 34716409784,
+              "lifetime_peak_bytes": 34742181816,
+              "resident_bytes": 4405428224,
+              "disk_read_bytes": 123396337664
+            },
+            {
+              "stage": "vae",
+              "seconds": 2.342202375002671,
+              "footprint_bytes": 27958435792,
+              "lifetime_peak_bytes": 34742181816,
+              "resident_bytes": 4436541440,
+              "disk_read_bytes": 123398389760
+            }
+          ],
+          "compute_seconds": 233.4940853750013,
+          "native_int8_calls": 1200,
+          "output_shape": [
+            2048,
+            2048,
+            3
+          ],
+          "rgb_sha256": "19e1138bfc85090c859a2c892a941c21d4e451c6c03182d459ecc7e7f019628c",
+          "index": 3,
+          "warmup": false,
+          "start_wall": 1794400526.011306,
+          "end_wall": 1794400759.804777,
+          "seconds": 233.79367074999755,
+          "wall_seconds": 233.7934708595276,
+          "process_lifetime": {
+            "footprint_bytes": 27958452176,
+            "lifetime_peak_bytes": 34742181816,
+            "resident_bytes": 4635344896,
+            "disk_read_bytes": 123399909376
+          },
+          "sampled_tree_peak_bytes": 34751766888,
+          "sampled_largest_process_peak_bytes": 34742181816,
+          "timing_valid": true
+        }
+      ]
+    },
+    {
+      "backend": "mlx-resident",
+      "size": 2048,
+      "seed": 42,
+      "steps": 6,
+      "prompt": "A close-up product photograph of one bright yellow enamel teapot with a black arched handle and a round lid, standing on a blue wooden table. One small white ceramic cup sits immediately to its right. The background is plain warm beige. Soft morning window light falls from the left. Realistic enamel, clear silhouettes, no text.",
+      "noise_sha256": "9cf954d9372059f2cd3c2671be1105b9f7c0b389896d56d7c4bca89122354cd2",
+      "sigmas": [
+        1.0,
+        0.9675236940383911,
+        0.8875485062599182,
+        0.75,
+        0.5327739119529724,
+        0.23200887441635132,
+        0.0
+      ],
+      "initialization_seconds": 0.10291937500005588,
+      "runs": [
+        {
+          "stages": [
+            {
+              "stage": "text",
+              "seconds": 3.905699041002663,
+              "wall_seconds": 3.905701160430908,
+              "native_int8_calls": 350,
+              "backend": "w8a8",
+              "mlx_peak_bytes": 559806908,
+              "footprint_bytes": 748389672,
+              "lifetime_peak_bytes": 1016153576,
+              "resident_bytes": 661897216,
+              "disk_read_bytes": 20068003840,
+              "embedding_shape": [
+                69,
+                5120
+              ],
+              "embedding_dtype": "mlx.core.bfloat16"
+            },
+            {
+              "stage": "dit",
+              "seconds": 50.919153458002256,
+              "wall_seconds": 50.91914701461792,
+              "native_int8_calls": 1200,
+              "backend": "w8a8",
+              "mlx_peak_bytes": 21101575700,
+              "footprint_bytes": 3309456600,
+              "lifetime_peak_bytes": 22203367168,
+              "resident_bytes": 3022503936,
+              "disk_read_bytes": 21030621184
+            },
+            {
+              "stage": "vae",
+              "seconds": 2.3385891249999986,
+              "wall_seconds": 2.338589906692505,
+              "native_int8_calls": 0,
+              "backend": "w8a8",
+              "mlx_peak_bytes": 882420630,
+              "footprint_bytes": 444826584,
+              "lifetime_peak_bytes": 1262274024,
+              "resident_bytes": 317358080,
+              "disk_read_bytes": 817795072
+            }
+          ],
+          "compute_seconds": 57.16344162400492,
+          "output_shape": [
+            2048,
+            2048,
+            3
+          ],
+          "rgb_sha256": "3aad7e67b61d6e6d7a8ed9df794eafa4dfb9c939428373a3392e9210e2732f18",
+          "index": 0,
+          "warmup": true,
+          "start_wall": 1794401319.171252,
+          "end_wall": 1794401376.7041411,
+          "seconds": 57.532897416000196,
+          "wall_seconds": 57.53288912773132,
+          "process_lifetime": {
+            "footprint_bytes": 123372096,
+            "lifetime_peak_bytes": 123372096,
+            "resident_bytes": 159580160,
+            "disk_read_bytes": 21495808
+          },
+          "sampled_tree_peak_bytes": 22120366352,
+          "sampled_largest_process_peak_bytes": 22045802240,
+          "timing_valid": true
+        },
+        {
+          "stages": [
+            {
+              "stage": "text",
+              "seconds": 4.15505979199952,
+              "wall_seconds": 4.155059099197388,
+              "native_int8_calls": 350,
+              "backend": "w8a8",
+              "mlx_peak_bytes": 559806908,
+              "footprint_bytes": 748406056,
+              "lifetime_peak_bytes": 1187808816,
+              "resident_bytes": 661913600,
+              "disk_read_bytes": 24405843968,
+              "embedding_shape": [
+                69,
+                5120
+              ],
+              "embedding_dtype": "mlx.core.bfloat16"
+            },
+            {
+              "stage": "dit",
+              "seconds": 50.08929658299894,
+              "wall_seconds": 50.08929634094238,
+              "native_int8_calls": 1200,
+              "backend": "w8a8",
+              "mlx_peak_bytes": 21101575700,
+              "footprint_bytes": 3036793904,
+              "lifetime_peak_bytes": 22184345176,
+              "resident_bytes": 2769092608,
+              "disk_read_bytes": 21003935744
+            },
+            {
+              "stage": "vae",
+              "seconds": 2.3218069590002415,
+              "wall_seconds": 2.3218071460723877,
+              "native_int8_calls": 0,
+              "backend": "w8a8",
+              "mlx_peak_bytes": 882420630,
+              "footprint_bytes": 537314240,
+              "lifetime_peak_bytes": 1256900000,
+              "resident_bytes": 407732224,
+              "disk_read_bytes": 816746496
+            }
+          ],
+          "compute_seconds": 56.5661633339987,
+          "output_shape": [
+            2048,
+            2048,
+            3
+          ],
+          "rgb_sha256": "3aad7e67b61d6e6d7a8ed9df794eafa4dfb9c939428373a3392e9210e2732f18",
+          "index": 1,
+          "warmup": false,
+          "start_wall": 1794401376.7048068,
+          "end_wall": 1794401433.5869892,
+          "seconds": 56.882183999994595,
+          "wall_seconds": 56.882182359695435,
+          "process_lifetime": {
+            "footprint_bytes": 103383616,
+            "lifetime_peak_bytes": 123388480,
+            "resident_bytes": 144965632,
+            "disk_read_bytes": 21499904
+          },
+          "sampled_tree_peak_bytes": 22162161816,
+          "sampled_largest_process_peak_bytes": 22038773336,
+          "timing_valid": true
+        },
+        {
+          "stages": [
+            {
+              "stage": "text",
+              "seconds": 4.0982343340001535,
+              "wall_seconds": 4.0982348918914795,
+              "native_int8_calls": 350,
+              "backend": "w8a8",
+              "mlx_peak_bytes": 559806908,
+              "footprint_bytes": 741606672,
+              "lifetime_peak_bytes": 1321453200,
+              "resident_bytes": 661553152,
+              "disk_read_bytes": 24405307392,
+              "embedding_shape": [
+                69,
+                5120
+              ],
+              "embedding_dtype": "mlx.core.bfloat16"
+            },
+            {
+              "stage": "dit",
+              "seconds": 50.66046254200046,
+              "wall_seconds": 50.66046380996704,
+              "native_int8_calls": 1200,
+              "backend": "w8a8",
+              "mlx_peak_bytes": 21101575700,
+              "footprint_bytes": 3309210840,
+              "lifetime_peak_bytes": 22268870352,
+              "resident_bytes": 2992996352,
+              "disk_read_bytes": 21012389888
+            },
+            {
+              "stage": "vae",
+              "seconds": 2.344360333001532,
+              "wall_seconds": 2.344360828399658,
+              "native_int8_calls": 0,
+              "backend": "w8a8",
+              "mlx_peak_bytes": 888916728,
+              "footprint_bytes": 444908480,
+              "lifetime_peak_bytes": 1262339488,
+              "resident_bytes": 317341696,
+              "disk_read_bytes": 816701440
+            }
+          ],
+          "compute_seconds": 57.103057209002145,
+          "output_shape": [
+            2048,
+            2048,
+            3
+          ],
+          "rgb_sha256": "3aad7e67b61d6e6d7a8ed9df794eafa4dfb9c939428373a3392e9210e2732f18",
+          "index": 2,
+          "warmup": false,
+          "start_wall": 1794401433.5877051,
+          "end_wall": 1794401491.014675,
+          "seconds": 57.42696954100393,
+          "wall_seconds": 57.42696976661682,
+          "process_lifetime": {
+            "footprint_bytes": 80069184,
+            "lifetime_peak_bytes": 123388480,
+            "resident_bytes": 130875392,
+            "disk_read_bytes": 21504000
+          },
+          "sampled_tree_peak_bytes": 22115402000,
+          "sampled_largest_process_peak_bytes": 22035431120,
+          "timing_valid": true
+        },
+        {
+          "stages": [
+            {
+              "stage": "text",
+              "seconds": 4.389297624999017,
+              "wall_seconds": 4.389297723770142,
+              "native_int8_calls": 350,
+              "backend": "w8a8",
+              "mlx_peak_bytes": 559806908,
+              "footprint_bytes": 742933752,
+              "lifetime_peak_bytes": 1185842712,
+              "resident_bytes": 661618688,
+              "disk_read_bytes": 24410390528,
+              "embedding_shape": [
+                69,
+                5120
+              ],
+              "embedding_dtype": "mlx.core.bfloat16"
+            },
+            {
+              "stage": "dit",
+              "seconds": 50.80535599999712,
+              "wall_seconds": 50.805357694625854,
+              "native_int8_calls": 1200,
+              "backend": "w8a8",
+              "mlx_peak_bytes": 21101575700,
+              "footprint_bytes": 3386281248,
+              "lifetime_peak_bytes": 22181969448,
+              "resident_bytes": 3111780352,
+              "disk_read_bytes": 21012000768
+            },
+            {
+              "stage": "vae",
+              "seconds": 2.3032430829989607,
+              "wall_seconds": 2.3032429218292236,
+              "native_int8_calls": 0,
+              "backend": "w8a8",
+              "mlx_peak_bytes": 882420630,
+              "footprint_bytes": 444728280,
+              "lifetime_peak_bytes": 1262159288,
+              "resident_bytes": 317210624,
+              "disk_read_bytes": 816013312
+            }
+          ],
+          "compute_seconds": 57.497896707995096,
+          "output_shape": [
+            2048,
+            2048,
+            3
+          ],
+          "rgb_sha256": "3aad7e67b61d6e6d7a8ed9df794eafa4dfb9c939428373a3392e9210e2732f18",
+          "index": 3,
+          "warmup": false,
+          "start_wall": 1794401491.015521,
+          "end_wall": 1794401548.833146,
+          "seconds": 57.817624750001414,
+          "wall_seconds": 57.81762504577637,
+          "process_lifetime": {
+            "footprint_bytes": 80085568,
+            "lifetime_peak_bytes": 123388480,
+            "resident_bytes": 130891776,
+            "disk_read_bytes": 21508096
+          },
+          "sampled_tree_peak_bytes": 22110519400,
+          "sampled_largest_process_peak_bytes": 22030433832,
+          "timing_valid": true
+        }
+      ]
+    },
+    {
+      "backend": "mlx-stream",
+      "size": 2048,
+      "seed": 42,
+      "steps": 6,
+      "prompt": "A close-up product photograph of one bright yellow enamel teapot with a black arched handle and a round lid, standing on a blue wooden table. One small white ceramic cup sits immediately to its right. The background is plain warm beige. Soft morning window light falls from the left. Realistic enamel, clear silhouettes, no text.",
+      "noise_sha256": "9cf954d9372059f2cd3c2671be1105b9f7c0b389896d56d7c4bca89122354cd2",
+      "sigmas": [
+        1.0,
+        0.9675236940383911,
+        0.8875485062599182,
+        0.75,
+        0.5327739119529724,
+        0.23200887441635132,
+        0.0
+      ],
+      "initialization_seconds": 0.08627799999521812,
+      "runs": [
+        {
+          "stages": [
+            {
+              "stage": "text",
+              "seconds": 3.9773402499995427,
+              "wall_seconds": 3.9773409366607666,
+              "native_int8_calls": 350,
+              "backend": "w8a8",
+              "mlx_peak_bytes": 559806908,
+              "footprint_bytes": 741934400,
+              "lifetime_peak_bytes": 1189103152,
+              "resident_bytes": 661848064,
+              "disk_read_bytes": 24396607488,
+              "embedding_shape": [
+                69,
+                5120
+              ],
+              "embedding_dtype": "mlx.core.bfloat16"
+            },
+            {
+              "stage": "dit",
+              "seconds": 58.950917082998785,
+              "wall_seconds": 58.95091891288757,
+              "native_int8_calls": 1200,
+              "backend": "w8a8",
+              "mlx_peak_bytes": 2048225748,
+              "footprint_bytes": 2090042760,
+              "lifetime_peak_bytes": 3189114608,
+              "resident_bytes": 799080448,
+              "disk_read_bytes": 21022986240
+            },
+            {
+              "stage": "vae",
+              "seconds": 2.323748666996835,
+              "wall_seconds": 2.32374906539917,
+              "native_int8_calls": 0,
+              "backend": "w8a8",
+              "mlx_peak_bytes": 882420630,
+              "footprint_bytes": 444908480,
+              "lifetime_peak_bytes": 1262355896,
+              "resident_bytes": 317407232,
+              "disk_read_bytes": 809324544
+            }
+          ],
+          "compute_seconds": 65.25200599999516,
+          "output_shape": [
+            2048,
+            2048,
+            3
+          ],
+          "rgb_sha256": "3aad7e67b61d6e6d7a8ed9df794eafa4dfb9c939428373a3392e9210e2732f18",
+          "index": 0,
+          "warmup": true,
+          "start_wall": 1794401549.036923,
+          "end_wall": 1794401614.5804958,
+          "seconds": 65.5435726670039,
+          "wall_seconds": 65.54357290267944,
+          "process_lifetime": {
+            "footprint_bytes": 92406312,
+            "lifetime_peak_bytes": 106545704,
+            "resident_bytes": 133431296,
+            "disk_read_bytes": 8863744
+          },
+          "sampled_tree_peak_bytes": 3200190840,
+          "sampled_largest_process_peak_bytes": 3125446480,
+          "timing_valid": true
+        },
+        {
+          "stages": [
+            {
+              "stage": "text",
+              "seconds": 4.280824000001303,
+              "wall_seconds": 4.280824661254883,
+              "native_int8_calls": 350,
+              "backend": "w8a8",
+              "mlx_peak_bytes": 559806908,
+              "footprint_bytes": 743261456,
+              "lifetime_peak_bytes": 1186334280,
+              "resident_bytes": 661716992,
+              "disk_read_bytes": 24407392256,
+              "embedding_shape": [
+                69,
+                5120
+              ],
+              "embedding_dtype": "mlx.core.bfloat16"
+            },
+            {
+              "stage": "dit",
+              "seconds": 59.67800516700663,
+              "wall_seconds": 59.67800712585449,
+              "native_int8_calls": 1200,
+              "backend": "w8a8",
+              "mlx_peak_bytes": 2048225748,
+              "footprint_bytes": 2089452816,
+              "lifetime_peak_bytes": 3477145160,
+              "resident_bytes": 798818304,
+              "disk_read_bytes": 21078904832
+            },
+            {
+              "stage": "vae",
+              "seconds": 2.3022039590068744,
+              "wall_seconds": 2.3022050857543945,
+              "native_int8_calls": 0,
+              "backend": "w8a8",
+              "mlx_peak_bytes": 882420630,
+              "footprint_bytes": 572769312,
+              "lifetime_peak_bytes": 1256621496,
+              "resident_bytes": 445202432,
+              "disk_read_bytes": 808689664
+            }
+          ],
+          "compute_seconds": 66.26103312601481,
+          "output_shape": [
+            2048,
+            2048,
+            3
+          ],
+          "rgb_sha256": "3aad7e67b61d6e6d7a8ed9df794eafa4dfb9c939428373a3392e9210e2732f18",
+          "index": 1,
+          "warmup": false,
+          "start_wall": 1794401614.581204,
+          "end_wall": 1794401681.134976,
+          "seconds": 66.553772457999,
+          "wall_seconds": 66.55377197265625,
+          "process_lifetime": {
+            "footprint_bytes": 89850408,
+            "lifetime_peak_bytes": 106545704,
+            "resident_bytes": 130891776,
+            "disk_read_bytes": 8867840
+          },
+          "sampled_tree_peak_bytes": 3165325592,
+          "sampled_largest_process_peak_bytes": 3072902896,
+          "timing_valid": true
+        },
+        {
+          "stages": [
+            {
+              "stage": "text",
+              "seconds": 4.3831552080009715,
+              "wall_seconds": 4.383156061172485,
+              "native_int8_calls": 350,
+              "backend": "w8a8",
+              "mlx_peak_bytes": 559806908,
+              "footprint_bytes": 748258552,
+              "lifetime_peak_bytes": 1054606776,
+              "resident_bytes": 661798912,
+              "disk_read_bytes": 24406831104,
+              "embedding_shape": [
+                69,
+                5120
+              ],
+              "embedding_dtype": "mlx.core.bfloat16"
+            },
+            {
+              "stage": "dit",
+              "seconds": 60.056341416995565,
+              "wall_seconds": 60.05634307861328,
+              "native_int8_calls": 1200,
+              "backend": "w8a8",
+              "mlx_peak_bytes": 2048225748,
+              "footprint_bytes": 2089911688,
+              "lifetime_peak_bytes": 3157722864,
+              "resident_bytes": 798949376,
+              "disk_read_bytes": 21124526080
+            },
+            {
+              "stage": "vae",
+              "seconds": 2.3235869579948485,
+              "wall_seconds": 2.3235878944396973,
+              "native_int8_calls": 0,
+              "backend": "w8a8",
+              "mlx_peak_bytes": 882420630,
+              "footprint_bytes": 444613520,
+              "lifetime_peak_bytes": 1256523168,
+              "resident_bytes": 317145088,
+              "disk_read_bytes": 809316352
+            }
+          ],
+          "compute_seconds": 66.76308358299138,
+          "output_shape": [
+            2048,
+            2048,
+            3
+          ],
+          "rgb_sha256": "3aad7e67b61d6e6d7a8ed9df794eafa4dfb9c939428373a3392e9210e2732f18",
+          "index": 2,
+          "warmup": false,
+          "start_wall": 1794401681.1357188,
+          "end_wall": 1794401748.1971,
+          "seconds": 67.06138033300522,
+          "wall_seconds": 67.06138110160828,
+          "process_lifetime": {
+            "footprint_bytes": 89883176,
+            "lifetime_peak_bytes": 106545704,
+            "resident_bytes": 130924544,
+            "disk_read_bytes": 8871936
+          },
+          "sampled_tree_peak_bytes": 3169290640,
+          "sampled_largest_process_peak_bytes": 3079407464,
+          "timing_valid": true
+        },
+        {
+          "stages": [
+            {
+              "stage": "text",
+              "seconds": 4.960081208002521,
+              "wall_seconds": 4.9600830078125,
+              "native_int8_calls": 350,
+              "backend": "w8a8",
+              "mlx_peak_bytes": 559806908,
+              "footprint_bytes": 879215960,
+              "lifetime_peak_bytes": 1188529712,
+              "resident_bytes": 723501056,
+              "disk_read_bytes": 24416296960,
+              "embedding_shape": [
+                69,
+                5120
+              ],
+              "embedding_dtype": "mlx.core.bfloat16"
+            },
+            {
+              "stage": "dit",
+              "seconds": 60.123490792000666,
+              "wall_seconds": 60.1234917640686,
+              "native_int8_calls": 1200,
+              "backend": "w8a8",
+              "mlx_peak_bytes": 2048225748,
+              "footprint_bytes": 2089633088,
+              "lifetime_peak_bytes": 3212084904,
+              "resident_bytes": 798965760,
+              "disk_read_bytes": 21077352448
+            },
+            {
+              "stage": "vae",
+              "seconds": 2.3079723750051926,
+              "wall_seconds": 2.3079731464385986,
+              "native_int8_calls": 0,
+              "backend": "w8a8",
+              "mlx_peak_bytes": 882420630,
+              "footprint_bytes": 444908480,
+              "lifetime_peak_bytes": 1262388712,
+              "resident_bytes": 317407232,
+              "disk_read_bytes": 808751104
+            }
+          ],
+          "compute_seconds": 67.39154437500838,
+          "output_shape": [
+            2048,
+            2048,
+            3
+          ],
+          "rgb_sha256": "3aad7e67b61d6e6d7a8ed9df794eafa4dfb9c939428373a3392e9210e2732f18",
+          "index": 3,
+          "warmup": false,
+          "start_wall": 1794401748.19784,
+          "end_wall": 1794401815.8860521,
+          "seconds": 67.68821062499774,
+          "wall_seconds": 67.68821215629578,
+          "process_lifetime": {
+            "footprint_bytes": 81019408,
+            "lifetime_peak_bytes": 106545704,
+            "resident_bytes": 130940928,
+            "disk_read_bytes": 8876032
+          },
+          "sampled_tree_peak_bytes": 3198109904,
+          "sampled_largest_process_peak_bytes": 3108210344,
+          "timing_valid": true
+        }
+      ]
+    },
+    {
+      "backend": "comfy",
+      "size": 4096,
+      "seed": 42,
+      "steps": 6,
+      "prompt": "A close-up product photograph of one bright yellow enamel teapot with a black arched handle and a round lid, standing on a blue wooden table. One small white ceramic cup sits immediately to its right. The background is plain warm beige. Soft morning window light falls from the left. Realistic enamel, clear silhouettes, no text.",
+      "noise_sha256": "4d6d8897ef57f3dad7e90541a4d9311ac1ce42b7b4fc8ed7d90ef11f38144041",
+      "sigmas": [
+        1.0,
+        0.9675236940383911,
+        0.8875485062599182,
+        0.75,
+        0.5327739119529724,
+        0.23200887441635132,
+        0.0
+      ],
+      "stock_simple_sigmas": [
+        1.0,
+        0.9676535725593567,
+        0.8877084255218506,
+        0.75,
+        0.5336428284645081,
+        0.23261038959026337,
+        0.0
+      ],
+      "tokens": {
+        "qwen3vl_32b": [
+          [
+            [
+              32,
+              1.0
+            ],
+            [
+              3265,
+              1.0
+            ],
+            [
+              5239,
+              1.0
+            ],
+            [
+              1985,
+              1.0
+            ],
+            [
+              10300,
+              1.0
+            ],
+            [
+              315,
+              1.0
+            ],
+            [
+              825,
+              1.0
+            ],
+            [
+              9906,
+              1.0
+            ],
+            [
+              13753,
+              1.0
+            ],
+            [
+              91748,
+              1.0
+            ],
+            [
+              1013,
+              1.0
+            ],
+            [
+              89901,
+              1.0
+            ],
+            [
+              448,
+              1.0
+            ],
+            [
+              264,
+              1.0
+            ],
+            [
+              3691,
+              1.0
+            ],
+            [
+              796,
+              1.0
+            ],
+            [
+              2397,
+              1.0
+            ],
+            [
+              3705,
+              1.0
+            ],
+            [
+              323,
+              1.0
+            ],
+            [
+              264,
+              1.0
+            ],
+            [
+              4778,
+              1.0
+            ],
+            [
+              26334,
+              1.0
+            ],
+            [
+              11,
+              1.0
+            ],
+            [
+              11259,
+              1.0
+            ],
+            [
+              389,
+              1.0
+            ],
+            [
+              264,
+              1.0
+            ],
+            [
+              6303,
+              1.0
+            ],
+            [
+              22360,
+              1.0
+            ],
+            [
+              1965,
+              1.0
+            ],
+            [
+              13,
+              1.0
+            ],
+            [
+              3776,
+              1.0
+            ],
+            [
+              2613,
+              1.0
+            ],
+            [
+              4158,
+              1.0
+            ],
+            [
+              42024,
+              1.0
+            ],
+            [
+              10525,
+              1.0
+            ],
+            [
+              23011,
+              1.0
+            ],
+            [
+              7069,
+              1.0
+            ],
+            [
+              311,
+              1.0
+            ],
+            [
+              1181,
+              1.0
+            ],
+            [
+              1290,
+              1.0
+            ],
+            [
+              13,
+              1.0
+            ],
+            [
+              576,
+              1.0
+            ],
+            [
+              4004,
+              1.0
+            ],
+            [
+              374,
+              1.0
+            ],
+            [
+              14396,
+              1.0
+            ],
+            [
+              8205,
+              1.0
+            ],
+            [
+              78265,
+              1.0
+            ],
+            [
+              13,
+              1.0
+            ],
+            [
+              24079,
+              1.0
+            ],
+            [
+              6556,
+              1.0
+            ],
+            [
+              3241,
+              1.0
+            ],
+            [
+              3100,
+              1.0
+            ],
+            [
+              17066,
+              1.0
+            ],
+            [
+              504,
+              1.0
+            ],
+            [
+              279,
+              1.0
+            ],
+            [
+              2115,
+              1.0
+            ],
+            [
+              13,
+              1.0
+            ],
+            [
+              8800,
+              1.0
+            ],
+            [
+              4532,
+              1.0
+            ],
+            [
+              91748,
+              1.0
+            ],
+            [
+              11,
+              1.0
+            ],
+            [
+              2797,
+              1.0
+            ],
+            [
+              5437,
+              1.0
+            ],
+            [
+              18166,
+              1.0
+            ],
+            [
+              45903,
+              1.0
+            ],
+            [
+              11,
+              1.0
+            ],
+            [
+              902,
+              1.0
+            ],
+            [
+              1467,
+              1.0
+            ],
+            [
+              13,
+              1.0
+            ]
+          ]
+        ]
+      },
+      "torch_version": "2.15.0",
+      "initialization_seconds": 4.721846125001321,
+      "stock_supports_int8_compute": false,
+      "effective_supports_int8_compute": false,
+      "runs": [
+        {
+          "stages": [
+            {
+              "stage": "text",
+              "seconds": 39.378502749998006,
+              "embedding_shape": [
+                1,
+                69,
+                5120
+              ],
+              "footprint_bytes": 4794053984,
+              "lifetime_peak_bytes": 6275648136,
+              "resident_bytes": 27705966592,
+              "disk_read_bytes": 26610860032
+            },
+            {
+              "stage": "dit",
+              "seconds": 484.8596526659967,
+              "footprint_bytes": 42194066712,
+              "lifetime_peak_bytes": 42313260360,
+              "resident_bytes": 92274688,
+              "disk_read_bytes": 49207279616
+            },
+            {
+              "stage": "vae",
+              "seconds": 10.701965457999904,
+              "footprint_bytes": 26389682784,
+              "lifetime_peak_bytes": 42313260360,
+              "resident_bytes": 147095552,
+              "disk_read_bytes": 50420150272
+            }
+          ],
+          "compute_seconds": 534.942238333002,
+          "native_int8_calls": 0,
+          "output_shape": [
+            4096,
+            4096,
+            3
+          ],
+          "rgb_sha256": "e7804796252fbd83215728705e36641bf20e61301935342ef899540268ba2b5f",
+          "index": 0,
+          "warmup": true,
+          "start_wall": 1794401820.7562618,
+          "end_wall": 1794402356.648382,
+          "seconds": 535.8810584579987,
+          "wall_seconds": 535.8921201229095,
+          "process_lifetime": {
+            "footprint_bytes": 27040357296,
+            "lifetime_peak_bytes": 42313260360,
+            "resident_bytes": 925040640,
+            "disk_read_bytes": 50430115840
+          },
+          "sampled_tree_peak_bytes": 42322894584,
+          "sampled_largest_process_peak_bytes": 42313260360,
+          "timing_valid": true
+        },
+        {
+          "stages": [
+            {
+              "stage": "text",
+              "seconds": 35.30860854099592,
+              "embedding_shape": [
+                1,
+                69,
+                5120
+              ],
+              "footprint_bytes": 27988450968,
+              "lifetime_peak_bytes": 42313260360,
+              "resident_bytes": 17209999360,
+              "disk_read_bytes": 74874499072
+            },
+            {
+              "stage": "dit",
+              "seconds": 628.028924541999,
+              "footprint_bytes": 40147851104,
+              "lifetime_peak_bytes": 42313260360,
+              "resident_bytes": 73433088,
+              "disk_read_bytes": 133986123776
+            },
+            {
+              "stage": "vae",
+              "seconds": 10.020416958999704,
+              "footprint_bytes": 25875814240,
+              "lifetime_peak_bytes": 42313260360,
+              "resident_bytes": 125894656,
+              "disk_read_bytes": 134513487872
+            }
+          ],
+          "compute_seconds": 673.3597703749983,
+          "native_int8_calls": 0,
+          "output_shape": [
+            4096,
+            4096,
+            3
+          ],
+          "rgb_sha256": "e7804796252fbd83215728705e36641bf20e61301935342ef899540268ba2b5f",
+          "index": 1,
+          "warmup": false,
+          "start_wall": 1794402356.653281,
+          "end_wall": 1794403030.954327,
+          "seconds": 674.2997755410033,
+          "wall_seconds": 674.3010461330414,
+          "process_lifetime": {
+            "footprint_bytes": 26638916000,
+            "lifetime_peak_bytes": 42313260360,
+            "resident_bytes": 904249344,
+            "disk_read_bytes": 134519791616
+          },
+          "sampled_tree_peak_bytes": 40206604560,
+          "sampled_largest_process_peak_bytes": 40197035872,
+          "timing_valid": true
+        },
+        {
+          "stages": [
+            {
+              "stage": "text",
+              "seconds": 35.247436040997854,
+              "embedding_shape": [
+                1,
+                69,
+                5120
+              ],
+              "footprint_bytes": 27653004496,
+              "lifetime_peak_bytes": 42313260360,
+              "resident_bytes": 16514596864,
+              "disk_read_bytes": 158954684416
+            },
+            {
+              "stage": "dit",
+              "seconds": 508.174953457994,
+              "footprint_bytes": 40150751048,
+              "lifetime_peak_bytes": 42313260360,
+              "resident_bytes": 661880832,
+              "disk_read_bytes": 179139751936
+            },
+            {
+              "stage": "vae",
+              "seconds": 9.137278957998205,
+              "footprint_bytes": 25877780296,
+              "lifetime_peak_bytes": 42313260360,
+              "resident_bytes": 713195520,
+              "disk_read_bytes": 179312279552
+            }
+          ],
+          "compute_seconds": 552.5613039579985,
+          "native_int8_calls": 0,
+          "output_shape": [
+            4096,
+            4096,
+            3
+          ],
+          "rgb_sha256": "e7804796252fbd83215728705e36641bf20e61301935342ef899540268ba2b5f",
+          "index": 2,
+          "warmup": false,
+          "start_wall": 1794403030.956883,
+          "end_wall": 1794403584.4263601,
+          "seconds": 553.5048305419987,
+          "wall_seconds": 553.4694771766663,
+          "process_lifetime": {
+            "footprint_bytes": 26649876872,
+            "lifetime_peak_bytes": 42313260360,
+            "resident_bytes": 1490829312,
+            "disk_read_bytes": 179316228096
+          },
+          "sampled_tree_peak_bytes": 40214698232,
+          "sampled_largest_process_peak_bytes": 40205129544,
+          "timing_valid": true
+        },
+        {
+          "stages": [
+            {
+              "stage": "text",
+              "seconds": 35.23521350000374,
+              "embedding_shape": [
+                1,
+                69,
+                5120
+              ],
+              "footprint_bytes": 27655216312,
+              "lifetime_peak_bytes": 42313260360,
+              "resident_bytes": 16346464256,
+              "disk_read_bytes": 203750133760
+            },
+            {
+              "stage": "dit",
+              "seconds": 523.3940511250039,
+              "footprint_bytes": 40150505288,
+              "lifetime_peak_bytes": 42313260360,
+              "resident_bytes": 406421504,
+              "disk_read_bytes": 227539894272
+            },
+            {
+              "stage": "vae",
+              "seconds": 11.008134875002725,
+              "footprint_bytes": 25882777440,
+              "lifetime_peak_bytes": 42313260360,
+              "resident_bytes": 461750272,
+              "disk_read_bytes": 228341043200
+            }
+          ],
+          "compute_seconds": 569.6395954590043,
+          "native_int8_calls": 0,
+          "output_shape": [
+            4096,
+            4096,
+            3
+          ],
+          "rgb_sha256": "e7804796252fbd83215728705e36641bf20e61301935342ef899540268ba2b5f",
+          "index": 3,
+          "warmup": false,
+          "start_wall": 1794403584.430155,
+          "end_wall": 1794404155.020191,
+          "seconds": 570.5921965829984,
+          "wall_seconds": 570.5900359153748,
+          "process_lifetime": {
+            "footprint_bytes": 26654873992,
+            "lifetime_peak_bytes": 42313260360,
+            "resident_bytes": 1240793088,
+            "disk_read_bytes": 228347731968
+          },
+          "sampled_tree_peak_bytes": 40208046328,
+          "sampled_largest_process_peak_bytes": 40198477640,
+          "timing_valid": true
+        }
+      ]
+    },
+    {
+      "backend": "comfy-native",
+      "size": 4096,
+      "seed": 42,
+      "steps": 6,
+      "prompt": "A close-up product photograph of one bright yellow enamel teapot with a black arched handle and a round lid, standing on a blue wooden table. One small white ceramic cup sits immediately to its right. The background is plain warm beige. Soft morning window light falls from the left. Realistic enamel, clear silhouettes, no text.",
+      "noise_sha256": "4d6d8897ef57f3dad7e90541a4d9311ac1ce42b7b4fc8ed7d90ef11f38144041",
+      "sigmas": [
+        1.0,
+        0.9675236940383911,
+        0.8875485062599182,
+        0.75,
+        0.5327739119529724,
+        0.23200887441635132,
+        0.0
+      ],
+      "stock_simple_sigmas": [
+        1.0,
+        0.9676535725593567,
+        0.8877084255218506,
+        0.75,
+        0.5336428284645081,
+        0.23261038959026337,
+        0.0
+      ],
+      "tokens": {
+        "qwen3vl_32b": [
+          [
+            [
+              32,
+              1.0
+            ],
+            [
+              3265,
+              1.0
+            ],
+            [
+              5239,
+              1.0
+            ],
+            [
+              1985,
+              1.0
+            ],
+            [
+              10300,
+              1.0
+            ],
+            [
+              315,
+              1.0
+            ],
+            [
+              825,
+              1.0
+            ],
+            [
+              9906,
+              1.0
+            ],
+            [
+              13753,
+              1.0
+            ],
+            [
+              91748,
+              1.0
+            ],
+            [
+              1013,
+              1.0
+            ],
+            [
+              89901,
+              1.0
+            ],
+            [
+              448,
+              1.0
+            ],
+            [
+              264,
+              1.0
+            ],
+            [
+              3691,
+              1.0
+            ],
+            [
+              796,
+              1.0
+            ],
+            [
+              2397,
+              1.0
+            ],
+            [
+              3705,
+              1.0
+            ],
+            [
+              323,
+              1.0
+            ],
+            [
+              264,
+              1.0
+            ],
+            [
+              4778,
+              1.0
+            ],
+            [
+              26334,
+              1.0
+            ],
+            [
+              11,
+              1.0
+            ],
+            [
+              11259,
+              1.0
+            ],
+            [
+              389,
+              1.0
+            ],
+            [
+              264,
+              1.0
+            ],
+            [
+              6303,
+              1.0
+            ],
+            [
+              22360,
+              1.0
+            ],
+            [
+              1965,
+              1.0
+            ],
+            [
+              13,
+              1.0
+            ],
+            [
+              3776,
+              1.0
+            ],
+            [
+              2613,
+              1.0
+            ],
+            [
+              4158,
+              1.0
+            ],
+            [
+              42024,
+              1.0
+            ],
+            [
+              10525,
+              1.0
+            ],
+            [
+              23011,
+              1.0
+            ],
+            [
+              7069,
+              1.0
+            ],
+            [
+              311,
+              1.0
+            ],
+            [
+              1181,
+              1.0
+            ],
+            [
+              1290,
+              1.0
+            ],
+            [
+              13,
+              1.0
+            ],
+            [
+              576,
+              1.0
+            ],
+            [
+              4004,
+              1.0
+            ],
+            [
+              374,
+              1.0
+            ],
+            [
+              14396,
+              1.0
+            ],
+            [
+              8205,
+              1.0
+            ],
+            [
+              78265,
+              1.0
+            ],
+            [
+              13,
+              1.0
+            ],
+            [
+              24079,
+              1.0
+            ],
+            [
+              6556,
+              1.0
+            ],
+            [
+              3241,
+              1.0
+            ],
+            [
+              3100,
+              1.0
+            ],
+            [
+              17066,
+              1.0
+            ],
+            [
+              504,
+              1.0
+            ],
+            [
+              279,
+              1.0
+            ],
+            [
+              2115,
+              1.0
+            ],
+            [
+              13,
+              1.0
+            ],
+            [
+              8800,
+              1.0
+            ],
+            [
+              4532,
+              1.0
+            ],
+            [
+              91748,
+              1.0
+            ],
+            [
+              11,
+              1.0
+            ],
+            [
+              2797,
+              1.0
+            ],
+            [
+              5437,
+              1.0
+            ],
+            [
+              18166,
+              1.0
+            ],
+            [
+              45903,
+              1.0
+            ],
+            [
+              11,
+              1.0
+            ],
+            [
+              902,
+              1.0
+            ],
+            [
+              1467,
+              1.0
+            ],
+            [
+              13,
+              1.0
+            ]
+          ]
+        ]
+      },
+      "torch_version": "2.15.0",
+      "initialization_seconds": 4.619379374998971,
+      "stock_supports_int8_compute": false,
+      "effective_supports_int8_compute": true,
+      "runs": [
+        {
+          "stages": [
+            {
+              "stage": "text",
+              "seconds": 38.74169808300212,
+              "embedding_shape": [
+                1,
+                69,
+                5120
+              ],
+              "footprint_bytes": 5873464672,
+              "lifetime_peak_bytes": 5949098632,
+              "resident_bytes": 27679522816,
+              "disk_read_bytes": 26720268288
+            },
+            {
+              "stage": "dit",
+              "seconds": 1047.9175958330015,
+              "footprint_bytes": 39472766232,
+              "lifetime_peak_bytes": 39605362016,
+              "resident_bytes": 228507648,
+              "disk_read_bytes": 79160766464
+            },
+            {
+              "stage": "vae",
+              "seconds": 12.847066208996694,
+              "footprint_bytes": 26459576928,
+              "lifetime_peak_bytes": 39605362016,
+              "resident_bytes": 309149696,
+              "disk_read_bytes": 80389181440
+            }
+          ],
+          "compute_seconds": 1099.5105476669996,
+          "native_int8_calls": 1200,
+          "output_shape": [
+            4096,
+            4096,
+            3
+          ],
+          "rgb_sha256": "14451846c51afa291855bb98fb8e1cb94869d7782e59dbbdf0d970e3193a3277",
+          "index": 0,
+          "warmup": true,
+          "start_wall": 1794405425.678242,
+          "end_wall": 1794406526.130086,
+          "seconds": 1100.4774990409933,
+          "wall_seconds": 1100.4518439769745,
+          "process_lifetime": {
+            "footprint_bytes": 27085757360,
+            "lifetime_peak_bytes": 39605362016,
+            "resident_bytes": 1086914560,
+            "disk_read_bytes": 80398385152
+          },
+          "sampled_tree_peak_bytes": 39614471952,
+          "sampled_largest_process_peak_bytes": 39604903264,
+          "timing_valid": true
+        },
+        {
+          "stages": [
+            {
+              "stage": "text",
+              "seconds": 40.598151582991704,
+              "embedding_shape": [
+                1,
+                69,
+                5120
+              ],
+              "footprint_bytes": 28025642672,
+              "lifetime_peak_bytes": 39605362016,
+              "resident_bytes": 11420057600,
+              "disk_read_bytes": 104842653696
+            },
+            {
+              "stage": "dit",
+              "seconds": 1075.1148361250089,
+              "footprint_bytes": 37303637832,
+              "lifetime_peak_bytes": 39605362016,
+              "resident_bytes": 764018688,
+              "disk_read_bytes": 164203659264
+            },
+            {
+              "stage": "vae",
+              "seconds": 14.281683749999502,
+              "footprint_bytes": 25885661000,
+              "lifetime_peak_bytes": 39605362016,
+              "resident_bytes": 838631424,
+              "disk_read_bytes": 165662580736
+            }
+          ],
+          "compute_seconds": 1129.9958591250033,
+          "native_int8_calls": 1200,
+          "output_shape": [
+            4096,
+            4096,
+            3
+          ],
+          "rgb_sha256": "cf79b8c036fd99bde054bc95a348eb2e4153aa375b79efd5f2d53acccdb8e236",
+          "index": 1,
+          "warmup": false,
+          "start_wall": 1794406526.13369,
+          "end_wall": 1794407657.082005,
+          "seconds": 1130.9497188329988,
+          "wall_seconds": 1130.9483149051666,
+          "process_lifetime": {
+            "footprint_bytes": 26655316360,
+            "lifetime_peak_bytes": 39605362016,
+            "resident_bytes": 1617575936,
+            "disk_read_bytes": 165669818368
+          },
+          "sampled_tree_peak_bytes": 37367240952,
+          "sampled_largest_process_peak_bytes": 37357819720,
+          "timing_valid": true
+        },
+        {
+          "stages": [
+            {
+              "stage": "text",
+              "seconds": 41.589503000010154,
+              "embedding_shape": [
+                1,
+                69,
+                5120
+              ],
+              "footprint_bytes": 27652496544,
+              "lifetime_peak_bytes": 39605362016,
+              "resident_bytes": 9706176512,
+              "disk_read_bytes": 190117953536
+            },
+            {
+              "stage": "dit",
+              "seconds": 1082.4000654999982,
+              "footprint_bytes": 35393787720,
+              "lifetime_peak_bytes": 39605362016,
+              "resident_bytes": 1181941760,
+              "disk_read_bytes": 252020412416
+            },
+            {
+              "stage": "vae",
+              "seconds": 9.31275633299083,
+              "footprint_bytes": 25890461536,
+              "lifetime_peak_bytes": 39605362016,
+              "resident_bytes": 1253015552,
+              "disk_read_bytes": 252286246912
+            }
+          ],
+          "compute_seconds": 1133.3074580000102,
+          "native_int8_calls": 1200,
+          "output_shape": [
+            4096,
+            4096,
+            3
+          ],
+          "rgb_sha256": "ecf102d4b7e24defcb902af6497cbb825f12599d29217abc9f8f40ff5e6dd1a9",
+          "index": 2,
+          "warmup": false,
+          "start_wall": 1794407657.085106,
+          "end_wall": 1794408791.351021,
+          "seconds": 1134.275114834003,
+          "wall_seconds": 1134.2659151554108,
+          "process_lifetime": {
+            "footprint_bytes": 26629659040,
+            "lifetime_peak_bytes": 39605362016,
+            "resident_bytes": 2031779840,
+            "disk_read_bytes": 252293046272
+          },
+          "sampled_tree_peak_bytes": 35448494328,
+          "sampled_largest_process_peak_bytes": 35439073096,
+          "timing_valid": true
+        },
+        {
+          "stages": [
+            {
+              "stage": "text",
+              "seconds": 42.14918675000081,
+              "embedding_shape": [
+                1,
+                69,
+                5120
+              ],
+              "footprint_bytes": 27652562128,
+              "lifetime_peak_bytes": 39605362016,
+              "resident_bytes": 8855289856,
+              "disk_read_bytes": 276736708608
+            },
+            {
+              "stage": "dit",
+              "seconds": 1117.6677938749926,
+              "footprint_bytes": 37306193760,
+              "lifetime_peak_bytes": 39605362016,
+              "resident_bytes": 531415040,
+              "disk_read_bytes": 359793287168
+            },
+            {
+              "stage": "vae",
+              "seconds": 19.709100500011118,
+              "footprint_bytes": 25880434552,
+              "lifetime_peak_bytes": 39605362016,
+              "resident_bytes": 587776000,
+              "disk_read_bytes": 363271913472
+            }
+          ],
+          "compute_seconds": 1179.5286569589953,
+          "native_int8_calls": 1200,
+          "output_shape": [
+            4096,
+            4096,
+            3
+          ],
+          "rgb_sha256": "8d0b54871d765631a91712b48ea472266752fb707b8b68089abef541700d54c0",
+          "index": 3,
+          "warmup": false,
+          "start_wall": 1794408791.3541179,
+          "end_wall": 1794409971.9562292,
+          "seconds": 1180.5452110000042,
+          "wall_seconds": 1180.602111339569,
+          "process_lifetime": {
+            "footprint_bytes": 26606066080,
+            "lifetime_peak_bytes": 39605362016,
+            "resident_bytes": 1365426176,
+            "disk_read_bytes": 363276017664
+          },
+          "sampled_tree_peak_bytes": 37370075408,
+          "sampled_largest_process_peak_bytes": 37360654176,
+          "timing_valid": true
+        }
+      ]
+    },
+    {
+      "backend": "mlx-stream",
+      "size": 4096,
+      "seed": 42,
+      "steps": 6,
+      "prompt": "A close-up product photograph of one bright yellow enamel teapot with a black arched handle and a round lid, standing on a blue wooden table. One small white ceramic cup sits immediately to its right. The background is plain warm beige. Soft morning window light falls from the left. Realistic enamel, clear silhouettes, no text.",
+      "noise_sha256": "4d6d8897ef57f3dad7e90541a4d9311ac1ce42b7b4fc8ed7d90ef11f38144041",
+      "sigmas": [
+        1.0,
+        0.9675236940383911,
+        0.8875485062599182,
+        0.75,
+        0.5327739119529724,
+        0.23200887441635132,
+        0.0
+      ],
+      "initialization_seconds": 0.11030312499497086,
+      "runs": [
+        {
+          "stages": [
+            {
+              "stage": "text",
+              "seconds": 4.921346499999345,
+              "wall_seconds": 4.921328783035278,
+              "native_int8_calls": 350,
+              "backend": "w8a8",
+              "mlx_peak_bytes": 559806908,
+              "footprint_bytes": 743376072,
+              "lifetime_peak_bytes": 1181566560,
+              "resident_bytes": 597540864,
+              "disk_read_bytes": 24085565440,
+              "embedding_shape": [
+                69,
+                5120
+              ],
+              "embedding_dtype": "mlx.core.bfloat16"
+            },
+            {
+              "stage": "dit",
+              "seconds": 298.7580772500005,
+              "wall_seconds": 298.75696325302124,
+              "native_int8_calls": 1200,
+              "backend": "w8a8",
+              "mlx_peak_bytes": 6129781696,
+              "footprint_bytes": 4854973760,
+              "lifetime_peak_bytes": 6925600496,
+              "resident_bytes": 789086208,
+              "disk_read_bytes": 21300391936
+            },
+            {
+              "stage": "vae",
+              "seconds": 7.918111499995575,
+              "wall_seconds": 7.918081998825073,
+              "native_int8_calls": 0,
+              "backend": "w8a8",
+              "mlx_peak_bytes": 889498518,
+              "footprint_bytes": 1140114896,
+              "lifetime_peak_bytes": 1942702000,
+              "resident_bytes": 1026424832,
+              "disk_read_bytes": 810704896
+            }
+          ],
+          "compute_seconds": 311.5975352499954,
+          "output_shape": [
+            4096,
+            4096,
+            3
+          ],
+          "rgb_sha256": "9f4c631ece00bab9e44b114483f18e0afa6e1b4b22dac71c7aaa748510171cb3",
+          "index": 0,
+          "warmup": true,
+          "start_wall": 1794404157.186916,
+          "end_wall": 1794404469.283123,
+          "seconds": 312.0973728329991,
+          "wall_seconds": 312.09620690345764,
+          "process_lifetime": {
+            "footprint_bytes": 269288096,
+            "lifetime_peak_bytes": 269288096,
+            "resident_bytes": 313032704,
+            "disk_read_bytes": 26480640
+          },
+          "sampled_tree_peak_bytes": 6857263360,
+          "sampled_largest_process_peak_bytes": 6782584560,
+          "timing_valid": true
+        },
+        {
+          "stages": [
+            {
+              "stage": "text",
+              "seconds": 4.724210667001898,
+              "wall_seconds": 4.724193096160889,
+              "native_int8_calls": 350,
+              "backend": "w8a8",
+              "mlx_peak_bytes": 559806908,
+              "footprint_bytes": 873284976,
+              "lifetime_peak_bytes": 1316603608,
+              "resident_bytes": 762249216,
+              "disk_read_bytes": 21817708544,
+              "embedding_shape": [
+                69,
+                5120
+              ],
+              "embedding_dtype": "mlx.core.bfloat16"
+            },
+            {
+              "stage": "dit",
+              "seconds": 303.4355061669994,
+              "wall_seconds": 303.43436002731323,
+              "native_int8_calls": 1200,
+              "backend": "w8a8",
+              "mlx_peak_bytes": 6129781696,
+              "footprint_bytes": 2672297352,
+              "lifetime_peak_bytes": 6902974216,
+              "resident_bytes": 787382272,
+              "disk_read_bytes": 21288366080
+            },
+            {
+              "stage": "vae",
+              "seconds": 7.94483754200337,
+              "wall_seconds": 7.9448082447052,
+              "native_int8_calls": 0,
+              "backend": "w8a8",
+              "mlx_peak_bytes": 889498518,
+              "footprint_bytes": 1139410336,
+              "lifetime_peak_bytes": 1944127384,
+              "resident_bytes": 1024131072,
+              "disk_read_bytes": 809771008
+            }
+          ],
+          "compute_seconds": 316.10455437600467,
+          "output_shape": [
+            4096,
+            4096,
+            3
+          ],
+          "rgb_sha256": "9f4c631ece00bab9e44b114483f18e0afa6e1b4b22dac71c7aaa748510171cb3",
+          "index": 1,
+          "warmup": false,
+          "start_wall": 1794404469.283909,
+          "end_wall": 1794404785.86724,
+          "seconds": 316.5845279580026,
+          "wall_seconds": 316.5833308696747,
+          "process_lifetime": {
+            "footprint_bytes": 210535048,
+            "lifetime_peak_bytes": 269304480,
+            "resident_bytes": 307249152,
+            "disk_read_bytes": 26480640
+          },
+          "sampled_tree_peak_bytes": 7051217320,
+          "sampled_largest_process_peak_bytes": 6782240520,
+          "timing_valid": true
+        },
+        {
+          "stages": [
+            {
+              "stage": "text",
+              "seconds": 4.962980250005785,
+              "wall_seconds": 4.962961912155151,
+              "native_int8_calls": 350,
+              "backend": "w8a8",
+              "mlx_peak_bytes": 559806908,
+              "footprint_bytes": 740410688,
+              "lifetime_peak_bytes": 1187169840,
+              "resident_bytes": 662110208,
+              "disk_read_bytes": 23504355328,
+              "embedding_shape": [
+                69,
+                5120
+              ],
+              "embedding_dtype": "mlx.core.bfloat16"
+            },
+            {
+              "stage": "dit",
+              "seconds": 303.87071241599915,
+              "wall_seconds": 303.85043120384216,
+              "native_int8_calls": 1200,
+              "backend": "w8a8",
+              "mlx_peak_bytes": 6129781696,
+              "footprint_bytes": 2496152920,
+              "lifetime_peak_bytes": 7181797104,
+              "resident_bytes": 788774912,
+              "disk_read_bytes": 21197201408
+            },
+            {
+              "stage": "vae",
+              "seconds": 7.9720334589947015,
+              "wall_seconds": 7.9718708992004395,
+              "native_int8_calls": 0,
+              "backend": "w8a8",
+              "mlx_peak_bytes": 893422320,
+              "footprint_bytes": 1141556664,
+              "lifetime_peak_bytes": 1944209376,
+              "resident_bytes": 1027866624,
+              "disk_read_bytes": 809627648
+            }
+          ],
+          "compute_seconds": 316.80572612499964,
+          "output_shape": [
+            4096,
+            4096,
+            3
+          ],
+          "rgb_sha256": "9f4c631ece00bab9e44b114483f18e0afa6e1b4b22dac71c7aaa748510171cb3",
+          "index": 2,
+          "warmup": false,
+          "start_wall": 1794404785.867857,
+          "end_wall": 1794405103.133524,
+          "seconds": 317.2861390409962,
+          "wall_seconds": 317.2656669616699,
+          "process_lifetime": {
+            "footprint_bytes": 210551432,
+            "lifetime_peak_bytes": 269304480,
+            "resident_bytes": 307281920,
+            "disk_read_bytes": 26480640
+          },
+          "sampled_tree_peak_bytes": 6992677216,
+          "sampled_largest_process_peak_bytes": 6819710704,
+          "timing_valid": true
+        },
+        {
+          "stages": [
+            {
+              "stage": "text",
+              "seconds": 4.9252889579947805,
+              "wall_seconds": 4.9252119064331055,
+              "native_int8_calls": 350,
+              "backend": "w8a8",
+              "mlx_peak_bytes": 559806908,
+              "footprint_bytes": 743097640,
+              "lifetime_peak_bytes": 1189021280,
+              "resident_bytes": 661749760,
+              "disk_read_bytes": 23081250816,
+              "embedding_shape": [
+                69,
+                5120
+              ],
+              "embedding_dtype": "mlx.core.bfloat16"
+            },
+            {
+              "stage": "dit",
+              "seconds": 304.37532516600913,
+              "wall_seconds": 304.37315917015076,
+              "native_int8_calls": 1200,
+              "backend": "w8a8",
+              "mlx_peak_bytes": 6129781696,
+              "footprint_bytes": 4855006552,
+              "lifetime_peak_bytes": 7099418280,
+              "resident_bytes": 789102592,
+              "disk_read_bytes": 21305339904
+            },
+            {
+              "stage": "vae",
+              "seconds": 7.9605828750063665,
+              "wall_seconds": 7.960530042648315,
+              "native_int8_calls": 0,
+              "backend": "w8a8",
+              "mlx_peak_bytes": 889498518,
+              "footprint_bytes": 1142162920,
+              "lifetime_peak_bytes": 1944799200,
+              "resident_bytes": 1028440064,
+              "disk_read_bytes": 816975872
+            }
+          ],
+          "compute_seconds": 317.2611969990103,
+          "output_shape": [
+            4096,
+            4096,
+            3
+          ],
+          "rgb_sha256": "9f4c631ece00bab9e44b114483f18e0afa6e1b4b22dac71c7aaa748510171cb3",
+          "index": 3,
+          "warmup": false,
+          "start_wall": 1794405103.1340868,
+          "end_wall": 1794405420.89283,
+          "seconds": 317.76104604199645,
+          "wall_seconds": 317.75874304771423,
+          "process_lifetime": {
+            "footprint_bytes": 210567816,
+            "lifetime_peak_bytes": 269304480,
+            "resident_bytes": 307298304,
+            "disk_read_bytes": 26480640
+          },
+          "sampled_tree_peak_bytes": 7028164960,
+          "sampled_largest_process_peak_bytes": 6817597144,
+          "timing_valid": true
+        }
+      ]
+    }
+  ]
+}

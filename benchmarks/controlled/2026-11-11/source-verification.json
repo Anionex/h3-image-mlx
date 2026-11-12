@@ -1,0 +1,19 @@
+{
+  "status": "passed",
+  "archives": [
+    {
+      "archive": "comfyui.tar.gz",
+      "sha256": "35fb3b19af647887c0bafb656578591a27bf3a0c2c976c8a6b56c6efaa67f2f7",
+      "files_checked": 1346,
+      "changed_files": []
+    },
+    {
+      "archive": "mps-int8.tar.gz",
+      "sha256": "512672c2b55dfac96cefbd8ec28c458c67f775dec9d056b3fad9301160f3a4d1",
+      "files_checked": 14,
+      "changed_files": []
+    }
+  ],
+  "mlx_commit": "64df997cd00a698302b1303f51028eee179487fe",
+  "mlx_worktree_clean": true
+}

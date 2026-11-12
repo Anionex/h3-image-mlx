@@ -18,7 +18,7 @@
 
 [Quick start](#generate-your-first-image) · [Image editing](#edit-with-reference-images) · [How it works](#how-it-works) · [Benchmarks](#benchmark-results)
 
-Generate and edit images on an Apple Silicon Mac with MiniMax H3 Image. Optimized for fast inference, with 4K generation using as little as 7 GB of peak inference-process memory. Available through a CLI and Python API, ready to use out of the box.
+Generate and edit images on an Apple Silicon Mac with MiniMax H3 Image. Optimized for fast inference, with 4K generation using around 7 GB of peak inference-process memory. Available through a CLI and Python API, ready to use out of the box.
 
 If you find this repository useful, feel free to 🌟 & fork~
 
@@ -28,24 +28,37 @@ If you find this repository useful, feel free to 🌟 & fork~
 - **W8A8 quantization and Metal acceleration.** Reduce weight memory usage with a portable MLX inference path, plus W8A8 Metal TensorOps acceleration on supported chips. Compatible with M1–M4.
 - **Staged inference with on-demand block loading.** Each stage runs in a separate process to release its memory on completion. Denoiser weights can be read one block at a time, greatly reducing peak memory usage and leaving more room for other apps.
 
-For reference, in our 1024×1024 generation benchmark, streaming reduced the peak inference-process footprint from **21.07 GB to 2.67 GB**, with median runtime increasing from **22.31 s to 30.90 s**. [Benchmark conditions and results](#benchmark-results)
+For reference, in our 1024×1024 generation benchmark, streaming reduced the peak inference-process footprint from **21.16 GB to 2.53 GB**, with median runtime increasing from **19.90 s to 28.82 s**. [Benchmark conditions and results](#benchmark-results)
 
 ### Benchmark results
 
+#### Same-machine controlled comparison
+
+The same M5 Pro MacBook (48 GB), weight files, teapot prompt, initial noise and six-step sigma grid. Each group has one warmup and three measured generations.
+
+| Resolution | MLX DiT mode | ComfyUI time (s) | MLX time (s) | Speed ratio | ComfyUI peak (GB) | MLX peak (GB) |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| 1024×1024 | `resident` | 87.15 | 19.90 | **4.38×** | 31.29 | 21.16 |
+| 1024×1024 | `stream` | 87.15 | **28.82** | **3.02×** | 31.29 | **2.53** |
+| 2048×2048 | `resident` | 134.17 | 57.43 | **2.34×** | 38.21 | 22.27 |
+| 2048×2048 | `stream` | 134.17 | **67.06** | **2.00×** | 38.21 | **3.48** |
+| 4096×4096 | `stream` | 570.59 | **317.29** | **1.80×** | 42.31 | **7.18** |
+
+<sub>Time is the median complete generation request. Memory is the kernel-recorded single-process physical-footprint peak, including warmup, in decimal GB. Speed ratio = local ComfyUI time ÷ MLX time.</sub>
+
+This compares complete pipelines: ComfyUI's default text encoder runs on CPU; MLX uses GPU. The main table reproduces the community configuration. The additional native INT8 DiT path, pinned versions and measurement method are in the [full benchmark records](BENCHMARKS.md#controlled-test-setup), with [source JSON](benchmarks/controlled/2026-11-11/summary.json) in this repository.
+
+#### Supplementary community measurements
+
 | Device / memory | Pipeline | DiT mode | Resolution | Time (s) | Process peak (GB) | Source |
 | --- | --- | --- | --- | ---: | ---: | --- |
-| <sub>M5 Pro MacBook / 48 GB</sub> | H3 Image MLX | `resident` | 512×512 | 16.50 | 20.56 | [Anionex](benchmarks/raw/teapot-512.json) |
-| <sub>M5 Pro MacBook / 48 GB</sub> | H3 Image MLX | `resident` | 1024×1024 | 22.31 | 21.07 | [Anionex](benchmarks/raw/teapot-1024-ab.json) |
-| <sub>M5 Pro MacBook / 48 GB</sub> | H3 Image MLX | `stream` | 1024×1024 | **30.90** | **2.67** | [Anionex](benchmarks/raw/teapot-1024-ab.json) |
-| <sub>M5 Pro MacBook / 48 GB</sub> | H3 Image MLX | `resident` | 2048×2048 | 65.54 | 22.04 | [Anionex](benchmarks/raw/teapot-2048.json) |
-| <sub>M5 Pro MacBook / 48 GB</sub> | H3 Image MLX | `stream` | 4096×4096 | **356.84** | **6.86** | [Anionex](benchmarks/raw/teapot-4096.json) |
 | <sub>M5 MacBook Air / 16 GB</sub> | H3 Image MLX | `stream` | 1024×1024 | **70.51** | **2.48** | [arielfikru](benchmarks/raw/teapot-1024-m5-air-16gb.json) |
 | <sub>M5 MacBook Air / 16 GB</sub> | H3 Image MLX | `stream` | 2048×2048 | **240.78** | **2.78** | [arielfikru](benchmarks/raw/teapot-2048-m5-air-16gb.json) |
 | <sub>M5 Pro Mac mini / 64 GB</sub> | ComfyUI + MPS INT8 | — | 1024×1024 | 89.55 | 31.42 | [pratikgx](https://huggingface.co/datasets/pratikgx/minimax-h3-image-m5-pro-mac-mini-bench) |
 | <sub>M5 Pro Mac mini / 64 GB</sub> | ComfyUI + MPS INT8 | — | 2048×2048 | 164.90 | 36.21 | [pratikgx](https://huggingface.co/datasets/pratikgx/minimax-h3-image-m5-pro-mac-mini-bench) |
 | <sub>M5 Pro Mac mini / 64 GB</sub> | ComfyUI + MPS INT8 | — | 4096×4096 | 547.31 | 48.78 | [pratikgx](https://huggingface.co/datasets/pratikgx/minimax-h3-image-m5-pro-mac-mini-bench) |
 
-<sub>Time is a three-run median or a single run; memory is peak process physical footprint in decimal GB. ComfyUI uses the ComfyUI-MPS-INT8 extension. See the [full records](BENCHMARKS.md) for run counts, environments and measurement methods.</sub>
+<sub>Independent measurements on different machines, retaining contributors' original results. Run counts and measurement methods are in the [full records](BENCHMARKS.md#supplementary-earlier-and-community-results), alongside the earlier M5 Pro runs.</sub>
 
 ### Rainy-night watchmaker
 
