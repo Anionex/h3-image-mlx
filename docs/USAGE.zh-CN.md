@@ -24,7 +24,7 @@ h3-image-mlx generate --models ./models --output edit.png \
   --prompt 'Edit <Picture 1>. Replace the white cup with the bird from <Picture 2>. Keep the teapot and table.'
 ```
 
-参考图按顺序编号：`<Picture 1>` 对应第一个 `--reference`，以此类推。最多传入 16 张 PNG、JPEG 或 WebP 图片。输出始终为 RGB PNG。当前版本固定使用六步采样，没有步数或 LoRA 参数。
+参考图按顺序编号：`<Picture 1>` 对应第一个 `--reference`，以此类推。最多传入 16 张 PNG、JPEG 或 WebP 图片。输出始终为 RGB PNG。默认使用六步采样；GitHub `main` 另提供通过环境变量开启的[实验性少步数 LoRA](PERFORMANCE.zh-CN.md#实验性少步数-lora)，PyPI `0.1.0a2` 尚未包含。
 
 ## 命令行参数
 

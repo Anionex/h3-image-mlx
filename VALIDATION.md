@@ -48,3 +48,14 @@ The installed Python API completed four serial 512×512 checks using W8A8, strea
 - A single-reference edit with both streaming switches enabled.
 
 The first three outputs were pixel-identical (decoded RGB SHA-256: `e36333e6319536ba10bcdd459fd91e0f9b3d6a9485bac911cc48610e2d72e906`). Profiling recorded six denoising steps and nonzero weight reads. The reference edit completed text, reference encoding, DiT and VAE stages and returned a 512×512 RGB image. These were functional release checks; the performance comparisons are documented separately in the [performance guide](docs/PERFORMANCE.md#reported-results).
+
+## Experimental LoRA integration
+
+PR #3 was tested against the 0.1.0a2 baseline on 2026-11-12, using Python 3.13.13, MLX 0.32.4, M5 Pro (48 GB) and the same local model files. All nine existing tests passed, including real-weight projection checks. With `H3_LORA`, `H3_STEPS`, `H3_SHIFT` and `H3_DIT` unset, four serial 512×512 runs covered default generation, asynchronous/prefetched generation, embedding-cache reuse and a single-reference edit. Every output matched its pre-merge decoded RGB hash:
+
+| Cases | RGB SHA-256 |
+| --- | --- |
+| Default, accelerated and cache-hit generation | `e36333e6319536ba10bcdd459fd91e0f9b3d6a9485bac911cc48610e2d72e906` |
+| Single-reference editing | `9ce85143b531f5c520ac556bd2b8c1503308a070abdcd88fc9895704a07089d5` |
+
+The cache-hit run skipped the text stage and profiling still recorded six steps. These checks verify the existing path with experimental controls disabled. Active-LoRA measurements and their coverage come from the contributor and are documented in the [experimental guide](docs/PERFORMANCE.md#experimental-few-step-lora).

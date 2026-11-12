@@ -55,6 +55,77 @@ H3_EMBED_CACHE=./.h3-embedding-cache h3-image-mlx generate \
 
 在生成命令前设置 `H3_PROFILE=./dit-profile.json`。文件记录准备阶段和每步耗时、读取字节数与时间、转换时间、预取等待时间、计算等待时间及 MLX 分配器峰值。重叠阶段的耗时不能直接相加；分配器峰值与进程物理占用是不同指标。需要保留多轮结果时，使用不同文件名。
 
+## 实验性少步数 LoRA
+
+该功能已进入 GitHub `main`，PyPI `0.1.0a2` 尚未包含。所有实验设置默认关闭；不设置时，生图和编辑仍使用原来的六步链路。体验前安装源码版：
+
+```bash
+python -m pip install --upgrade 'git+https://github.com/Anionex/h3-image-mlx.git'
+```
+
+### 直接加载 LoRA
+
+从 [akhaliq/minimax-h3-image-pdmd-2step](https://huggingface.co/akhaliq/minimax-h3-image-pdmd-2step/tree/main) 下载 `minimax_h3_pdmd_2nfe_comfyui.safetensors`，放到 `./loras/`。这是 [PR #3](https://github.com/Anionex/h3-image-mlx/pull/3) 验证过的 ComfyUI 格式转换版，上游原始文件的张量命名不同。LoRA 需要单独下载，`h3-image-mlx fetch` 不会下载它。
+
+```bash
+env -u H3_DIT H3_LORA=./loras/minimax_h3_pdmd_2nfe_comfyui.safetensors \
+  H3_STEPS=2 H3_SHIFT=12 H3_ASYNC=1 H3_PREFETCH=1 \
+  h3-image-mlx generate --models ./models --dit-mode stream \
+  --width 1024 --height 1024 --seed 42 --output teapot-2step.png \
+  --prompt 'A yellow enamel teapot and a white cup on a blue wooden table.'
+```
+
+把 `H3_STEPS` 改为 `3`，并更换输出文件名，即可对比三步效果。[上游 pDMD LoRA](https://huggingface.co/pdmd2026/pdmd_2NFE_lora) 按两步训练，三步是贡献者测试过的推理设置。在他的茶壶示例中，两步在平坦区域留下细密纹理，三步大幅缓解。即使 seed 相同，两者的构图和细节也可能与原版六步不同。
+
+| 设置 | 手动设置后的作用 |
+| --- | --- |
+| `H3_LORA=<文件>` | 在量化投影旁加载一个 ComfyUI 格式 LoRA |
+| `H3_STEPS=2` 或 `3` | 使用偏移后的少步数采样时间表，需搭配对应蒸馏 LoRA 或预合并权重 |
+| `H3_SHIFT=12` | 采样时间表偏移；启用少步数但未指定时使用 12 |
+| `H3_DIT=<文件>` | 改用张量布局相同的另一份 DiT 权重 |
+
+命令行和 Python API 读取相同的环境变量。运行 `unset H3_LORA H3_STEPS H3_SHIFT H3_DIT` 可恢复原版权重和六步采样；独立的 `H3_ASYNC`、`H3_PREFETCH` 加速开关可以保留。
+
+### 预合并为 INT8 权重
+
+直接加载会在推理时增加低秩计算，不修改现有模型文件。可选的[合并脚本](../scripts/merge_lora_int8.py) 则在 ConvRot 量化前，把 LoRA 加到 BF16 权重中，另存一份 INT8 权重。在本仓库源码目录中、安装好软件包依赖后运行：
+
+```bash
+python scripts/merge_lora_int8.py \
+  --base ./models/diffusion_models/minimax_h3_image_pruned_int8_convrot.safetensors \
+  --lora ./loras/minimax_h3_pdmd_2nfe_comfyui.safetensors \
+  --out ./models/diffusion_models/minimax_h3_image_pdmd_merged_int8_convrot.safetensors
+```
+
+脚本使用 macOS APFS 克隆，通过 HTTP 读取约 40 GB 的上游 BF16 张量，不保存完整 BF16 下载。克隆逐步改写时会消耗空间，应为新增 INT8 权重预留约 21 GB。可用 `--rev` 固定上游 Hugging Face 版本。输出必须使用独立路径，不能指向原版权重；只在使用相同原版权重、LoRA 和上游版本续跑时复用已有输出。进度保存在输出旁的 `.progress.json` 中，看到 `DONE` 后再用于推理；`--limit` 是开发选项，会留下未完成的权重。
+
+```bash
+env -u H3_LORA \
+  H3_DIT=./models/diffusion_models/minimax_h3_image_pdmd_merged_int8_convrot.safetensors \
+  H3_STEPS=3 H3_SHIFT=12 H3_ASYNC=1 H3_PREFETCH=1 \
+  h3-image-mlx generate --models ./models --dit-mode stream \
+  --output teapot-merged.png \
+  --prompt 'A yellow enamel teapot and a white cup on a blue wooden table.'
+```
+
+使用预合并权重时不要再加载同一个 `H3_LORA`，否则会叠加两次。重新量化会让预合并和直接加载的结果存在数值差异。`verify --models` 仍只校验原版固定模型文件，不校验 `H3_DIT` 指向的替代权重。
+
+### 贡献者实测与覆盖范围
+
+[PR #3](https://github.com/Anionex/h3-image-mlx/pull/3) 提供了 M5 MacBook Air 16 GB 上的 1024×1024 茶壶测试：seed 42、W8A8、分块模式，同时开启两个加速开关。
+
+| 模式 | 完整生图耗时 |
+| --- | ---: |
+| 原版六步 | 34.8–43.6 秒 |
+| 直接加载 LoRA，两步 | 23.4 秒 |
+| 直接加载 LoRA，三步 | 25.7–28.6 秒 |
+| 直接加载 LoRA，三步，命中编码缓存 | 18.7 秒 |
+
+另一次热机且存在 swap 的交错对比中，预合并把两轮 DiT 耗时从 23.9/23.0 秒降至 20.3/18.3 秒；这与上表完整生图计时来自不同测量。实验模式尚无可对比的峰值内存数据。
+
+贡献者只测了 1024×1024 的一个提示词，其他 LoRA、带 LoRA 的参考图编辑、其他分辨率、常驻模式和通用后端仍待验证。我们另行验证了实验设置关闭时的现有生图和编辑链路，见[验收记录](../VALIDATION.md#experimental-lora-integration)。
+
+
 ## 硬件与内存
 
 | 芯片 | 默认计算后端 | 真机验证 |

@@ -24,7 +24,7 @@ h3-image-mlx generate --models ./models --output edit.png \
   --prompt 'Edit <Picture 1>. Replace the white cup with the bird from <Picture 2>. Keep the teapot and table.'
 ```
 
-References are ordered: `<Picture 1>` is the first `--reference`, and so on. Supply up to 16 PNG, JPEG or WebP files. Output is always an RGB PNG. The sampler runs six steps; this release has no step-count or LoRA option.
+References are ordered: `<Picture 1>` is the first `--reference`, and so on. Supply up to 16 PNG, JPEG or WebP files. Output is always an RGB PNG. The default sampler runs six steps. GitHub `main` also provides [experimental few-step LoRA settings](PERFORMANCE.md#experimental-few-step-lora) through environment variables; these are not included in PyPI `0.1.0a2`.
 
 ## CLI parameters
 
