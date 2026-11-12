@@ -57,10 +57,10 @@ Set `H3_PROFILE=./dit-profile.json` on a generation command. The file records se
 
 ## Experimental few-step LoRA
 
-Available on GitHub `main`; the PyPI `0.1.0a2` release does not include this feature. All experimental settings are off by default. Without them, generation and editing retain the original six-step path. Install the source version to try it:
+Available starting with `0.1.0a3` on PyPI. All experimental settings are off by default. Without them, generation and editing retain the original six-step path. Upgrade to try it:
 
 ```bash
-python -m pip install --upgrade 'git+https://github.com/Anionex/h3-image-mlx.git'
+python -m pip install --upgrade 'h3-image-mlx==0.1.0a3'
 ```
 
 ### Load a LoRA directly
@@ -88,7 +88,7 @@ The CLI and Python API read the same environment variables. To return to the ori
 
 ### Merge the LoRA into an INT8 checkpoint
 
-Direct loading adds low-rank computation at inference time without changing the existing model file. The optional [merge script](../scripts/merge_lora_int8.py) instead applies the adapter to BF16 weights before ConvRot quantization and writes a separate INT8 checkpoint. Run it from a checkout of this repository with the package dependencies installed:
+Direct loading adds low-rank computation at inference time without changing the existing model file. The optional [merge script](../scripts/merge_lora_int8.py) instead applies the adapter to BF16 weights before ConvRot quantization and writes a separate INT8 checkpoint. Run it from a checkout of this repository or the unpacked source distribution, with the package dependencies installed:
 
 ```bash
 python scripts/merge_lora_int8.py \
