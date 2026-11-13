@@ -1,5 +1,27 @@
-from .core import Weights, attention, heads, mx, norm, rope
+from .core import H256, Weights, attention, heads, mx, norm, rope
 from tokenizers import Tokenizer
+
+# P-H3-Image conditions on these hidden states of its 4B encoder (0 = embeddings, 36 = final norm output).
+PH3_STATES = (13, 19, 25, 31, 36)
+
+
+def embed(w, key, ids):
+    rows = mx.stack([w._read(key, row=i) for i in ids])
+    if rows.dtype == mx.int8:
+        # ConvRot int8 table: scale each row, then undo the grouped Hadamard rotation (H256 is its own inverse).
+        scale = mx.stack([w._read(key + "_scale", row=i) for i in ids])
+        rows = ((rows.astype(mx.float32) * scale).reshape(len(ids), -1, 256) @ H256).reshape(len(ids), -1)
+        rows = rows.astype(mx.bfloat16)
+    return rows
+
+
+def connect(w, states):
+    """P-H3-Image text connector: standardize the stacked hidden states, project, rescale, sink token first."""
+    x = mx.concatenate([s.astype(mx.float32) for s in states], axis=-1)
+    x = (x - w["text_connector.input_mean"]) / w["text_connector.input_std"]
+    x = x @ w["text_connector.proj.weight"].T
+    x = x * w["text_connector.output_std"] + w["text_connector.output_mean"]
+    return mx.concatenate([w["text_connector.sink_embedding"][None], x[1:]])
 
 
 def encode(path, tokenizer_path, prompt, refs=()):
@@ -8,15 +30,23 @@ def encode(path, tokenizer_path, prompt, refs=()):
     if not ids:
         raise ValueError("Empty prompt")
     w = Weights(path)
+    ph3 = "text_connector.proj.weight" in w.header
+    lm = "model.language_model." if ph3 else "model."
+    layers = sum(key.startswith(lm + "layers.") and key.endswith(".input_layernorm.weight") for key in w.header)
+    states = []
+    if ph3 and refs:
+        raise NotImplementedError("P-H3-Image reference images are not ported yet")
     if refs:
         from .vision import prepare_prompt
 
         x, angles, rows, deep, tags = prepare_prompt(w, tok, prompt, refs)
     else:
-        x = mx.stack([w._read("model.embed_tokens.weight", row=i) for i in ids])
+        x = embed(w, lm + "embed_tokens.weight", ids)
         tags = mx.ones((len(ids),), dtype=mx.int32)
-    for i in range(50):
-        prefix = f"model.layers.{i}."
+    for i in range(layers):
+        if ph3 and i in PH3_STATES:
+            states.append(x)
+        prefix = f"{lm}layers.{i}."
         h = norm(x, w[prefix + "input_layernorm.weight"], 1e-6)
         att = prefix + "self_attn."
 
@@ -45,5 +75,9 @@ def encode(path, tokenizer_path, prompt, refs=()):
         )
         if refs and i < len(deep):
             x = x.at[rows].add(deep[i].astype(x.dtype))
+        mx.eval(x)
+    if ph3:
+        states.append(norm(x, w[lm + "norm.weight"], 1e-6))
+        x = connect(w, states)
         mx.eval(x)
     return x, tags, w.int8_calls

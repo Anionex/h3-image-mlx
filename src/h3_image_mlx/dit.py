@@ -8,6 +8,9 @@ import time
 import numpy as np
 from .core import Weights, attention, flag, heads, mx, norm, rope, swiglu
 
+# P-H3-Image (PrunaAI) ships no sampling metadata; this is the checkpoint's own 8-step grid.
+PH3_SIGMAS = [1.0, 0.984753, 0.967905, 0.951688, 0.925372, 0.881923, 0.810083, 0.528718, 0.0]
+
 
 def qkv_attention(w, prefix, x, angles=None):
     q, k, v = [
@@ -43,12 +46,21 @@ def image_positions(h, width, cursor):
     return np.stack([np.full(h * width, cursor), yy.flatten(), xx.flatten()], axis=-1)
 
 
-def angles_for(w, ntext, grids):
+def angles_for(w, ntext, grids, audio=0):
+    """Rotary angles for the packed sequence [text | reference images | target audio | target image]."""
     text = np.zeros((ntext, 3), np.float32)
     text[:, 0] = np.arange(ntext)
     positions = [text] + [
         image_positions(h, width, ntext + i) for i, (h, width) in enumerate(grids)
     ]
+    if audio:
+        # Stereo rows, channel-major: time advances per audio latent, width is pinned to the
+        # target image's first and last column, height stays 0.
+        image = positions[-1]
+        sound = np.zeros((2 * audio, 3))
+        sound[:, 0] = np.tile(image[0, 0] + np.arange(audio), 2)
+        sound[:audio, 2], sound[audio:, 2] = image[0, 2], image[-1, 2]
+        positions.insert(-1, sound)
     pos = mx.array(np.concatenate(positions).astype(np.float32))
     return (pos[:, :, None] * w["rope.inv_freq"]).reshape(pos.shape[0], -1)
 
@@ -131,8 +143,10 @@ def denoise(
                 raise ValueError(f"BF16 requires floating-point weights; {path}: {key} is {spec['dtype']}. Check H3_DIT.")
     # H3_ASYNC: queue each block on the GPU and read the next block's weights meanwhile.
     pipelined, profile = bool(flag("H3_ASYNC")), dict(steps=[], eval_s=0.0)
-    config = json.loads(w.header["__metadata__"]["config"])["transformer"]
-    grid = sigmas = config["pdd_sigmas"]
+    meta = w.header.get("__metadata__") or {}
+    grid = sigmas = json.loads(meta["config"])["transformer"]["pdd_sigmas"] if "config" in meta else PH3_SIGMAS
+    # A checkpoint with an audio stream (P-H3-Image) is the joint model: a still image spans two audio latents.
+    audio = 2 if "audio_patch_proj.weight" in w.header else 0
     # Opt-in few-step mode: H3_LORA=<file> beside the quantized weights, H3_STEPS on a shifted uniform grid.
     if os.environ.get("H3_LORA"):
         w.lora = Weights(os.environ["H3_LORA"])
@@ -140,6 +154,9 @@ def denoise(
     if steps:
         shift = flag("H3_SHIFT") or 12.0
         sigmas = [shift * t / (1 + (shift - 1) * t) for t in (1 - k / steps for k in range(steps + 1))]
+    if os.environ.get("H3_SIGMAS"):  # explicit grid, e.g. a subset of the checkpoint's own
+        sigmas = [float(v) for v in os.environ["H3_SIGMAS"].split(",")]
+        steps = len(sigmas) - 1
     coords = curve_coordinates(w, sigmas[:-1])
     if refs:
         coords = np.concatenate([coords, curve_coordinates(w, [0.001])])
@@ -154,7 +171,7 @@ def denoise(
     rows, cols = height // 32, width // 32
     ntext = text.shape[0]
     grids = [(z.shape[1] // 2, z.shape[2] // 2) for z in refs]
-    angles = angles_for(w, ntext, [*grids, (rows, cols)])
+    angles = angles_for(w, ntext, [*grids, (rows, cols)], audio)
     fixed = [text]
     text_tags = np.asarray(tags) if tags is not None else np.ones(ntext, int)
     splits = np.r_[0, np.flatnonzero(np.diff(text_tags)) + 1, ntext]
@@ -169,6 +186,10 @@ def denoise(
         fixed.append(w.linear("video_patch_proj", r).astype(text.dtype))
         segments.append((target_start, target_start + r.shape[0], 3))
         target_start += r.shape[0]
+    audio_start = target_start
+    if audio:
+        segments.append((audio_start, audio_start + 2 * audio, 2))
+        target_start += 2 * audio
     segments.append((target_start, target_start + rows * cols, 0))
     prefix = mx.concatenate(fixed)
     mx.eval(prefix)
@@ -179,14 +200,15 @@ def denoise(
         .transpose(1, 3, 0, 2, 4)
         .reshape(rows * cols, 96)
     )
+    sound = mx.array(rng.standard_normal((2 * audio, 32), dtype=np.float32)) if audio else None
     profile["setup_s"] = time.perf_counter() - began
     last = len(sigmas) - 2
     for step, (sigma, next_sigma) in enumerate(itertools.pairwise(sigmas)):
         start = time.monotonic()
         previous = None
-        x = mx.concatenate(
-            [prefix, w.linear("video_patch_proj", patches).astype(text.dtype)]
-        )
+        streams = [w.linear("audio_patch_proj", sound)] if audio else []
+        streams.append(w.linear("video_patch_proj", patches))
+        x = mx.concatenate([prefix, *(s.astype(text.dtype) for s in streams)])
         for i, b in enumerate(blocks):
             if i < 49 or step < last:
                 w.ahead(blocks[(i + 1) % 50], keep=(b,))
@@ -211,20 +233,24 @@ def denoise(
             profile["eval_s"] += time.perf_counter() - t
         shift, scale = final_mod[step, 0]
         x = (
-            norm(x[target_start:], w["final_layer.norm.weight"]).astype(mx.float32)
+            norm(x[audio_start:], w["final_layer.norm.weight"]).astype(mx.float32)
             * (1 + scale)
             + shift
         )
-        head = w["final_layer.video_out.weight"].reshape(6, 96, -1)
-        bias = w["final_layer.video_out.bias"].reshape(6, 96)
+        head = w["final_layer.video_out.weight"].reshape(-1, 96, x.shape[-1])
+        bias = w["final_layer.video_out.bias"].reshape(-1, 96)
         ww, bb = head[0], bias[0]
-        if steps:
+        # A PDD checkpoint stacks one head per grid interval; P-H3-Image has one plain head.
+        if len(head) > 1 and steps:
             for k, part in head_mix(grid, sigma, next_sigma):
                 ww, bb = ww + part * head[k], bb + part * bias[k]
-        elif step:
+        elif len(head) > 1 and step:
             ww, bb = ww + head[step], bb + bias[step]
-        patches = patches + (sigma - next_sigma) * (x @ ww.T + bb)
-        mx.eval(patches)
+        patches = patches + (sigma - next_sigma) * (x[2 * audio :] @ ww.T + bb)
+        if audio:
+            out = x[: 2 * audio] @ w["final_layer.audio_out.weight"].T + w["final_layer.audio_out.bias"]
+            sound = sound + (sigma - next_sigma) * out
+        mx.eval(patches, *([sound] if audio else []))
         profile["steps"].append(time.monotonic() - start)
         if progress:
             progress(step + 1, time.monotonic() - start)
@@ -234,7 +260,7 @@ def denoise(
         .reshape(24, rows * 2, cols * 2)
     )
     if os.environ.get("H3_PROFILE"):
-        profile.update(w.stats, total_s=time.perf_counter() - began, tokens=int(x.shape[0]) + target_start,
+        profile.update(w.stats, total_s=time.perf_counter() - began, tokens=int(x.shape[0]) + audio_start,
                        peak_mlx_gb=mx.get_peak_memory() / 1e9)
         with open(os.environ["H3_PROFILE"], "w") as out:
             json.dump(profile, out)

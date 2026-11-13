@@ -19,7 +19,12 @@ def embedding_cache(directory, prompt, refs, backend, precision="int8"):
     if not root:
         return None
     text = model_paths(precision)[1]
-    key = [prompt, backend, precision, text, (directory / text).stat().st_size, [hashlib.sha256(p.read_bytes()).hexdigest() for p in refs]]
+    encoder = Path(os.environ.get("H3_TEXT") or directory / text).resolve()
+    stat = encoder.stat()
+    tokenizer = Path(os.environ.get("H3_TOKENIZER") or directory / model_paths(precision)[3])
+    key = [prompt, backend, precision, str(encoder), stat.st_size, stat.st_mtime_ns,
+           hashlib.sha256(tokenizer.read_bytes()).hexdigest(),
+           [hashlib.sha256(p.read_bytes()).hexdigest() for p in refs]]
     name = hashlib.sha256(json.dumps(key).encode()).hexdigest()
     Path(root).expanduser().mkdir(parents=True, exist_ok=True)
     return Path(root).expanduser() / f"{name}.safetensors"

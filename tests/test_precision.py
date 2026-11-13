@@ -49,6 +49,7 @@ class PrecisionTests(unittest.TestCase):
     def test_embedding_cache_separates_precisions(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
+            (root / model_paths('int8')[3]).write_text('{}')
             for precision in ('int8', 'bf16'):
                 text = root / model_paths(precision)[1]
                 text.parent.mkdir(parents=True, exist_ok=True)
@@ -57,6 +58,49 @@ class PrecisionTests(unittest.TestCase):
                 a = embedding_cache(root, 'same prompt', [], 'auto', 'int8')
                 b = embedding_cache(root, 'same prompt', [], 'auto', 'bf16')
             self.assertNotEqual(a, b)
+
+    def test_embedding_cache_tracks_encoder_and_tokenizer_overrides(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            encoders = [root/'first.safetensors', root/'second.safetensors']
+            for path in encoders:
+                path.write_bytes(b'same-size')
+            tokenizer = root/'tokenizer.json'
+            tokenizer.write_text('{"version": 1}')
+            env = {'H3_EMBED_CACHE':str(root/'cache'), 'H3_TOKENIZER':str(tokenizer)}
+            with patch.dict(os.environ, env):
+                with patch.dict(os.environ, {'H3_TEXT':str(encoders[0])}):
+                    a = embedding_cache(root, 'prompt', [], 'auto')
+                with patch.dict(os.environ, {'H3_TEXT':str(encoders[1])}):
+                    b = embedding_cache(root, 'prompt', [], 'auto')
+                    tokenizer.write_text('{"version": 2}')
+                    c = embedding_cache(root, 'prompt', [], 'auto')
+            self.assertEqual(len({a,b,c}), 3)
+
+    def test_stage_overrides_survive_precision_selection(self):
+        from h3_image_mlx import _stage
+        from PIL import Image
+        with tempfile.TemporaryDirectory() as tmp:
+            work = Path(tmp)
+            config = work/model_paths('int8')[4]
+            config.parent.mkdir(parents=True)
+            config.write_text('{}')
+            mx.save_safetensors(str(work/'latent.safetensors'), {'latent':mx.zeros((24,16,16))})
+            env = {'H3_TEXT':str(work/'custom-text'), 'H3_TOKENIZER':str(work/'custom-tokenizer'),
+                   'H3_VAE':str(work/'custom-vae')}
+            for precision in ('int8', 'bf16'):
+                request = dict(models=str(work),precision=precision,backend='auto',references=[],prompt='test')
+                (work/'request.json').write_text(json.dumps(request))
+                token = core.backend.set('portable')
+                try:
+                    with patch.dict(os.environ, env), patch('h3_image_mlx.text.encode',return_value=(mx.zeros((1,5120)),mx.ones((1,),dtype=mx.int32),0)) as encode:
+                        _stage.main('text',work)
+                        self.assertEqual(encode.call_args.args[:2],(env['H3_TEXT'],env['H3_TOKENIZER']))
+                    with patch.dict(os.environ, env), patch('h3_image_mlx.vae.decode',return_value=Image.new('RGB',(32,32))) as decode:
+                        _stage.main('vae',work)
+                        self.assertEqual(decode.call_args.args[0],env['H3_VAE'])
+                finally:
+                    core.backend.reset(token)
 
     def test_pipeline_passes_precision_to_every_stage(self):
         calls = []

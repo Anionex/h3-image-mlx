@@ -16,15 +16,22 @@ def tile_positions(size):
     return [0, *np.cumsum(gaps).tolist()], 16
 
 
+# P-H3-Image decodes one frame at a fixed rotary time coordinate; the H3 Image decoder has no time axis.
+PH3_FRAME_POSITION = 2.0 * (0.5 / 7) - 1.0
+
+
 def decode_tiles(w, z):
     batch, h, width, channels = z.shape
     z = z.reshape(batch, -1, channels)
-    x = z @ w["post_quant_conv.weight"][:, :, 0, 0].T + w["post_quant_conv.bias"]
+    kind = z.dtype
+    dim = w.header["decoder.x_embedder.weight"]["shape"][0]
+    layers = sum(key.endswith(".attn.to_qkv.weight") for key in w.header)
+    x = z @ w["post_quant_conv.weight"].reshape(channels, channels).astype(kind).T + w["post_quant_conv.bias"].astype(kind)
     x = w.linear("decoder.x_embedder", x)
     x = mx.concatenate(
         [
             x,
-            mx.broadcast_to(w["decoder.register_tokens"], (batch, 4, 1024)),
+            mx.broadcast_to(w["decoder.register_tokens"].astype(kind), (batch, 4, dim)),
             mx.zeros_like(x[:, :1]),
         ],
         axis=1,
@@ -35,15 +42,17 @@ def decode_tiles(w, z):
         indexing="ij",
     )
     positions = np.stack(coords, axis=-1).reshape(-1, 2)
-    positions = np.concatenate([positions, np.zeros((5, 2))])
+    if "latents_mean" in w.header:  # P-H3-Image: rotary axes (t, h, w) on 48 of 64 head channels
+        positions = np.concatenate([np.full((len(positions), 1), PH3_FRAME_POSITION), positions], axis=1)
+    positions = np.concatenate([positions, np.zeros((5, positions.shape[1]))])
     ang = (2 * np.pi * positions[:, :, None] * 100 ** (-np.arange(8) / 8)).reshape(
-        -1, 16
+        len(positions), -1
     )
     angles = mx.array(ang.astype(np.float32))
-    for i in range(24):
+    for i in range(layers):
         b = f"decoder.transformer_blocks.{i}"
         qkv = w.linear(b + ".attn.to_qkv", norm(x, w[b + ".norm1.weight"])).reshape(
-            batch, x.shape[1], 16, 192
+            batch, x.shape[1], dim // 64, 192
         )
         q, k, v = mx.split(qkv.transpose(0, 2, 1, 3), 3, axis=-1)
         q, k = rope(norm(q), angles), rope(norm(k), angles)
@@ -51,15 +60,15 @@ def decode_tiles(w, z):
         x = (
             x
             + w.linear(b + ".attn.to_out", out.transpose(0, 2, 1, 3).reshape(x.shape))
-            * w[b + ".scale1"]
+            * w[b + ".scale1"].astype(kind)
         )
         out = swiglu(w.linear(b + ".ff.w1", norm(x, w[b + ".norm2.weight"])))
-        x = x + w.linear(b + ".ff.w2", out) * w[b + ".scale2"]
+        x = x + w.linear(b + ".ff.w2", out) * w[b + ".scale2"].astype(kind)
         mx.eval(x)
     x = mx.fast.layer_norm(
         x[:, : h * width],
-        w["decoder.norm_out.weight"],
-        w["decoder.norm_out.bias"],
+        w["decoder.norm_out.weight"].astype(kind),
+        w["decoder.norm_out.bias"].astype(kind),
         1e-5,
     )
     out = w.linear("decoder.proj_out", x)
@@ -72,10 +81,14 @@ def decode_tiles(w, z):
 
 def decode(path, latent, stats):
     w = Weights(path, True)
+    if "latents_mean" in w.header:  # P-H3-Image stores its latent statistics in the checkpoint
+        stats = {key: w[key].astype(mx.float32) for key in ("latents_mean", "latents_std")}
     z = latent.transpose(1, 2, 0) * mx.array(stats["latents_std"]) + mx.array(
         stats["latents_mean"]
     )
-    z = z.astype(mx.float16)
+    # Compute in the checkpoint's own dtype: casting 5 GB of bf16 weights to fp16 on every tile batch dominated the stage.
+    bf16 = w.header["decoder.x_embedder.weight"]["dtype"] == "BF16"
+    z = z.astype(mx.bfloat16 if bf16 else mx.float16)
     yy, th = tile_positions(z.shape[0])
     xx, tw = tile_positions(z.shape[1])
     canvas = np.zeros((z.shape[0] * 16, z.shape[1] * 16, 3), np.float32)
