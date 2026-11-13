@@ -3,6 +3,7 @@
 ![H3 Image MLX in liquid-glass lettering on a blue gradient](assets/hero.jpg)
 
 <p align="center"><em>This banner was generated end to end with MiniMax H3 Image using <a href="https://github.com/Anionex/h3-image-mlx">H3 Image MLX</a>.</em></p>
+<p align="center">If you find this repository useful, feel free to 🌟 &amp; fork~</p>
 
 # H3 Image MLX
 **English** · [简体中文](README.zh-CN.md)
@@ -19,8 +20,6 @@
 [Quick start](#generate-your-first-image) · [Image editing](#edit-with-reference-images) · [How it works](#how-it-works) · [Benchmarks](#benchmark-results) · [Usage](docs/USAGE.md) · [Performance](docs/PERFORMANCE.md)
 
 Generate and edit images on an Apple Silicon Mac with MiniMax H3 Image. Optimized for fast inference, with 4K generation using around 7 GB of peak inference-process memory. Available through a CLI and Python API, ready to use out of the box.
-
-If you find this repository useful, feel free to 🌟 & fork~
 
 ## Highlights
 

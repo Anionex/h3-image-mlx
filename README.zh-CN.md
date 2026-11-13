@@ -1,6 +1,7 @@
 ![蓝色颗粒渐变上的 H3 Image MLX 液体玻璃字](assets/hero.jpg)
 
 <p align="center"><em>这张头图通过 <a href="https://github.com/Anionex/h3-image-mlx">H3 Image MLX</a> 项目调用 MiniMax H3 Image 端到端生成。</em></p>
+<p align="center">如果这个仓库对你有用，欢迎 🌟 &amp; fork~</p>
 
 # H3 Image MLX
 
@@ -14,8 +15,6 @@
 [快速开始](#生成第一张图) · [参考图编辑](#用参考图编辑) · [推理原理](#推理原理) · [实测数据](#实测数据) · [使用指南](docs/USAGE.zh-CN.md) · [性能调优](docs/PERFORMANCE.zh-CN.md)
 
 在 Apple Silicon Mac 上用 MiniMax H3 Image 生图、编辑图片。优化本地推理速度，以约 7 GB 的推理进程峰值内存生成 4K 图像；提供命令行和 Python API，开箱即用。
-
-如果这个仓库对你有用，欢迎 🌟 & fork~
 
 ## 亮点
 
