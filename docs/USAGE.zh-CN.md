@@ -7,7 +7,7 @@
 使用支持 Metal 的 Apple Silicon Mac 和 Python 3.11 或更高版本。首次下载模型需要 49.30 GB 磁盘空间。
 
 ```bash
-python -m pip install --upgrade 'h3-image-mlx==0.1.0a3'
+python -m pip install --upgrade 'h3-image-mlx==0.1.0a4'
 h3-image-mlx fetch --models ./models
 ```
 
@@ -17,7 +17,7 @@ h3-image-mlx fetch --models ./models
 
 选择 `--precision bf16` 可使用未量化的 BF16 DiT 和文本编码器，同时保留现有 AdaLN 裁剪。默认仍为 INT8。BF16 使用标准 MLX 浮点计算，不将激活量化为 INT8；`--backend w8a8` 仅适用于 INT8 权重。FP16 VAE、tokenizer 和 VAE 配置沿用并复用现有文件。
 
-此选项已在源码版提供；下一次软件包发布前，请在源码目录执行 `python -m pip install -e .` 安装。全新 BF16 模型目录需要 **92.92 GB** 磁盘空间；如果已有公共组件，新增两份 BF16 权重需要 **91.74 GB**。下载前会检查剩余空间。
+此选项在 `0.1.0a4` 及后续版本提供。全新 BF16 模型目录需要 **92.92 GB** 磁盘空间；如果已有公共组件，新增两份 BF16 权重需要 **91.74 GB**。下载前会检查剩余空间。
 
 ```bash
 h3-image-mlx fetch --models ./models --precision bf16
@@ -38,6 +38,25 @@ text_encoders/qwen3vl_32b_minimax_h3_bf16.safetensors
 ```
 
 DiT 来自 [Comfy-Org/MiniMax-H3-Image](https://huggingface.co/Comfy-Org/MiniMax-H3-Image)，配套的 50 层文本编码器来自 [Comfy-Org/MiniMax-H3](https://huggingface.co/Comfy-Org/MiniMax-H3)。固定版本、文件大小和 SHA-256 见 [weights-bf16.json](../src/h3_image_mlx/weights-bf16.json)。
+
+## 实验性 P-H3-Image
+
+`0.1.0a4` 还提供 [PrunaAI/P-H3-Image](https://huggingface.co/PrunaAI/P-H3-Image) 的实验性文生图支持。从 [P-H3-Image-Comfy](https://huggingface.co/PrunaAI/P-H3-Image-Comfy) 获取 INT8 ConvRot DiT、文本编码器及可选的 BF16 VAE；从 P-H3-Image 仓库获取 `tokenizer/tokenizer.json`。这些文件不包含在 `fetch` 中，遵循各自的上游许可。
+
+```bash
+P=./models/ph3
+H3_TEXT="$P/text_encoders/p-h3-image_text_encoder_int8_convrot.safetensors" \
+H3_TOKENIZER="$P/tokenizer.json" \
+H3_DIT="$P/diffusion_models/p-h3-image_int8_convrot.safetensors" \
+H3_VAE="$P/vae/p-h3-image_vae_bf16.safetensors" \
+H3_ASYNC=1 H3_PREFETCH=1 \
+h3-image-mlx generate --models ./models --dit-mode stream \
+  --prompt 'A yellow enamel teapot on a blue wooden table.' --output ph3.png
+```
+
+上述 DiT 和文本编码器为 INT8，保留默认的 `--precision int8`。`--models` 仍需包含完整的默认 H3 Image 模型及 VAE 配置。不设置 `H3_VAE` 时使用较小的 H3 Image VAE。该模型默认使用自身的八步采样序列；`H3_SIGMAS` 可指定以逗号分隔、包含末尾零值的完整采样序列。
+
+P-H3 参考图编辑和提示词增强器尚未实现。P-H3 端到端结果来自贡献者在 [PR #7](https://github.com/Anionex/h3-image-mlx/pull/7) 中的测试；完整 BF16 H3 生图尚未在本机验证。普通 H3 Image 的编辑功能继续可用。
 
 ## 生图与编辑
 
