@@ -18,7 +18,8 @@ def embedding_cache(directory, prompt, refs, backend):
     root = os.environ.get("H3_EMBED_CACHE")
     if not root:
         return None
-    key = [prompt, backend, (directory / TEXT).stat().st_size, [hashlib.sha256(p.read_bytes()).hexdigest() for p in refs]]
+    encoder = Path(os.environ.get("H3_TEXT") or directory / TEXT)  # an overridden encoder gets its own entries
+    key = [prompt, backend, encoder.stat().st_size, [hashlib.sha256(p.read_bytes()).hexdigest() for p in refs]]
     name = hashlib.sha256(json.dumps(key).encode()).hexdigest()
     Path(root).expanduser().mkdir(parents=True, exist_ok=True)
     return Path(root).expanduser() / f"{name}.safetensors"

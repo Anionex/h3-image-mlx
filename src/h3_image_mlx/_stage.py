@@ -29,7 +29,8 @@ def main(stage, work):
     embedding, latents, result = (str(work / (key + ".safetensors")) for key in ("embedding", "references", "latent"))
     if stage == "text":
         from .text import encode
-        x, tags, _ = encode(models / TEXT, models / TOKENIZER, request["prompt"], refs)
+        # H3_TEXT / H3_TOKENIZER / H3_VAE / H3_DIT: use another checkpoint (e.g. P-H3-Image) instead of the manifest's.
+        x, tags, _ = encode(os.environ.get("H3_TEXT") or models / TEXT, os.environ.get("H3_TOKENIZER") or models / TOKENIZER, request["prompt"], refs)
         mx.save_safetensors(embedding, {"embedding": x, "tags": tags})
     elif stage == "references":
         from .ref_vae import encode_reference
@@ -56,7 +57,7 @@ def main(stage, work):
     elif stage == "vae":
         from .vae import decode
         stats = json.loads((models / VAE_CONFIG).read_text())
-        decode(models / VAE, mx.load(result)["latent"], stats).save(work / "image.png")
+        decode(os.environ.get("H3_VAE") or models / VAE, mx.load(result)["latent"], stats).save(work / "image.png")
     else:
         raise ValueError(f"Unknown stage: {stage}")
     mx.synchronize()
