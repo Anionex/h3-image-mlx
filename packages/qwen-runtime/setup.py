@@ -18,7 +18,7 @@ class NativeWheel(bdist_wheel):
                 "Run scripts/build_qwen_runtime.py before building the native wheel"
             )
         platform = json.loads(manifest.read_text()).get(
-            "wheel_platform", "macosx_26_2_arm64"
+            "wheel_platform", "macosx_26_0_arm64"
         )
         return "py3", "none", platform
 

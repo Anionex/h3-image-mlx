@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "h3-image-mlx"
-version = "0.1.0a5.dev0"
+version = "0.1.0a5"
 description = "Local H3 and Qwen Image generation and editing with MLX on Apple Silicon"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -17,6 +17,9 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
 dependencies = ["mlx>=0.32.3,<0.33", "numpy>=1.26", "Pillow>=10", "tokenizers>=0.21,<0.24", "httpx>=0.27,<1", "safetensors>=0.4"]
+
+[project.optional-dependencies]
+qwen = ["h3-image-mlx-qwen-runtime==0.1.0a1"]
 
 [project.urls]
 Source = "https://github.com/Anionex/h3-image-mlx"

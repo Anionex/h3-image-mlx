@@ -2,14 +2,15 @@
 
 Qwen shares the package's CLI and Python API with H3. Its native worker is a separate optional platform package, so H3 installations keep their existing runtime. The implementation reuses the desktop app's model engine without starting the app or an HTTP server. Prompt enhancement and desktop UI/history are outside this API.
 
-## Install from this source branch
+## Install
 
-Qwen support in this branch requires the Python package plus the native runtime wheel built below. It is not included in the already-published `0.1.0a4` wheel.
+Install the public Python package and optional native runtime together:
 
 ```bash
-python -m pip install .
-python -m pip install packages/qwen-runtime/dist/h3_image_mlx_qwen_runtime-*.whl
+python -m pip install 'h3-image-mlx[qwen]==0.1.0a5'
 ```
+
+Installing `h3-image-mlx` without the `qwen` extra keeps the native runtime optional for H3 users.
 
 The native wheel contains its dynamic libraries and Metal resources. It requires Apple Silicon and macOS 26.2 or later. On M5/M6 the default is W8A8 TensorOps; earlier chips select ordinary quantized MLX operations. The portable path is tested on M5; M1–M4 still need hardware validation.
 

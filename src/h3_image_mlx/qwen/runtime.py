@@ -3,6 +3,7 @@
 import importlib.resources
 import json
 import os
+import platform
 import queue
 import re
 import signal
@@ -35,6 +36,16 @@ def locate(explicit=None):
             ) from exc
     if not path.is_file() or not os.access(path, os.X_OK):
         raise FileNotFoundError(f"Qwen runtime is not executable: {path}")
+    manifest = path.parent / "runtime.json"
+    if manifest.is_file():
+        minimum = json.loads(manifest.read_text()).get("minimum_macos")
+        if minimum:
+            required = tuple(map(int, minimum.split(".")))
+            current = tuple(map(int, platform.mac_ver()[0].split(".")[: len(required)]))
+            if current < required:
+                raise RuntimeError(
+                    f"This Qwen runtime requires macOS {minimum} or later"
+                )
     return path
 
 

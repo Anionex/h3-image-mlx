@@ -91,7 +91,11 @@ Generated locally with H3 Image MLX: food, wildlife, product photography, archit
 
 ## Qwen Image 2.1 Turbo
 
-Qwen support is currently available from this source branch with the optional native runtime wheel; the published `0.1.0a4` package remains H3-only.
+Available in `0.1.0a5`. Install Qwen and its standalone runtime together (Apple Silicon, macOS 26.2+):
+
+```bash
+python -m pip install 'h3-image-mlx[qwen]==0.1.0a5'
+```
 
 ```python
 from h3_image_mlx import generate, QwenOptions, Lora
@@ -115,7 +119,7 @@ Use Python 3.11 or later on a Mac with Metal. Allow 49.30 GB of disk space for a
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install 'h3-image-mlx==0.1.0a4'
+python -m pip install 'h3-image-mlx==0.1.0a5'
 
 h3-image-mlx fetch --models ./models
 h3-image-mlx generate --models ./models --output teapot.png \
@@ -131,7 +135,7 @@ This writes a 1024×1024 RGB PNG. Set `--width` and `--height` to change the siz
 Available from `0.1.0a2`; upgrade and enable both switches for this command:
 
 ```bash
-python -m pip install --upgrade 'h3-image-mlx==0.1.0a4'
+python -m pip install --upgrade 'h3-image-mlx==0.1.0a5'
 H3_ASYNC=1 H3_PREFETCH=1 h3-image-mlx generate \
   --models ./models --dit-mode stream --output teapot.png \
   --prompt 'A yellow enamel teapot and a white cup on a blue wooden table.'
