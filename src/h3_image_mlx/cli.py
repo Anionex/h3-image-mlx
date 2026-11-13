@@ -24,19 +24,20 @@ def main(argv=None):
     verify = commands.add_parser("verify", help="Verify all five local file hashes")
     for command in (gen, get, verify):
         command.add_argument("--models", type=Path, required=True, help="Directory containing the pinned model files")
+        command.add_argument("--precision", choices=("int8", "bf16"), default="int8", help="DiT and text-encoder weight precision (default: int8)")
     args = parser.parse_args(argv)
     try:
         if args.command == "fetch":
             from .download import fetch
-            print(fetch(args.models, args.source))
+            print(fetch(args.models, args.source, precision=args.precision))
         elif args.command == "verify":
-            print(check_models(args.models, hashes=True))
+            print(check_models(args.models, hashes=True, precision=args.precision))
         else:
             from .pipeline import generate
             if args.output.suffix.lower() != ".png":
                 raise ValueError("Output must be a .png file")
             image = generate(args.prompt, models=args.models, width=args.width, height=args.height,
-                             seed=args.seed, references=args.reference, backend=args.backend, dit_mode=args.dit_mode)
+                             seed=args.seed, references=args.reference, backend=args.backend, dit_mode=args.dit_mode, precision=args.precision)
             args.output.parent.mkdir(parents=True, exist_ok=True)
             with tempfile.NamedTemporaryFile(dir=args.output.parent, delete=False) as tmp:
                 try:

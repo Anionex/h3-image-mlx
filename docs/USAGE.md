@@ -13,6 +13,32 @@ h3-image-mlx fetch --models ./models
 
 ModelScope is the default source. Use `--source huggingface` with `fetch` to select Hugging Face. Downloads resume from partial files. The model files and VAE configuration are fetched separately from the Python package.
 
+## BF16 weights
+
+Select `--precision bf16` to use the unquantized BF16 DiT and text encoder while retaining the existing AdaLN pruning. INT8 remains the default. BF16 uses standard MLX floating-point operations and does not quantize activations to INT8; `--backend w8a8` is only available with INT8 weights. The existing FP16 VAE, tokenizer and VAE configuration are shared.
+
+This option is available in the source checkout; install it with `python -m pip install -e .` until the next package release. A fresh BF16 model directory requires **92.92 GB** of disk space. If the shared components are already present, the two additional BF16 files need **91.74 GB**. Downloads check available space before transferring files.
+
+```bash
+h3-image-mlx fetch --models ./models --precision bf16
+h3-image-mlx verify --models ./models --precision bf16
+h3-image-mlx generate --models ./models --precision bf16 --dit-mode stream \
+  --prompt 'A yellow enamel teapot on a blue wooden table.' --output bf16.png
+```
+
+ModelScope remains the default download source; add `--source huggingface` to `fetch` to switch. Both profiles can coexist in one directory. `--precision` is explicit on each command, so downloading BF16 does not change the default INT8 selection. Python callers use `generate(..., precision="bf16")`.
+
+In BF16 mode, `--dit-mode auto` selects streaming on every chip; `resident` is still available explicitly for Macs with sufficient memory. Streaming, prefetch/async settings and reference-image ordering work as before. An `H3_DIT` override must also contain floating-point weights when BF16 is selected.
+
+BF16 files, in addition to the shared VAE and tokenizer:
+
+```text
+diffusion_models/minimax_h3_image_pruned_bf16.safetensors
+text_encoders/qwen3vl_32b_minimax_h3_bf16.safetensors
+```
+
+The DiT is from [Comfy-Org/MiniMax-H3-Image](https://huggingface.co/Comfy-Org/MiniMax-H3-Image); the matching 50-layer text encoder is from [Comfy-Org/MiniMax-H3](https://huggingface.co/Comfy-Org/MiniMax-H3). Exact revisions, sizes and SHA-256 hashes are pinned in [weights-bf16.json](../src/h3_image_mlx/weights-bf16.json).
+
 ## Generate and edit
 
 ```bash
@@ -31,6 +57,7 @@ References are ordered: `<Picture 1>` is the first `--reference`, and so on. Sup
 | Parameter | Default | Meaning |
 | --- | --- | --- |
 | `--models` | Required | Model directory for `fetch`, `verify` and `generate` |
+| `--precision` | `int8` | `int8` or `bf16`, for `fetch`, `verify` and `generate` |
 | `--prompt` | Required | Nonempty generation or editing instruction |
 | `--output` | Required | Output path ending in `.png` |
 | `--width`, `--height` | `1024` each | Multiples of 32 from 256 through 4096 |

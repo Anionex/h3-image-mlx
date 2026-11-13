@@ -4,10 +4,15 @@ import os
 import re
 import sys
 from pathlib import Path
-from .models import DIT, TEXT, TOKENIZER, VAE, VAE_CONFIG
+from .models import model_paths, manifest_for
 
 
-def select_backend(requested, device):
+def select_backend(requested, device, precision="int8"):
+    manifest_for(precision)
+    if precision == "bf16":
+        if requested == "w8a8":
+            raise ValueError("W8A8 requires INT8 weights; use --backend auto or portable with BF16")
+        return "portable"
     native = bool(re.search(r"\bApple M[56]\b", device))
     if requested == "auto":
         return "w8a8" if native else "portable"
@@ -21,7 +26,9 @@ def main(stage, work):
     from . import core
     request = json.loads((work / "request.json").read_text())
     info = mx.device_info()
-    backend = select_backend(request["backend"], info["device_name"])
+    precision = request.get("precision", "int8")
+    dit, text, vae, tokenizer, vae_config = model_paths(precision)
+    backend = select_backend(request["backend"], info["device_name"], precision)
     core.backend.set(backend)
     mx.set_cache_limit(96 << 20)
     models = Path(request["models"])
@@ -30,12 +37,12 @@ def main(stage, work):
     if stage == "text":
         from .text import encode
         # H3_TEXT / H3_TOKENIZER / H3_VAE / H3_DIT: use another checkpoint (e.g. P-H3-Image) instead of the manifest's.
-        x, tags, _ = encode(os.environ.get("H3_TEXT") or models / TEXT, os.environ.get("H3_TOKENIZER") or models / TOKENIZER, request["prompt"], refs)
+        x, tags, _ = encode(os.environ.get("H3_TEXT") or models / text, os.environ.get("H3_TOKENIZER") or models / tokenizer, request["prompt"], refs)
         mx.save_safetensors(embedding, {"embedding": x, "tags": tags})
     elif stage == "references":
         from .ref_vae import encode_reference
-        weights = core.Weights(models / VAE, True)
-        stats = json.loads((models / VAE_CONFIG).read_text())
+        weights = core.Weights(models / vae, True)
+        stats = json.loads((models / vae_config).read_text())
         zs = {}
         for i, ref in enumerate(refs):
             zs[str(i)] = encode_reference(weights, ref, stats)
@@ -52,12 +59,12 @@ def main(stage, work):
         resident = mode == "resident" or (mode == "auto" and backend == "w8a8" and
                     info["memory_size"] >= 32 * 1024**3 and rows <= 8192)
         # H3_DIT=<file>: use another DiT checkpoint with the same layout (e.g. one with a LoRA merged in).
-        z, _ = denoise(os.environ.get("H3_DIT") or models / DIT, inputs["embedding"], width, height, request["seed"], resident, zs, inputs["tags"])
+        z, _ = denoise(os.environ.get("H3_DIT") or models / dit, inputs["embedding"], width, height, request["seed"], resident, zs, inputs["tags"], precision=precision)
         mx.save_safetensors(result, {"latent": z})
     elif stage == "vae":
         from .vae import decode
-        stats = json.loads((models / VAE_CONFIG).read_text())
-        decode(os.environ.get("H3_VAE") or models / VAE, mx.load(result)["latent"], stats).save(work / "image.png")
+        stats = json.loads((models / vae_config).read_text())
+        decode(os.environ.get("H3_VAE") or models / vae, mx.load(result)["latent"], stats).save(work / "image.png")
     else:
         raise ValueError(f"Unknown stage: {stage}")
     mx.synchronize()

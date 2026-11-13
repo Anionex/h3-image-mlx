@@ -127,12 +127,20 @@ def patchify(latent):
 
 
 def denoise(
-    path, text, width, height, seed, resident=True, refs=(), tags=None, progress=None
+    path, text, width, height, seed, resident=True, refs=(), tags=None, progress=None,
+    precision=None,
 ):
     if min(width, height) < 32 or width % 32 or height % 32:
         raise ValueError("Image dimensions must be positive multiples of 32")
     began = time.perf_counter()
     w = Weights(path, resident)
+    if precision == "bf16":
+        for key, spec in w.header.items():
+            if key.endswith(".weight") and spec["dtype"] not in ("BF16", "F16", "F32"):
+                if w.pool:
+                    w.pool.shutdown()
+                w.file.close()
+                raise ValueError(f"BF16 requires floating-point weights; {path}: {key} is {spec['dtype']}. Check H3_DIT.")
     # H3_ASYNC: queue each block on the GPU and read the next block's weights meanwhile.
     pipelined, profile = bool(flag("H3_ASYNC")), dict(steps=[], eval_s=0.0)
     meta = w.header.get("__metadata__") or {}

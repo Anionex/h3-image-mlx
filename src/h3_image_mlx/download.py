@@ -4,7 +4,7 @@ import shutil
 from pathlib import Path
 import httpx
 
-from .models import MANIFEST, sha256
+from .models import manifest_for, sha256
 
 
 def _download_file(client, url, dest, entry):
@@ -37,27 +37,29 @@ def _download_file(client, url, dest, entry):
     partial.replace(dest)
 
 
-def fetch(directory: Path, source="modelscope"):
+def fetch(directory: Path, source="modelscope", *, precision="int8"):
+    manifest = manifest_for(precision)
     if source not in ("modelscope", "huggingface"):
         raise ValueError(f"Unknown model source: {source}")
     directory = Path(directory).expanduser().resolve()
     directory.mkdir(parents=True, exist_ok=True)
-    with (directory / ".h3-fetch.lock").open("a") as lock, httpx.Client(follow_redirects=True, timeout=90) as client:
+    with (directory / ".h3-fetch.lock").open("a") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
         missing_bytes = 0
-        for entry in MANIFEST["files"]:
+        for entry in manifest["files"]:
             dest = directory / entry["path"]
             if not dest.exists():
                 partial = dest.with_name(dest.name + ".part")
                 missing_bytes += max(0, entry["bytes"] - (partial.stat().st_size if partial.exists() else 0))
         if missing_bytes > shutil.disk_usage(directory).free:
             raise OSError(f"Need another {missing_bytes:,} available bytes to fetch this model")
-        for entry in MANIFEST["files"]:
-            dest = directory / entry["path"]
-            if dest.exists():
-                if dest.stat().st_size != entry["bytes"] or sha256(dest) != entry["sha256"]:
-                    raise ValueError(f"Existing file differs from pinned weights: {dest}")
-                continue
-            dest.parent.mkdir(parents=True, exist_ok=True)
-            _download_file(client, entry[source], dest, entry)
+        with httpx.Client(follow_redirects=True, timeout=90) as client:
+            for entry in manifest["files"]:
+                dest = directory / entry["path"]
+                if dest.exists():
+                    if dest.stat().st_size != entry["bytes"] or sha256(dest) != entry["sha256"]:
+                        raise ValueError(f"Existing file differs from pinned weights: {dest}")
+                    continue
+                dest.parent.mkdir(parents=True, exist_ok=True)
+                _download_file(client, entry[source], dest, entry)
     return directory

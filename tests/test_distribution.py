@@ -21,7 +21,7 @@ class PackageTests(unittest.TestCase):
     def test_packaged_runtime_resources(self):
         package = files("h3_image_mlx")
         self.assertFalse(package.joinpath("vae_stats.json").is_file())
-        for name in ("MODEL_LICENSE.txt", "weights.json", "NOTICE.txt",
+        for name in ("MODEL_LICENSE.txt", "weights.json", "weights-bf16.json", "NOTICE.txt",
                      "kernels/LICENSE", "kernels/mpp_tensor_ops.metal",
                      "kernels/w8a8_gemm_body.metal", "kernels/w8a8_epi_plain.metal"):
             self.assertTrue(package.joinpath(name).is_file(), name)
