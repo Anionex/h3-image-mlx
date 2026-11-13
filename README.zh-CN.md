@@ -75,14 +75,14 @@ M5 Pro 48 GB，`0.1.0a3`，1024×1024，相同权重、提示词和 seed，原�
 
 ## 生成第一张图
 
-源码版还支持 **未量化的 BF16 DiT 和文本编码器权重**，保留 AdaLN 裁剪和分阶段分块推理。使用 `--precision bf16` 选择，默认仍为 INT8。[BF16 下载与使用](docs/USAGE.zh-CN.md#bf16-权重)
+`0.1.0a4` 还支持 **未量化的 BF16 DiT 和文本编码器权重**，保留 AdaLN 裁剪和分阶段分块推理。使用 `--precision bf16` 选择，默认仍为 INT8。[BF16 下载与使用](docs/USAGE.zh-CN.md#bf16-权重)
 
 使用支持 Metal 的 Apple Silicon Mac 和 Python 3.11 或更高版本。首次下载模型需要 49.30 GB 磁盘空间。模型的适用地区和使用条件见 [MiniMax 模型许可](https://huggingface.co/MiniMaxAI/MiniMax-H3-Image/blob/main/LICENSE)。
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install 'h3-image-mlx==0.1.0a3'
+python -m pip install 'h3-image-mlx==0.1.0a4'
 
 h3-image-mlx fetch --models ./models
 h3-image-mlx generate --models ./models --output teapot.png \
@@ -98,7 +98,7 @@ h3-image-mlx generate --models ./models --output teapot.png \
 这些开关从 `0.1.0a2` 开始提供；升级后在单次命令中开启：
 
 ```bash
-python -m pip install --upgrade 'h3-image-mlx==0.1.0a3'
+python -m pip install --upgrade 'h3-image-mlx==0.1.0a4'
 H3_ASYNC=1 H3_PREFETCH=1 h3-image-mlx generate \
   --models ./models --dit-mode stream --output teapot.png \
   --prompt 'A yellow enamel teapot and a white cup on a blue wooden table.'

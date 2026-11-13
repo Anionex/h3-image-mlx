@@ -7,7 +7,7 @@
 Use Python 3.11 or newer on an Apple Silicon Mac with Metal. A fresh model download needs 49.30 GB of disk space.
 
 ```bash
-python -m pip install --upgrade 'h3-image-mlx==0.1.0a3'
+python -m pip install --upgrade 'h3-image-mlx==0.1.0a4'
 h3-image-mlx fetch --models ./models
 ```
 
@@ -17,7 +17,7 @@ ModelScope is the default source. Use `--source huggingface` with `fetch` to sel
 
 Select `--precision bf16` to use the unquantized BF16 DiT and text encoder while retaining the existing AdaLN pruning. INT8 remains the default. BF16 uses standard MLX floating-point operations and does not quantize activations to INT8; `--backend w8a8` is only available with INT8 weights. The existing FP16 VAE, tokenizer and VAE configuration are shared.
 
-This option is available in the source checkout; install it with `python -m pip install -e .` until the next package release. A fresh BF16 model directory requires **92.92 GB** of disk space. If the shared components are already present, the two additional BF16 files need **91.74 GB**. Downloads check available space before transferring files.
+This option is available in `0.1.0a4` and later. A fresh BF16 model directory requires **92.92 GB** of disk space. If the shared components are already present, the two additional BF16 files need **91.74 GB**. Downloads check available space before transferring files.
 
 ```bash
 h3-image-mlx fetch --models ./models --precision bf16
@@ -38,6 +38,25 @@ text_encoders/qwen3vl_32b_minimax_h3_bf16.safetensors
 ```
 
 The DiT is from [Comfy-Org/MiniMax-H3-Image](https://huggingface.co/Comfy-Org/MiniMax-H3-Image); the matching 50-layer text encoder is from [Comfy-Org/MiniMax-H3](https://huggingface.co/Comfy-Org/MiniMax-H3). Exact revisions, sizes and SHA-256 hashes are pinned in [weights-bf16.json](../src/h3_image_mlx/weights-bf16.json).
+
+## Experimental P-H3-Image
+
+Version `0.1.0a4` also includes experimental text-to-image support for [PrunaAI/P-H3-Image](https://huggingface.co/PrunaAI/P-H3-Image). Obtain the INT8 ConvRot DiT and text encoder, and optional BF16 VAE, from [P-H3-Image-Comfy](https://huggingface.co/PrunaAI/P-H3-Image-Comfy); obtain `tokenizer/tokenizer.json` from the P-H3-Image repository. These files are separate from `fetch` and retain their upstream license.
+
+```bash
+P=./models/ph3
+H3_TEXT="$P/text_encoders/p-h3-image_text_encoder_int8_convrot.safetensors" \
+H3_TOKENIZER="$P/tokenizer.json" \
+H3_DIT="$P/diffusion_models/p-h3-image_int8_convrot.safetensors" \
+H3_VAE="$P/vae/p-h3-image_vae_bf16.safetensors" \
+H3_ASYNC=1 H3_PREFETCH=1 \
+h3-image-mlx generate --models ./models --dit-mode stream \
+  --prompt 'A yellow enamel teapot on a blue wooden table.' --output ph3.png
+```
+
+Keep the default `--precision int8` for these INT8 DiT/text files. `--models` must still contain a complete default H3 Image profile and its VAE configuration. Leaving `H3_VAE` unset selects the smaller H3 Image VAE. The checkpoint uses its own eight-step grid; `H3_SIGMAS` accepts an explicit comma-separated grid including the final zero.
+
+P-H3 reference-image editing and its prompt upsampler are not implemented. End-to-end P-H3 results are the contributor's tests in [PR #7](https://github.com/Anionex/h3-image-mlx/pull/7); full BF16 H3 generation has not yet been tested locally. Standard H3 Image editing remains available.
 
 ## Generate and edit
 
