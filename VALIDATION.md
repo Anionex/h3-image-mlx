@@ -1,20 +1,6 @@
 # Local package validation
 
-## Qwen integration — November 14, 2026
-
-Main wheel `0.1.0a5.dev0` and optional native runtime wheel `0.1.0a1` were installed into a separate Python 3.13 environment. The bundled worker runs without the desktop app or an HTTP server; its dylibs, Metal library and notices are included. Release platform tag: `macosx_26_0_arm64` (the standard macOS major-version tag); the runtime manifest and startup check enforce macOS 26.2+.
-
-- Real 512² generations cover staged text-to-image, all four memory modes, full pipe requests, RGBA, single- and two-reference editing, reversed reference order, and image-to-image variation. Reference ordering is preserved during PNG encoding and changes the actual editing result.
-- Real adapters cover zero-strength identity, nonzero pose LoRA, Turbo 3/4-step, standard CFG with a negative prompt, Lightning, DMD2, and the official Turbo adapter with non-block corrections. Lightning editing with fixed scale, automatic scale and an additional pose LoRA produces three distinct outputs. Source weights remain unchanged.
-- All 30 unit/integration tests pass against the installed main wheel, including actual H3 INT8/BF16 projection fixtures.
-- Real GPU cancellation after the first denoising step exits and reaps the worker. Subprocess tests separately exercise pipe draining, failure, timeout and cancellation.
-- The portable MLX backend completes a real Qwen generation on M5. M1–M4 hardware validation remains outstanding. Native 4K and ten-reference editing have not been exercised in this integration test.
-- H3 through the new public API matches the published `0.1.0a4` reference image pixel for pixel (RGB SHA-256 `e36333e6319536ba10bcdd459fd91e0f9b3d6a9485bac911cc48610e2d72e906`). Existing INT8/BF16 projection tests remain part of the full suite.
-- Six installed-wheel generations verify aligned uncached reads through text, DiT and VAE. Each size has three repeats with identical pixels; all cache-residency and physical-read checks pass. [Benchmark details](BENCHMARKS.md#qwen-image-21-turbo-uncached).
-
-[Functional metrics and verification](benchmarks/qwen/2026-11-14/functional-validation.json) · [Source provenance](native/source.json) · [Reproduction runner](benchmarks/qwen/run.py)
-
-## Earlier H3 validation
+## H3 validation
 
 Earlier local prototype tested on 2026-11-11: `dist/h3_image_mlx-0.1.0a1-py3-none-any.whl`, 32,805 bytes. SHA-256: `08bdceebfc67c294c1551bdbca17caf42070bb92b10e13c3adb670a9872f5590`.
 
@@ -91,3 +77,17 @@ Four serial 512×512 installed-wheel runs covered default INT8 generation, async
 Wheel and source distribution passed strict Twine checks. Every packaged runtime file matches the tested source byte for byte; the wheel contains both download manifests and no model weights or embedded VAE calibration data. See [the tested artifact hashes](releases/v0.1.0a4.sha256).
 
 Full BF16 image generation was not run: the additional 91.74 GB of weights exceed available local disk capacity. BF16 validation covers checkpoint layout, real projection samples and dispatch. P-H3 end-to-end validation remains the contributor's results in [PR #7](https://github.com/Anionex/h3-image-mlx/pull/7); its reference-image editing and prompt upsampler are not implemented.
+
+## Qwen integration — November 14, 2026
+
+Main wheel `0.1.0a5.dev0` and optional native runtime wheel `0.1.0a1` were installed into a separate Python 3.13 environment. The bundled worker runs without the desktop app or an HTTP server; its dylibs, Metal library and notices are included. Release platform tag: `macosx_26_0_arm64` (the standard macOS major-version tag); the runtime manifest and startup check enforce macOS 26.2+.
+
+- Real 512² generations cover staged text-to-image, all four memory modes, full pipe requests, RGBA, single- and two-reference editing, reversed reference order, and image-to-image variation. Reference ordering is preserved during PNG encoding and changes the actual editing result.
+- Real adapters cover zero-strength identity, nonzero pose LoRA, Turbo 3/4-step, standard CFG with a negative prompt, Lightning, DMD2, and the official Turbo adapter with non-block corrections. Lightning editing with fixed scale, automatic scale and an additional pose LoRA produces three distinct outputs. Source weights remain unchanged.
+- All 30 unit/integration tests pass against the installed main wheel, including actual H3 INT8/BF16 projection fixtures.
+- Real GPU cancellation after the first denoising step exits and reaps the worker. Subprocess tests separately exercise pipe draining, failure, timeout and cancellation.
+- The portable MLX backend completes a real Qwen generation on M5. M1–M4 hardware validation remains outstanding. Native 4K and ten-reference editing have not been exercised in this integration test.
+- H3 through the new public API matches the published `0.1.0a4` reference image pixel for pixel (RGB SHA-256 `e36333e6319536ba10bcdd459fd91e0f9b3d6a9485bac911cc48610e2d72e906`). Existing INT8/BF16 projection tests remain part of the full suite.
+- Six installed-wheel generations verify aligned uncached reads through text, DiT and VAE. Each size has three repeats with identical pixels; all cache-residency and physical-read checks pass. [Benchmark details](BENCHMARKS.md#qwen-image-21-turbo-uncached).
+
+[Functional metrics and verification](benchmarks/qwen/2026-11-14/functional-validation.json) · [Source provenance](native/source.json) · [Reproduction runner](benchmarks/qwen/run.py)
