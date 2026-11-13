@@ -134,7 +134,10 @@ def prepare(source, destination):
             for v in re.findall(r"minos (\d+\.\d+)", build)
         )
     minimum = max(versions)
-    manifest["wheel_platform"] = f"macosx_{minimum[0]}_{minimum[1]}_arm64"
+    manifest["minimum_macos"] = ".".join(map(str, minimum))
+    # Python packaging uses a zero minor component for macOS 11 and later.
+    minor = 0 if minimum[0] >= 11 else minimum[1]
+    manifest["wheel_platform"] = f"macosx_{minimum[0]}_{minor}_arm64"
     licenses = destination / "licenses"
     licenses.mkdir(exist_ok=True)
     for name in ("LICENSE", "LICENSE-APACHE-2.0", "NOTICE"):

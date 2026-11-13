@@ -14,12 +14,31 @@ from h3_image_mlx import QwenOptions, generate
 from h3_image_mlx.qwen.assets import identity, validate_prepared
 from h3_image_mlx.qwen.lora import inspect_adapter
 from h3_image_mlx.qwen.pipeline import encode_references, validate
-from h3_image_mlx.qwen.runtime import Cancelled, run_worker
+from h3_image_mlx.qwen.runtime import Cancelled, locate, run_worker
 from PIL import Image
 from safetensors.numpy import save_file
 
 
 class Requests(unittest.TestCase):
+    def test_native_runtime_enforces_minor_macos_requirement(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            binary = root / "qwen-stream-probe"
+            binary.write_text("#!/bin/sh\nexit 0\n")
+            binary.chmod(0o755)
+            (root / "runtime.json").write_text(json.dumps({"minimum_macos": "26.2"}))
+            with patch(
+                "h3_image_mlx.qwen.runtime.platform.mac_ver",
+                return_value=("26.1", (), "arm64"),
+            ):
+                with self.assertRaisesRegex(RuntimeError, "macOS 26.2"):
+                    locate(binary)
+            with patch(
+                "h3_image_mlx.qwen.runtime.platform.mac_ver",
+                return_value=("26.6", (), "arm64"),
+            ):
+                self.assertEqual(locate(binary), binary.resolve())
+
     def test_model_options_are_not_silently_ignored(self):
         with self.assertRaisesRegex(ValueError, "QwenOptions"):
             generate("x", models="missing", qwen=QwenOptions())

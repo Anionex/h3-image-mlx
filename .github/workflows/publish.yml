@@ -2,6 +2,15 @@ name: Publish release to PyPI
 
 on:
   workflow_dispatch:
+    inputs:
+      package:
+        description: Package to publish (publish qwen-runtime before main)
+        required: true
+        type: choice
+        options:
+          - main
+          - qwen-runtime
+        default: main
 
 permissions: {}
 
@@ -23,10 +32,17 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_PACKAGE: ${{ inputs.package }}
         run: |
           set -euo pipefail
           mkdir -p dist
-          gh release download "$RELEASE_TAG" --dir dist --pattern '*.whl' --pattern '*.tar.gz'
+          if [ "$RELEASE_PACKAGE" = qwen-runtime ]; then
+            gh release download "$RELEASE_TAG" --dir dist --pattern 'h3_image_mlx_qwen_runtime-*.whl'
+            manifest="../releases/$RELEASE_TAG-qwen-runtime.sha256"
+          else
+            gh release download "$RELEASE_TAG" --dir dist --pattern 'h3_image_mlx-*.whl' --pattern 'h3_image_mlx-*.tar.gz'
+            manifest="../releases/$RELEASE_TAG.sha256"
+          fi
           cd dist
-          sha256sum --strict --check "../releases/$RELEASE_TAG.sha256"
+          sha256sum --strict --check "$manifest"
       - uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # release/v1

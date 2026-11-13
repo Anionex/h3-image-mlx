@@ -1,4 +1,4 @@
 include scripts/merge_lora_int8.py
 include scripts/build_qwen_runtime.py
 recursive-include native *
-recursive-include packages/qwen-runtime *.py *.toml *.in
+recursive-include packages/qwen-runtime *.py *.toml *.in *.md

@@ -6,8 +6,13 @@ build-backend = "setuptools.build_meta"
 name = "h3-image-mlx-qwen-runtime"
 version = "0.1.0a1"
 description = "Standalone native MLX worker for Qwen Image 2.1"
+readme = "README.md"
 requires-python = ">=3.11"
 license = "Apache-2.0 AND MIT AND BSD-3-Clause"
+
+[project.urls]
+Source = "https://github.com/Anionex/h3-image-mlx"
+Issues = "https://github.com/Anionex/h3-image-mlx/issues"
 
 [tool.setuptools.packages.find]
 where = ["src"]

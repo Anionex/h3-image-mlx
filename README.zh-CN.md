@@ -86,7 +86,11 @@ M5 Pro 48 GB，`0.1.0a3`，1024×1024，相同权重、提示词和 seed，原�
 
 ## Qwen Image 2.1 Turbo
 
-Qwen 支持当前从本分支源码与可选原生 wheel 安装；已发布的 `0.1.0a4` 仍仅包含 H3。
+`0.1.0a5` 已提供 Qwen 支持。一次安装主包与独立运行时（Apple Silicon，macOS 26.2+）：
+
+```bash
+python -m pip install 'h3-image-mlx[qwen]==0.1.0a5'
+```
 
 ```python
 from h3_image_mlx import generate, QwenOptions, Lora
@@ -110,7 +114,7 @@ image.save("teapot.png")
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install 'h3-image-mlx==0.1.0a4'
+python -m pip install 'h3-image-mlx==0.1.0a5'
 
 h3-image-mlx fetch --models ./models
 h3-image-mlx generate --models ./models --output teapot.png \
@@ -126,7 +130,7 @@ h3-image-mlx generate --models ./models --output teapot.png \
 这些开关从 `0.1.0a2` 开始提供；升级后在单次命令中开启：
 
 ```bash
-python -m pip install --upgrade 'h3-image-mlx==0.1.0a4'
+python -m pip install --upgrade 'h3-image-mlx==0.1.0a5'
 H3_ASYNC=1 H3_PREFETCH=1 h3-image-mlx generate \
   --models ./models --dit-mode stream --output teapot.png \
   --prompt 'A yellow enamel teapot and a white cup on a blue wooden table.'

@@ -2,15 +2,14 @@
 
 通过同一套 CLI 和 Python API 调用 H3 与 Qwen。Qwen 使用独立的可选原生运行时，不启动生图 App 或 HTTP 服务；H3 用户不需要安装这部分。此次不包含提示词增强、桌面界面和历史管理。
 
-本分支提供文生图、有序多图编辑、图生图、透明输出、LoRA 叠加与独立强度、采样预设、CFG/负向提示词、四档内存模式、真实进度及取消。已完成的功能验证见 [验证记录](../VALIDATION.md)，性能数据见 [实测表](../BENCHMARKS.md)。
+本库提供文生图、有序多图编辑、图生图、透明输出、LoRA 叠加与独立强度、采样预设、CFG/负向提示词、四档内存模式、真实进度及取消。已完成的功能验证见 [验证记录](../VALIDATION.md)，性能数据见 [实测表](../BENCHMARKS.md)。
 
 ## 安装与生成
 
-已发布的 `0.1.0a4` 尚不包含 Qwen。当前使用本分支源码，以及按[英文构建说明](QWEN.md#build-the-optional-runtime)产出的原生 wheel：
+从 PyPI 一次安装主包与可选原生运行时：
 
 ```bash
-python -m pip install .
-python -m pip install packages/qwen-runtime/dist/h3_image_mlx_qwen_runtime-*.whl
+python -m pip install 'h3-image-mlx[qwen]==0.1.0a5'
 h3-image-mlx fetch --model qwen-image-2.1-turbo --models ./qwen-models
 h3-image-mlx generate --model qwen-image-2.1-turbo --models ./qwen-models \
   --prompt '白色桌面上的红色陶瓷茶壶。' --output teapot.png \

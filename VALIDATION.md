@@ -2,7 +2,7 @@
 
 ## Qwen integration — November 14, 2026
 
-Main wheel `0.1.0a5.dev0` and optional native runtime wheel `0.1.0a1` were installed into a separate Python 3.13 environment. The bundled worker runs without the desktop app or an HTTP server; its dylibs, Metal library and notices are included. Platform tag: `macosx_26_2_arm64`.
+Main wheel `0.1.0a5.dev0` and optional native runtime wheel `0.1.0a1` were installed into a separate Python 3.13 environment. The bundled worker runs without the desktop app or an HTTP server; its dylibs, Metal library and notices are included. Release platform tag: `macosx_26_0_arm64` (the standard macOS major-version tag); the runtime manifest and startup check enforce macOS 26.2+.
 
 - Real 512² generations cover staged text-to-image, all four memory modes, full pipe requests, RGBA, single- and two-reference editing, reversed reference order, and image-to-image variation. Reference ordering is preserved during PNG encoding and changes the actual editing result.
 - Real adapters cover zero-strength identity, nonzero pose LoRA, Turbo 3/4-step, standard CFG with a negative prompt, Lightning, DMD2, and the official Turbo adapter with non-block corrections. Lightning editing with fixed scale, automatic scale and an additional pose LoRA produces three distinct outputs. Source weights remain unchanged.
