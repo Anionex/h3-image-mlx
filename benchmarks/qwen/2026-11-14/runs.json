@@ -1,0 +1,3476 @@
+[
+  {
+    "name": "512-micro-fast-0",
+    "size": 512,
+    "mode": "micro-fast",
+    "trial": 0,
+    "cache_verified": true,
+    "violations": [],
+    "metrics": {
+      "model": "qwen-image-2.1-turbo",
+      "backend": "w8a8",
+      "memory_mode": "micro-fast",
+      "profile": "complete",
+      "steps": 8,
+      "seed": 42,
+      "stages": [
+        {
+          "peak_bytes": 663274624,
+          "disk_read_bytes": 7483305984,
+          "stage": "text",
+          "elapsed_ms": 1830,
+          "mlx_peak_bytes": 229565424,
+          "weight_io": {
+            "calls": 959,
+            "logical_bytes": 7392537133,
+            "aligned_bytes": 7408260980,
+            "errors": 0
+          },
+          "wall_seconds": 5.260243499971693,
+          "progress": []
+        },
+        {
+          "peak_bytes": 842007680,
+          "disk_read_bytes": 56193597440,
+          "stage": "dit",
+          "elapsed_ms": 12025,
+          "mlx_peak_bytes": 475724992,
+          "weight_io": {
+            "calls": 2639,
+            "logical_bytes": 56152684213,
+            "aligned_bytes": 56191892452,
+            "errors": 0
+          },
+          "wall_seconds": 12.12537062499905,
+          "progress": [
+            {
+              "stage": "Denoising",
+              "step": 1,
+              "total": 8
+            },
+            {
+              "stage": "Denoising",
+              "step": 2,
+              "total": 8
+            },
+            {
+              "stage": "Denoising",
+              "step": 3,
+              "total": 8
+            },
+            {
+              "stage": "Denoising",
+              "step": 4,
+              "total": 8
+            },
+            {
+              "stage": "Denoising",
+              "step": 5,
+              "total": 8
+            },
+            {
+              "stage": "Denoising",
+              "step": 6,
+              "total": 8
+            },
+            {
+              "stage": "Denoising",
+              "step": 7,
+              "total": 8
+            },
+            {
+              "stage": "Denoising",
+              "step": 8,
+              "total": 8
+            }
+          ]
+        },
+        {
+          "peak_bytes": 712065672,
+          "disk_read_bytes": 509464576,
+          "stage": "vae",
+          "elapsed_ms": 3687,
+          "mlx_peak_bytes": 561755654,
+          "weight_io": {
+            "calls": 131,
+            "logical_bytes": 506169509,
+            "aligned_bytes": 508271845,
+            "errors": 0
+          },
+          "wall_seconds": 3.780067500018049,
+          "progress": []
+        }
+      ],
+      "preparation": [],
+      "worker_peak_bytes": 842007680,
+      "disk_read_bytes": 64186368000,
+      "generation_seconds": 21.173194167000474,
+      "execution": "staged",
+      "weight_read_policy": "uncached"
+    },
+    "weight_cache_peak_bytes": 0,
+    "before": {
+      "files": [
+        {
+          "path": "<LOCAL_HOME>/.local/share/qwen-image21-turbo8/models/ddalcu/Qwen-Image-2.1-Turbo-MLX-Serve-8bit/text_encoder/model.safetensors",
+          "bytes": 9367829459,
+          "resident_bytes": 0
+        },
+        {
+          "path": "<LOCAL_HOME>/.local/share/qwen-image21-turbo8/models/ddalcu/Qwen-Image-2.1-Turbo-MLX-Serve-8bit/transformer/diffusion_pytorch_model-00001-of-00002.safetensors",
+          "bytes": 5407063648,
+          "resident_bytes": 0
+        },
+        {
+          "path": "<LOCAL_HOME>/.local/share/qwen-image21-turbo8/models/ddalcu/Qwen-Image-2.1-Turbo-MLX-Serve-8bit/transformer/diffusion_pytorch_model-00002-of-00002.safetensors",
+          "bytes": 2280158619,
+          "resident_bytes": 0
+        },
+        {
+          "path": "<LOCAL_HOME>/.local/share/qwen-image21-turbo8/models/ddalcu/Qwen-Image-2.1-Turbo-MLX-Serve-8bit/vae/diffusion_pytorch_model.safetensors",
+          "bytes": 662000745,
+          "resident_bytes": 0
+        },
+        {
+          "path": "<LOCAL_HOME>/.local/share/qwen-image21-turbo8/models/ddalcu/Qwen-Image-2.1-Turbo-MLX-Serve-8bit/vision/model.safetensors",
+          "bytes": 742557480,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-00.safetensors",
+          "bytes": 218286068,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-01.safetensors",
+          "bytes": 218286062,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-02.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-03.safetensors",
+          "bytes": 218286060,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-04.safetensors",
+          "bytes": 218286058,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-05.safetensors",
+          "bytes": 218286076,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-06.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-07.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-08.safetensors",
+          "bytes": 218286052,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-09.safetensors",
+          "bytes": 218286060,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-10.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-11.safetensors",
+          "bytes": 218286068,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-12.safetensors",
+          "bytes": 218286082,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-13.safetensors",
+          "bytes": 218286074,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-14.safetensors",
+          "bytes": 218286068,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-15.safetensors",
+          "bytes": 218286078,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-16.safetensors",
+          "bytes": 218286084,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-17.safetensors",
+          "bytes": 218286066,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-18.safetensors",
+          "bytes": 218286064,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-19.safetensors",
+          "bytes": 218286070,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-20.safetensors",
+          "bytes": 218286066,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-21.safetensors",
+          "bytes": 218286096,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-22.safetensors",
+          "bytes": 218286078,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-23.safetensors",
+          "bytes": 218286080,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-24.safetensors",
+          "bytes": 218286068,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-25.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-26.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-27.safetensors",
+          "bytes": 218286084,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-28.safetensors",
+          "bytes": 218286086,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-29.safetensors",
+          "bytes": 218286086,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-30.safetensors",
+          "bytes": 218286070,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-31.safetensors",
+          "bytes": 218286074,
+          "resident_bytes": 0
+        }
+      ],
+      "bytes": 25444764261,
+      "resident_bytes": 0
+    },
+    "after": {
+      "files": [
+        {
+          "path": "<LOCAL_HOME>/.local/share/qwen-image21-turbo8/models/ddalcu/Qwen-Image-2.1-Turbo-MLX-Serve-8bit/text_encoder/model.safetensors",
+          "bytes": 9367829459,
+          "resident_bytes": 0
+        },
+        {
+          "path": "<LOCAL_HOME>/.local/share/qwen-image21-turbo8/models/ddalcu/Qwen-Image-2.1-Turbo-MLX-Serve-8bit/transformer/diffusion_pytorch_model-00001-of-00002.safetensors",
+          "bytes": 5407063648,
+          "resident_bytes": 0
+        },
+        {
+          "path": "<LOCAL_HOME>/.local/share/qwen-image21-turbo8/models/ddalcu/Qwen-Image-2.1-Turbo-MLX-Serve-8bit/transformer/diffusion_pytorch_model-00002-of-00002.safetensors",
+          "bytes": 2280158619,
+          "resident_bytes": 0
+        },
+        {
+          "path": "<LOCAL_HOME>/.local/share/qwen-image21-turbo8/models/ddalcu/Qwen-Image-2.1-Turbo-MLX-Serve-8bit/vae/diffusion_pytorch_model.safetensors",
+          "bytes": 662000745,
+          "resident_bytes": 0
+        },
+        {
+          "path": "<LOCAL_HOME>/.local/share/qwen-image21-turbo8/models/ddalcu/Qwen-Image-2.1-Turbo-MLX-Serve-8bit/vision/model.safetensors",
+          "bytes": 742557480,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-00.safetensors",
+          "bytes": 218286068,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-01.safetensors",
+          "bytes": 218286062,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-02.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-03.safetensors",
+          "bytes": 218286060,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-04.safetensors",
+          "bytes": 218286058,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-05.safetensors",
+          "bytes": 218286076,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-06.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-07.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-08.safetensors",
+          "bytes": 218286052,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-09.safetensors",
+          "bytes": 218286060,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-10.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-11.safetensors",
+          "bytes": 218286068,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-12.safetensors",
+          "bytes": 218286082,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-13.safetensors",
+          "bytes": 218286074,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-14.safetensors",
+          "bytes": 218286068,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-15.safetensors",
+          "bytes": 218286078,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-16.safetensors",
+          "bytes": 218286084,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-17.safetensors",
+          "bytes": 218286066,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-18.safetensors",
+          "bytes": 218286064,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-19.safetensors",
+          "bytes": 218286070,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-20.safetensors",
+          "bytes": 218286066,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-21.safetensors",
+          "bytes": 218286096,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-22.safetensors",
+          "bytes": 218286078,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-23.safetensors",
+          "bytes": 218286080,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-24.safetensors",
+          "bytes": 218286068,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-25.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-26.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-27.safetensors",
+          "bytes": 218286084,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-28.safetensors",
+          "bytes": 218286086,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-29.safetensors",
+          "bytes": 218286086,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-30.safetensors",
+          "bytes": 218286070,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-31.safetensors",
+          "bytes": 218286074,
+          "resident_bytes": 0
+        }
+      ],
+      "bytes": 25444764261,
+      "resident_bytes": 0
+    },
+    "system_before": {
+      "monotonic": 228854.902711791,
+      "wall_time": 1794585913.40751,
+      "page_size": 16384,
+      "vm": {
+        "Pages free": 1219731,
+        "Pages active": 396459,
+        "Pages inactive": 373942,
+        "Pages speculative": 26194,
+        "Pages throttled": 0,
+        "Pages wired down": 322668,
+        "Pages purgeable": 24984,
+        "Translation faults": 5400159195,
+        "Pages copy-on-write": 155642583,
+        "Pages zero filled": 17331710454,
+        "Pages reactivated": 240956695,
+        "Pages purged": 42156557,
+        "File-backed pages": 46164,
+        "Anonymous pages": 750431,
+        "Pages stored in compressor": 1685279,
+        "Pages occupied by compressor": 746514,
+        "Decompressions": 689297402,
+        "Compressions": 736601111,
+        "Pageins": 1162359821,
+        "Pageouts": 303807,
+        "Swapins": 38435289,
+        "Swapouts": 44976174,
+        "Pages tagged": 139565,
+        "Pages tagged resident": 105431,
+        "Pages tagged compressed": 34134,
+        "Pages tag-storage": 98304,
+        "Pages tag-storage holding tags": 5241,
+        "Pages tag-storage free": 228,
+        "Pages tag-storage non-tag pageable": 92826,
+        "Pages tag-storage non-tag wired": 9,
+        "Bytes of compressed tags": 4777792,
+        "Tagged compressions": 3545785,
+        "Tagged decompressions": 3288073
+      },
+      "swap_used_bytes": 2904429690.88,
+      "pressure": 1
+    },
+    "system_after": {
+      "monotonic": 228876.860602666,
+      "wall_time": 1794585935.365428,
+      "page_size": 16384,
+      "vm": {
+        "Pages free": 1152908,
+        "Pages active": 433011,
+        "Pages inactive": 373748,
+        "Pages speculative": 63545,
+        "Pages throttled": 0,
+        "Pages wired down": 320478,
+        "Pages purgeable": 19910,
+        "Translation faults": 5401039011,
+        "Pages copy-on-write": 155663144,
+        "Pages zero filled": 17336563754,
+        "Pages reactivated": 240956701,
+        "Pages purged": 42157197,
+        "File-backed pages": 131973,
+        "Anonymous pages": 738331,
+        "Pages stored in compressor": 1677207,
+        "Pages occupied by compressor": 741503,
+        "Decompressions": 689299982,
+        "Compressions": 736601111,
+        "Pageins": 1162433661,
+        "Pageouts": 303807,
+        "Swapins": 38435289,
+        "Swapouts": 44976174,
+        "Pages tagged": 139624,
+        "Pages tagged resident": 105536,
+        "Pages tagged compressed": 34088,
+        "Pages tag-storage": 98304,
+        "Pages tag-storage holding tags": 5241,
+        "Pages tag-storage free": 1013,
+        "Pages tag-storage non-tag pageable": 92041,
+        "Pages tag-storage non-tag wired": 9,
+        "Bytes of compressed tags": 4771008,
+        "Tagged compressions": 3545785,
+        "Tagged decompressions": 3288119
+      },
+      "swap_used_bytes": 2904429690.88,
+      "pressure": 1
+    },
+    "system_disk_read_bytes": 65084272640,
+    "rgb_sha256": "4a836b4d691f3f629ae2c41ee7788bae92b6e39620f29e83d9916ff84536907c"
+  },
+  {
+    "name": "512-micro-fast-1",
+    "size": 512,
+    "mode": "micro-fast",
+    "trial": 1,
+    "cache_verified": true,
+    "violations": [],
+    "metrics": {
+      "model": "qwen-image-2.1-turbo",
+      "backend": "w8a8",
+      "memory_mode": "micro-fast",
+      "profile": "complete",
+      "steps": 8,
+      "seed": 42,
+      "stages": [
+        {
+          "peak_bytes": 660014232,
+          "disk_read_bytes": 7408263168,
+          "stage": "text",
+          "elapsed_ms": 1808,
+          "mlx_peak_bytes": 229565424,
+          "weight_io": {
+            "calls": 959,
+            "logical_bytes": 7392537133,
+            "aligned_bytes": 7408260980,
+            "errors": 0
+          },
+          "wall_seconds": 1.8983984579972457,
+          "progress": []
+        },
+        {
+          "peak_bytes": 845546576,
+          "disk_read_bytes": 56192425984,
+          "stage": "dit",
+          "elapsed_ms": 11209,
+          "mlx_peak_bytes": 475724992,
+          "weight_io": {
+            "calls": 2639,
+            "logical_bytes": 56152684213,
+            "aligned_bytes": 56191892452,
+            "errors": 0
+          },
+          "wall_seconds": 11.30126329199993,
+          "progress": [
+            {
+              "stage": "Denoising",
+              "step": 1,
+              "total": 8
+            },
+            {
+              "stage": "Denoising",
+              "step": 2,
+              "total": 8
+            },
+            {
+              "stage": "Denoising",
+              "step": 3,
+              "total": 8
+            },
+            {
+              "stage": "Denoising",
+              "step": 4,
+              "total": 8
+            },
+            {
+              "stage": "Denoising",
+              "step": 5,
+              "total": 8
+            },
+            {
+              "stage": "Denoising",
+              "step": 6,
+              "total": 8
+            },
+            {
+              "stage": "Denoising",
+              "step": 7,
+              "total": 8
+            },
+            {
+              "stage": "Denoising",
+              "step": 8,
+              "total": 8
+            }
+          ]
+        },
+        {
+          "peak_bytes": 724599576,
+          "disk_read_bytes": 508276736,
+          "stage": "vae",
+          "elapsed_ms": 3634,
+          "mlx_peak_bytes": 561755654,
+          "weight_io": {
+            "calls": 131,
+            "logical_bytes": 506169509,
+            "aligned_bytes": 508271845,
+            "errors": 0
+          },
+          "wall_seconds": 3.7274901249911636,
+          "progress": []
+        }
+      ],
+      "preparation": [],
+      "worker_peak_bytes": 845546576,
+      "disk_read_bytes": 64108965888,
+      "generation_seconds": 16.93615920798038,
+      "execution": "staged",
+      "weight_read_policy": "uncached"
+    },
+    "weight_cache_peak_bytes": 0,
+    "before": {
+      "files": [
+        {
+          "path": "<LOCAL_HOME>/.local/share/qwen-image21-turbo8/models/ddalcu/Qwen-Image-2.1-Turbo-MLX-Serve-8bit/text_encoder/model.safetensors",
+          "bytes": 9367829459,
+          "resident_bytes": 0
+        },
+        {
+          "path": "<LOCAL_HOME>/.local/share/qwen-image21-turbo8/models/ddalcu/Qwen-Image-2.1-Turbo-MLX-Serve-8bit/transformer/diffusion_pytorch_model-00001-of-00002.safetensors",
+          "bytes": 5407063648,
+          "resident_bytes": 0
+        },
+        {
+          "path": "<LOCAL_HOME>/.local/share/qwen-image21-turbo8/models/ddalcu/Qwen-Image-2.1-Turbo-MLX-Serve-8bit/transformer/diffusion_pytorch_model-00002-of-00002.safetensors",
+          "bytes": 2280158619,
+          "resident_bytes": 0
+        },
+        {
+          "path": "<LOCAL_HOME>/.local/share/qwen-image21-turbo8/models/ddalcu/Qwen-Image-2.1-Turbo-MLX-Serve-8bit/vae/diffusion_pytorch_model.safetensors",
+          "bytes": 662000745,
+          "resident_bytes": 0
+        },
+        {
+          "path": "<LOCAL_HOME>/.local/share/qwen-image21-turbo8/models/ddalcu/Qwen-Image-2.1-Turbo-MLX-Serve-8bit/vision/model.safetensors",
+          "bytes": 742557480,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-00.safetensors",
+          "bytes": 218286068,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-01.safetensors",
+          "bytes": 218286062,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-02.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-03.safetensors",
+          "bytes": 218286060,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-04.safetensors",
+          "bytes": 218286058,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-05.safetensors",
+          "bytes": 218286076,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-06.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-07.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-08.safetensors",
+          "bytes": 218286052,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-09.safetensors",
+          "bytes": 218286060,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-10.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-11.safetensors",
+          "bytes": 218286068,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-12.safetensors",
+          "bytes": 218286082,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-13.safetensors",
+          "bytes": 218286074,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-14.safetensors",
+          "bytes": 218286068,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-15.safetensors",
+          "bytes": 218286078,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-16.safetensors",
+          "bytes": 218286084,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-17.safetensors",
+          "bytes": 218286066,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-18.safetensors",
+          "bytes": 218286064,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-19.safetensors",
+          "bytes": 218286070,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-20.safetensors",
+          "bytes": 218286066,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-21.safetensors",
+          "bytes": 218286096,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-22.safetensors",
+          "bytes": 218286078,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-23.safetensors",
+          "bytes": 218286080,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-24.safetensors",
+          "bytes": 218286068,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-25.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-26.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-27.safetensors",
+          "bytes": 218286084,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-28.safetensors",
+          "bytes": 218286086,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-29.safetensors",
+          "bytes": 218286086,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-30.safetensors",
+          "bytes": 218286070,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-31.safetensors",
+          "bytes": 218286074,
+          "resident_bytes": 0
+        }
+      ],
+      "bytes": 25444764261,
+      "resident_bytes": 0
+    },
+    "after": {
+      "files": [
+        {
+          "path": "<LOCAL_HOME>/.local/share/qwen-image21-turbo8/models/ddalcu/Qwen-Image-2.1-Turbo-MLX-Serve-8bit/text_encoder/model.safetensors",
+          "bytes": 9367829459,
+          "resident_bytes": 0
+        },
+        {
+          "path": "<LOCAL_HOME>/.local/share/qwen-image21-turbo8/models/ddalcu/Qwen-Image-2.1-Turbo-MLX-Serve-8bit/transformer/diffusion_pytorch_model-00001-of-00002.safetensors",
+          "bytes": 5407063648,
+          "resident_bytes": 0
+        },
+        {
+          "path": "<LOCAL_HOME>/.local/share/qwen-image21-turbo8/models/ddalcu/Qwen-Image-2.1-Turbo-MLX-Serve-8bit/transformer/diffusion_pytorch_model-00002-of-00002.safetensors",
+          "bytes": 2280158619,
+          "resident_bytes": 0
+        },
+        {
+          "path": "<LOCAL_HOME>/.local/share/qwen-image21-turbo8/models/ddalcu/Qwen-Image-2.1-Turbo-MLX-Serve-8bit/vae/diffusion_pytorch_model.safetensors",
+          "bytes": 662000745,
+          "resident_bytes": 0
+        },
+        {
+          "path": "<LOCAL_HOME>/.local/share/qwen-image21-turbo8/models/ddalcu/Qwen-Image-2.1-Turbo-MLX-Serve-8bit/vision/model.safetensors",
+          "bytes": 742557480,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-00.safetensors",
+          "bytes": 218286068,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-01.safetensors",
+          "bytes": 218286062,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-02.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-03.safetensors",
+          "bytes": 218286060,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-04.safetensors",
+          "bytes": 218286058,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-05.safetensors",
+          "bytes": 218286076,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-06.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-07.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-08.safetensors",
+          "bytes": 218286052,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-09.safetensors",
+          "bytes": 218286060,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-10.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-11.safetensors",
+          "bytes": 218286068,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-12.safetensors",
+          "bytes": 218286082,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-13.safetensors",
+          "bytes": 218286074,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-14.safetensors",
+          "bytes": 218286068,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-15.safetensors",
+          "bytes": 218286078,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-16.safetensors",
+          "bytes": 218286084,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-17.safetensors",
+          "bytes": 218286066,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-18.safetensors",
+          "bytes": 218286064,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-19.safetensors",
+          "bytes": 218286070,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-20.safetensors",
+          "bytes": 218286066,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-21.safetensors",
+          "bytes": 218286096,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-22.safetensors",
+          "bytes": 218286078,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-23.safetensors",
+          "bytes": 218286080,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-24.safetensors",
+          "bytes": 218286068,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-25.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-26.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-27.safetensors",
+          "bytes": 218286084,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-28.safetensors",
+          "bytes": 218286086,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-29.safetensors",
+          "bytes": 218286086,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-30.safetensors",
+          "bytes": 218286070,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-31.safetensors",
+          "bytes": 218286074,
+          "resident_bytes": 0
+        }
+      ],
+      "bytes": 25444764261,
+      "resident_bytes": 0
+    },
+    "system_before": {
+      "monotonic": 228877.326841958,
+      "wall_time": 1794585935.831668,
+      "page_size": 16384,
+      "vm": {
+        "Pages free": 1152825,
+        "Pages active": 433069,
+        "Pages inactive": 373748,
+        "Pages speculative": 63909,
+        "Pages throttled": 0,
+        "Pages wired down": 319728,
+        "Pages purgeable": 19337,
+        "Translation faults": 5401047872,
+        "Pages copy-on-write": 155664303,
+        "Pages zero filled": 17336571436,
+        "Pages reactivated": 240956701,
+        "Pages purged": 42157197,
+        "File-backed pages": 132796,
+        "Anonymous pages": 737930,
+        "Pages stored in compressor": 1677196,
+        "Pages occupied by compressor": 741502,
+        "Decompressions": 689299993,
+        "Compressions": 736601111,
+        "Pageins": 1162434474,
+        "Pageouts": 303807,
+        "Swapins": 38435289,
+        "Swapouts": 44976174,
+        "Pages tagged": 139815,
+        "Pages tagged resident": 105727,
+        "Pages tagged compressed": 34088,
+        "Pages tag-storage": 98304,
+        "Pages tag-storage holding tags": 5241,
+        "Pages tag-storage free": 1003,
+        "Pages tag-storage non-tag pageable": 92051,
+        "Pages tag-storage non-tag wired": 9,
+        "Bytes of compressed tags": 4771008,
+        "Tagged compressions": 3545785,
+        "Tagged decompressions": 3288119
+      },
+      "swap_used_bytes": 2904429690.88,
+      "pressure": 1
+    },
+    "system_after": {
+      "monotonic": 228895.081395666,
+      "wall_time": 1794585953.5862532,
+      "page_size": 16384,
+      "vm": {
+        "Pages free": 1156064,
+        "Pages active": 446048,
+        "Pages inactive": 378482,
+        "Pages speculative": 68356,
+        "Pages throttled": 0,
+        "Pages wired down": 294491,
+        "Pages purgeable": 22515,
+        "Translation faults": 5401792163,
+        "Pages copy-on-write": 155680780,
+        "Pages zero filled": 17341523466,
+        "Pages reactivated": 240956701,
+        "Pages purged": 42158221,
+        "File-backed pages": 142139,
+        "Anonymous pages": 750747,
+        "Pages stored in compressor": 1676862,
+        "Pages occupied by compressor": 741440,
+        "Decompressions": 689300325,
+        "Compressions": 736601111,
+        "Pageins": 1162442550,
+        "Pageouts": 303807,
+        "Swapins": 38435289,
+        "Swapouts": 44976174,
+        "Pages tagged": 139641,
+        "Pages tagged resident": 105555,
+        "Pages tagged compressed": 34086,
+        "Pages tag-storage": 98304,
+        "Pages tag-storage holding tags": 5240,
+        "Pages tag-storage free": 1046,
+        "Pages tag-storage non-tag pageable": 92009,
+        "Pages tag-storage non-tag wired": 9,
+        "Bytes of compressed tags": 4770624,
+        "Tagged compressions": 3545785,
+        "Tagged decompressions": 3288121
+      },
+      "swap_used_bytes": 2904429690.88,
+      "pressure": 1
+    },
+    "system_disk_read_bytes": 64197111808,
+    "rgb_sha256": "4a836b4d691f3f629ae2c41ee7788bae92b6e39620f29e83d9916ff84536907c"
+  },
+  {
+    "name": "512-micro-fast-2",
+    "size": 512,
+    "mode": "micro-fast",
+    "trial": 2,
+    "cache_verified": true,
+    "violations": [],
+    "metrics": {
+      "model": "qwen-image-2.1-turbo",
+      "backend": "w8a8",
+      "memory_mode": "micro-fast",
+      "profile": "complete",
+      "steps": 8,
+      "seed": 42,
+      "stages": [
+        {
+          "peak_bytes": 656704664,
+          "disk_read_bytes": 7408263168,
+          "stage": "text",
+          "elapsed_ms": 1843,
+          "mlx_peak_bytes": 229565424,
+          "weight_io": {
+            "calls": 959,
+            "logical_bytes": 7392537133,
+            "aligned_bytes": 7408260980,
+            "errors": 0
+          },
+          "wall_seconds": 1.9328472920169588,
+          "progress": []
+        },
+        {
+          "peak_bytes": 841860152,
+          "disk_read_bytes": 56192425984,
+          "stage": "dit",
+          "elapsed_ms": 11458,
+          "mlx_peak_bytes": 475724992,
+          "weight_io": {
+            "calls": 2639,
+            "logical_bytes": 56152684213,
+            "aligned_bytes": 56191892452,
+            "errors": 0
+          },
+          "wall_seconds": 11.55327133301762,
+          "progress": [
+            {
+              "stage": "Denoising",
+              "step": 1,
+              "total": 8
+            },
+            {
+              "stage": "Denoising",
+              "step": 2,
+              "total": 8
+            },
+            {
+              "stage": "Denoising",
+              "step": 3,
+              "total": 8
+            },
+            {
+              "stage": "Denoising",
+              "step": 4,
+              "total": 8
+            },
+            {
+              "stage": "Denoising",
+              "step": 5,
+              "total": 8
+            },
+            {
+              "stage": "Denoising",
+              "step": 6,
+              "total": 8
+            },
+            {
+              "stage": "Denoising",
+              "step": 7,
+              "total": 8
+            },
+            {
+              "stage": "Denoising",
+              "step": 8,
+              "total": 8
+            }
+          ]
+        },
+        {
+          "peak_bytes": 738886280,
+          "disk_read_bytes": 508276736,
+          "stage": "vae",
+          "elapsed_ms": 2825,
+          "mlx_peak_bytes": 561755654,
+          "weight_io": {
+            "calls": 131,
+            "logical_bytes": 506169509,
+            "aligned_bytes": 508271845,
+            "errors": 0
+          },
+          "wall_seconds": 2.879801834002137,
+          "progress": []
+        }
+      ],
+      "preparation": [],
+      "worker_peak_bytes": 841860152,
+      "disk_read_bytes": 64108965888,
+      "generation_seconds": 16.37474500000826,
+      "execution": "staged",
+      "weight_read_policy": "uncached"
+    },
+    "weight_cache_peak_bytes": 0,
+    "before": {
+      "files": [
+        {
+          "path": "<LOCAL_HOME>/.local/share/qwen-image21-turbo8/models/ddalcu/Qwen-Image-2.1-Turbo-MLX-Serve-8bit/text_encoder/model.safetensors",
+          "bytes": 9367829459,
+          "resident_bytes": 0
+        },
+        {
+          "path": "<LOCAL_HOME>/.local/share/qwen-image21-turbo8/models/ddalcu/Qwen-Image-2.1-Turbo-MLX-Serve-8bit/transformer/diffusion_pytorch_model-00001-of-00002.safetensors",
+          "bytes": 5407063648,
+          "resident_bytes": 0
+        },
+        {
+          "path": "<LOCAL_HOME>/.local/share/qwen-image21-turbo8/models/ddalcu/Qwen-Image-2.1-Turbo-MLX-Serve-8bit/transformer/diffusion_pytorch_model-00002-of-00002.safetensors",
+          "bytes": 2280158619,
+          "resident_bytes": 0
+        },
+        {
+          "path": "<LOCAL_HOME>/.local/share/qwen-image21-turbo8/models/ddalcu/Qwen-Image-2.1-Turbo-MLX-Serve-8bit/vae/diffusion_pytorch_model.safetensors",
+          "bytes": 662000745,
+          "resident_bytes": 0
+        },
+        {
+          "path": "<LOCAL_HOME>/.local/share/qwen-image21-turbo8/models/ddalcu/Qwen-Image-2.1-Turbo-MLX-Serve-8bit/vision/model.safetensors",
+          "bytes": 742557480,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-00.safetensors",
+          "bytes": 218286068,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-01.safetensors",
+          "bytes": 218286062,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-02.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-03.safetensors",
+          "bytes": 218286060,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-04.safetensors",
+          "bytes": 218286058,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-05.safetensors",
+          "bytes": 218286076,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-06.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-07.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-08.safetensors",
+          "bytes": 218286052,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-09.safetensors",
+          "bytes": 218286060,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-10.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-11.safetensors",
+          "bytes": 218286068,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-12.safetensors",
+          "bytes": 218286082,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-13.safetensors",
+          "bytes": 218286074,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-14.safetensors",
+          "bytes": 218286068,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-15.safetensors",
+          "bytes": 218286078,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-16.safetensors",
+          "bytes": 218286084,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-17.safetensors",
+          "bytes": 218286066,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-18.safetensors",
+          "bytes": 218286064,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-19.safetensors",
+          "bytes": 218286070,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-20.safetensors",
+          "bytes": 218286066,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-21.safetensors",
+          "bytes": 218286096,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-22.safetensors",
+          "bytes": 218286078,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-23.safetensors",
+          "bytes": 218286080,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-24.safetensors",
+          "bytes": 218286068,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-25.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-26.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-27.safetensors",
+          "bytes": 218286084,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-28.safetensors",
+          "bytes": 218286086,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-29.safetensors",
+          "bytes": 218286086,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-30.safetensors",
+          "bytes": 218286070,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-31.safetensors",
+          "bytes": 218286074,
+          "resident_bytes": 0
+        }
+      ],
+      "bytes": 25444764261,
+      "resident_bytes": 0
+    },
+    "after": {
+      "files": [
+        {
+          "path": "<LOCAL_HOME>/.local/share/qwen-image21-turbo8/models/ddalcu/Qwen-Image-2.1-Turbo-MLX-Serve-8bit/text_encoder/model.safetensors",
+          "bytes": 9367829459,
+          "resident_bytes": 0
+        },
+        {
+          "path": "<LOCAL_HOME>/.local/share/qwen-image21-turbo8/models/ddalcu/Qwen-Image-2.1-Turbo-MLX-Serve-8bit/transformer/diffusion_pytorch_model-00001-of-00002.safetensors",
+          "bytes": 5407063648,
+          "resident_bytes": 0
+        },
+        {
+          "path": "<LOCAL_HOME>/.local/share/qwen-image21-turbo8/models/ddalcu/Qwen-Image-2.1-Turbo-MLX-Serve-8bit/transformer/diffusion_pytorch_model-00002-of-00002.safetensors",
+          "bytes": 2280158619,
+          "resident_bytes": 0
+        },
+        {
+          "path": "<LOCAL_HOME>/.local/share/qwen-image21-turbo8/models/ddalcu/Qwen-Image-2.1-Turbo-MLX-Serve-8bit/vae/diffusion_pytorch_model.safetensors",
+          "bytes": 662000745,
+          "resident_bytes": 0
+        },
+        {
+          "path": "<LOCAL_HOME>/.local/share/qwen-image21-turbo8/models/ddalcu/Qwen-Image-2.1-Turbo-MLX-Serve-8bit/vision/model.safetensors",
+          "bytes": 742557480,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-00.safetensors",
+          "bytes": 218286068,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-01.safetensors",
+          "bytes": 218286062,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-02.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-03.safetensors",
+          "bytes": 218286060,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-04.safetensors",
+          "bytes": 218286058,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-05.safetensors",
+          "bytes": 218286076,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-06.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-07.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-08.safetensors",
+          "bytes": 218286052,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-09.safetensors",
+          "bytes": 218286060,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-10.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-11.safetensors",
+          "bytes": 218286068,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-12.safetensors",
+          "bytes": 218286082,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-13.safetensors",
+          "bytes": 218286074,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-14.safetensors",
+          "bytes": 218286068,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-15.safetensors",
+          "bytes": 218286078,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-16.safetensors",
+          "bytes": 218286084,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-17.safetensors",
+          "bytes": 218286066,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-18.safetensors",
+          "bytes": 218286064,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-19.safetensors",
+          "bytes": 218286070,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-20.safetensors",
+          "bytes": 218286066,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-21.safetensors",
+          "bytes": 218286096,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-22.safetensors",
+          "bytes": 218286078,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-23.safetensors",
+          "bytes": 218286080,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-24.safetensors",
+          "bytes": 218286068,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-25.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-26.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-27.safetensors",
+          "bytes": 218286084,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-28.safetensors",
+          "bytes": 218286086,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-29.safetensors",
+          "bytes": 218286086,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-30.safetensors",
+          "bytes": 218286070,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-31.safetensors",
+          "bytes": 218286074,
+          "resident_bytes": 0
+        }
+      ],
+      "bytes": 25444764261,
+      "resident_bytes": 0
+    },
+    "system_before": {
+      "monotonic": 228895.540791041,
+      "wall_time": 1794585954.0456479,
+      "page_size": 16384,
+      "vm": {
+        "Pages free": 1155825,
+        "Pages active": 446580,
+        "Pages inactive": 378433,
+        "Pages speculative": 68391,
+        "Pages throttled": 0,
+        "Pages wired down": 294070,
+        "Pages purgeable": 22495,
+        "Translation faults": 5401803441,
+        "Pages copy-on-write": 155682207,
+        "Pages zero filled": 17341532312,
+        "Pages reactivated": 240956701,
+        "Pages purged": 42158221,
+        "File-backed pages": 142376,
+        "Anonymous pages": 751028,
+        "Pages stored in compressor": 1676857,
+        "Pages occupied by compressor": 741438,
+        "Decompressions": 689300328,
+        "Compressions": 736601111,
+        "Pageins": 1162442794,
+        "Pageouts": 303807,
+        "Swapins": 38435289,
+        "Swapouts": 44976174,
+        "Pages tagged": 139631,
+        "Pages tagged resident": 105545,
+        "Pages tagged compressed": 34086,
+        "Pages tag-storage": 98304,
+        "Pages tag-storage holding tags": 5240,
+        "Pages tag-storage free": 1058,
+        "Pages tag-storage non-tag pageable": 91997,
+        "Pages tag-storage non-tag wired": 9,
+        "Bytes of compressed tags": 4770624,
+        "Tagged compressions": 3545785,
+        "Tagged decompressions": 3288121
+      },
+      "swap_used_bytes": 2904429690.88,
+      "pressure": 1
+    },
+    "system_after": {
+      "monotonic": 228912.559046666,
+      "wall_time": 1794585971.063933,
+      "page_size": 16384,
+      "vm": {
+        "Pages free": 1114143,
+        "Pages active": 456315,
+        "Pages inactive": 378913,
+        "Pages speculative": 75730,
+        "Pages throttled": 0,
+        "Pages wired down": 318441,
+        "Pages purgeable": 17486,
+        "Translation faults": 5402614472,
+        "Pages copy-on-write": 155701102,
+        "Pages zero filled": 17346565857,
+        "Pages reactivated": 240956829,
+        "Pages purged": 42158477,
+        "File-backed pages": 162348,
+        "Anonymous pages": 748610,
+        "Pages stored in compressor": 1676451,
+        "Pages occupied by compressor": 741305,
+        "Decompressions": 689300734,
+        "Compressions": 736601111,
+        "Pageins": 1162460701,
+        "Pageouts": 303807,
+        "Swapins": 38435289,
+        "Swapouts": 44976174,
+        "Pages tagged": 139876,
+        "Pages tagged resident": 105801,
+        "Pages tagged compressed": 34075,
+        "Pages tag-storage": 98304,
+        "Pages tag-storage holding tags": 5240,
+        "Pages tag-storage free": 1110,
+        "Pages tag-storage non-tag pageable": 91945,
+        "Pages tag-storage non-tag wired": 9,
+        "Bytes of compressed tags": 4769472,
+        "Tagged compressions": 3545785,
+        "Tagged decompressions": 3288132
+      },
+      "swap_used_bytes": 2904429690.88,
+      "pressure": 1
+    },
+    "system_disk_read_bytes": 64331083776,
+    "rgb_sha256": "4a836b4d691f3f629ae2c41ee7788bae92b6e39620f29e83d9916ff84536907c"
+  },
+  {
+    "name": "1024-micro-fast-0",
+    "size": 1024,
+    "mode": "micro-fast",
+    "trial": 0,
+    "cache_verified": true,
+    "violations": [],
+    "metrics": {
+      "model": "qwen-image-2.1-turbo",
+      "backend": "w8a8",
+      "memory_mode": "micro-fast",
+      "profile": "complete",
+      "steps": 8,
+      "seed": 42,
+      "stages": [
+        {
+          "peak_bytes": 658556008,
+          "disk_read_bytes": 7408263168,
+          "stage": "text",
+          "elapsed_ms": 1940,
+          "mlx_peak_bytes": 229565424,
+          "weight_io": {
+            "calls": 959,
+            "logical_bytes": 7392537133,
+            "aligned_bytes": 7408260980,
+            "errors": 0
+          },
+          "wall_seconds": 2.040229542006273,
+          "progress": []
+        },
+        {
+          "peak_bytes": 1407960168,
+          "disk_read_bytes": 56192589824,
+          "stage": "dit",
+          "elapsed_ms": 33257,
+          "mlx_peak_bytes": 1003545644,
+          "weight_io": {
+            "calls": 2639,
+            "logical_bytes": 56152684213,
+            "aligned_bytes": 56191892452,
+            "errors": 0
+          },
+          "wall_seconds": 33.352155458997004,
+          "progress": [
+            {
+              "stage": "Denoising",
+              "step": 1,
+              "total": 8
+            },
+            {
+              "stage": "Denoising",
+              "step": 2,
+              "total": 8
+            },
+            {
+              "stage": "Denoising",
+              "step": 3,
+              "total": 8
+            },
+            {
+              "stage": "Denoising",
+              "step": 4,
+              "total": 8
+            },
+            {
+              "stage": "Denoising",
+              "step": 5,
+              "total": 8
+            },
+            {
+              "stage": "Denoising",
+              "step": 6,
+              "total": 8
+            },
+            {
+              "stage": "Denoising",
+              "step": 7,
+              "total": 8
+            },
+            {
+              "stage": "Denoising",
+              "step": 8,
+              "total": 8
+            }
+          ]
+        },
+        {
+          "peak_bytes": 1143669504,
+          "disk_read_bytes": 508276736,
+          "stage": "vae",
+          "elapsed_ms": 12165,
+          "mlx_peak_bytes": 1282335498,
+          "weight_io": {
+            "calls": 131,
+            "logical_bytes": 506169509,
+            "aligned_bytes": 508271845,
+            "errors": 0
+          },
+          "wall_seconds": 12.26157366699772,
+          "progress": []
+        }
+      ],
+      "preparation": [],
+      "worker_peak_bytes": 1407960168,
+      "disk_read_bytes": 64109129728,
+      "generation_seconds": 47.67236974998377,
+      "execution": "staged",
+      "weight_read_policy": "uncached"
+    },
+    "weight_cache_peak_bytes": 0,
+    "before": {
+      "files": [
+        {
+          "path": "<LOCAL_HOME>/.local/share/qwen-image21-turbo8/models/ddalcu/Qwen-Image-2.1-Turbo-MLX-Serve-8bit/text_encoder/model.safetensors",
+          "bytes": 9367829459,
+          "resident_bytes": 0
+        },
+        {
+          "path": "<LOCAL_HOME>/.local/share/qwen-image21-turbo8/models/ddalcu/Qwen-Image-2.1-Turbo-MLX-Serve-8bit/transformer/diffusion_pytorch_model-00001-of-00002.safetensors",
+          "bytes": 5407063648,
+          "resident_bytes": 0
+        },
+        {
+          "path": "<LOCAL_HOME>/.local/share/qwen-image21-turbo8/models/ddalcu/Qwen-Image-2.1-Turbo-MLX-Serve-8bit/transformer/diffusion_pytorch_model-00002-of-00002.safetensors",
+          "bytes": 2280158619,
+          "resident_bytes": 0
+        },
+        {
+          "path": "<LOCAL_HOME>/.local/share/qwen-image21-turbo8/models/ddalcu/Qwen-Image-2.1-Turbo-MLX-Serve-8bit/vae/diffusion_pytorch_model.safetensors",
+          "bytes": 662000745,
+          "resident_bytes": 0
+        },
+        {
+          "path": "<LOCAL_HOME>/.local/share/qwen-image21-turbo8/models/ddalcu/Qwen-Image-2.1-Turbo-MLX-Serve-8bit/vision/model.safetensors",
+          "bytes": 742557480,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-00.safetensors",
+          "bytes": 218286068,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-01.safetensors",
+          "bytes": 218286062,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-02.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-03.safetensors",
+          "bytes": 218286060,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-04.safetensors",
+          "bytes": 218286058,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-05.safetensors",
+          "bytes": 218286076,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-06.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-07.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-08.safetensors",
+          "bytes": 218286052,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-09.safetensors",
+          "bytes": 218286060,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-10.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-11.safetensors",
+          "bytes": 218286068,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-12.safetensors",
+          "bytes": 218286082,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-13.safetensors",
+          "bytes": 218286074,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-14.safetensors",
+          "bytes": 218286068,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-15.safetensors",
+          "bytes": 218286078,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-16.safetensors",
+          "bytes": 218286084,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-17.safetensors",
+          "bytes": 218286066,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-18.safetensors",
+          "bytes": 218286064,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-19.safetensors",
+          "bytes": 218286070,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-20.safetensors",
+          "bytes": 218286066,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-21.safetensors",
+          "bytes": 218286096,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-22.safetensors",
+          "bytes": 218286078,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-23.safetensors",
+          "bytes": 218286080,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-24.safetensors",
+          "bytes": 218286068,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-25.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-26.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-27.safetensors",
+          "bytes": 218286084,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-28.safetensors",
+          "bytes": 218286086,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-29.safetensors",
+          "bytes": 218286086,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-30.safetensors",
+          "bytes": 218286070,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-31.safetensors",
+          "bytes": 218286074,
+          "resident_bytes": 0
+        }
+      ],
+      "bytes": 25444764261,
+      "resident_bytes": 0
+    },
+    "after": {
+      "files": [
+        {
+          "path": "<LOCAL_HOME>/.local/share/qwen-image21-turbo8/models/ddalcu/Qwen-Image-2.1-Turbo-MLX-Serve-8bit/text_encoder/model.safetensors",
+          "bytes": 9367829459,
+          "resident_bytes": 0
+        },
+        {
+          "path": "<LOCAL_HOME>/.local/share/qwen-image21-turbo8/models/ddalcu/Qwen-Image-2.1-Turbo-MLX-Serve-8bit/transformer/diffusion_pytorch_model-00001-of-00002.safetensors",
+          "bytes": 5407063648,
+          "resident_bytes": 0
+        },
+        {
+          "path": "<LOCAL_HOME>/.local/share/qwen-image21-turbo8/models/ddalcu/Qwen-Image-2.1-Turbo-MLX-Serve-8bit/transformer/diffusion_pytorch_model-00002-of-00002.safetensors",
+          "bytes": 2280158619,
+          "resident_bytes": 0
+        },
+        {
+          "path": "<LOCAL_HOME>/.local/share/qwen-image21-turbo8/models/ddalcu/Qwen-Image-2.1-Turbo-MLX-Serve-8bit/vae/diffusion_pytorch_model.safetensors",
+          "bytes": 662000745,
+          "resident_bytes": 0
+        },
+        {
+          "path": "<LOCAL_HOME>/.local/share/qwen-image21-turbo8/models/ddalcu/Qwen-Image-2.1-Turbo-MLX-Serve-8bit/vision/model.safetensors",
+          "bytes": 742557480,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-00.safetensors",
+          "bytes": 218286068,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-01.safetensors",
+          "bytes": 218286062,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-02.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-03.safetensors",
+          "bytes": 218286060,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-04.safetensors",
+          "bytes": 218286058,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-05.safetensors",
+          "bytes": 218286076,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-06.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-07.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-08.safetensors",
+          "bytes": 218286052,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-09.safetensors",
+          "bytes": 218286060,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-10.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-11.safetensors",
+          "bytes": 218286068,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-12.safetensors",
+          "bytes": 218286082,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-13.safetensors",
+          "bytes": 218286074,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-14.safetensors",
+          "bytes": 218286068,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-15.safetensors",
+          "bytes": 218286078,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-16.safetensors",
+          "bytes": 218286084,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-17.safetensors",
+          "bytes": 218286066,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-18.safetensors",
+          "bytes": 218286064,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-19.safetensors",
+          "bytes": 218286070,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-20.safetensors",
+          "bytes": 218286066,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-21.safetensors",
+          "bytes": 218286096,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-22.safetensors",
+          "bytes": 218286078,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-23.safetensors",
+          "bytes": 218286080,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-24.safetensors",
+          "bytes": 218286068,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-25.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-26.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-27.safetensors",
+          "bytes": 218286084,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-28.safetensors",
+          "bytes": 218286086,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-29.safetensors",
+          "bytes": 218286086,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-30.safetensors",
+          "bytes": 218286070,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-31.safetensors",
+          "bytes": 218286074,
+          "resident_bytes": 0
+        }
+      ],
+      "bytes": 25444764261,
+      "resident_bytes": 0
+    },
+    "system_before": {
+      "monotonic": 228913.039123291,
+      "wall_time": 1794585971.544011,
+      "page_size": 16384,
+      "vm": {
+        "Pages free": 1106121,
+        "Pages active": 447303,
+        "Pages inactive": 371484,
+        "Pages speculative": 75815,
+        "Pages throttled": 0,
+        "Pages wired down": 342725,
+        "Pages purgeable": 11222,
+        "Translation faults": 5402621836,
+        "Pages copy-on-write": 155702082,
+        "Pages zero filled": 17346589258,
+        "Pages reactivated": 240956829,
+        "Pages purged": 42158477,
+        "File-backed pages": 162477,
+        "Anonymous pages": 732125,
+        "Pages stored in compressor": 1676451,
+        "Pages occupied by compressor": 741305,
+        "Decompressions": 689300734,
+        "Compressions": 736601111,
+        "Pageins": 1162460772,
+        "Pageouts": 303807,
+        "Swapins": 38435289,
+        "Swapouts": 44976174,
+        "Pages tagged": 139791,
+        "Pages tagged resident": 105716,
+        "Pages tagged compressed": 34075,
+        "Pages tag-storage": 98304,
+        "Pages tag-storage holding tags": 5240,
+        "Pages tag-storage free": 1110,
+        "Pages tag-storage non-tag pageable": 91945,
+        "Pages tag-storage non-tag wired": 9,
+        "Bytes of compressed tags": 4769472,
+        "Tagged compressions": 3545785,
+        "Tagged decompressions": 3288132
+      },
+      "swap_used_bytes": 2904429690.88,
+      "pressure": 1
+    },
+    "system_after": {
+      "monotonic": 228961.181308708,
+      "wall_time": 1794586019.68628,
+      "page_size": 16384,
+      "vm": {
+        "Pages free": 1073997,
+        "Pages active": 469681,
+        "Pages inactive": 382824,
+        "Pages speculative": 85788,
+        "Pages throttled": 0,
+        "Pages wired down": 333626,
+        "Pages purgeable": 19420,
+        "Translation faults": 5403696884,
+        "Pages copy-on-write": 155748615,
+        "Pages zero filled": 17365670201,
+        "Pages reactivated": 240957550,
+        "Pages purged": 42160333,
+        "File-backed pages": 186867,
+        "Anonymous pages": 751426,
+        "Pages stored in compressor": 1670099,
+        "Pages occupied by compressor": 738426,
+        "Decompressions": 689306047,
+        "Compressions": 736601111,
+        "Pageins": 1162481698,
+        "Pageouts": 303807,
+        "Swapins": 38435289,
+        "Swapouts": 44976174,
+        "Pages tagged": 140047,
+        "Pages tagged resident": 106009,
+        "Pages tagged compressed": 34038,
+        "Pages tag-storage": 98304,
+        "Pages tag-storage holding tags": 5240,
+        "Pages tag-storage free": 1510,
+        "Pages tag-storage non-tag pageable": 91545,
+        "Pages tag-storage non-tag wired": 9,
+        "Bytes of compressed tags": 4765440,
+        "Tagged compressions": 3545785,
+        "Tagged decompressions": 3288169
+      },
+      "swap_used_bytes": 2904429690.88,
+      "pressure": 1
+    },
+    "system_disk_read_bytes": 64397283328,
+    "rgb_sha256": "079610eee585ac38743c301c1323f9ba0c73d11c31b65b5deda2929d97d2bba9"
+  },
+  {
+    "name": "1024-micro-fast-1",
+    "size": 1024,
+    "mode": "micro-fast",
+    "trial": 1,
+    "cache_verified": true,
+    "violations": [],
+    "metrics": {
+      "model": "qwen-image-2.1-turbo",
+      "backend": "w8a8",
+      "memory_mode": "micro-fast",
+      "profile": "complete",
+      "steps": 8,
+      "seed": 42,
+      "stages": [
+        {
+          "peak_bytes": 663209088,
+          "disk_read_bytes": 7408263168,
+          "stage": "text",
+          "elapsed_ms": 1826,
+          "mlx_peak_bytes": 229565424,
+          "weight_io": {
+            "calls": 959,
+            "logical_bytes": 7392537133,
+            "aligned_bytes": 7408260980,
+            "errors": 0
+          },
+          "wall_seconds": 1.9195392090186942,
+          "progress": []
+        },
+        {
+          "peak_bytes": 1357038768,
+          "disk_read_bytes": 56192425984,
+          "stage": "dit",
+          "elapsed_ms": 33248,
+          "mlx_peak_bytes": 1003545644,
+          "weight_io": {
+            "calls": 2639,
+            "logical_bytes": 56152684213,
+            "aligned_bytes": 56191892452,
+            "errors": 0
+          },
+          "wall_seconds": 33.34086391600431,
+          "progress": [
+            {
+              "stage": "Denoising",
+              "step": 1,
+              "total": 8
+            },
+            {
+              "stage": "Denoising",
+              "step": 2,
+              "total": 8
+            },
+            {
+              "stage": "Denoising",
+              "step": 3,
+              "total": 8
+            },
+            {
+              "stage": "Denoising",
+              "step": 4,
+              "total": 8
+            },
+            {
+              "stage": "Denoising",
+              "step": 5,
+              "total": 8
+            },
+            {
+              "stage": "Denoising",
+              "step": 6,
+              "total": 8
+            },
+            {
+              "stage": "Denoising",
+              "step": 7,
+              "total": 8
+            },
+            {
+              "stage": "Denoising",
+              "step": 8,
+              "total": 8
+            }
+          ]
+        },
+        {
+          "peak_bytes": 1320829720,
+          "disk_read_bytes": 508276736,
+          "stage": "vae",
+          "elapsed_ms": 11800,
+          "mlx_peak_bytes": 1282335498,
+          "weight_io": {
+            "calls": 131,
+            "logical_bytes": 506169509,
+            "aligned_bytes": 508271845,
+            "errors": 0
+          },
+          "wall_seconds": 11.901701374998083,
+          "progress": []
+        }
+      ],
+      "preparation": [],
+      "worker_peak_bytes": 1357038768,
+      "disk_read_bytes": 64108965888,
+      "generation_seconds": 47.18152862499119,
+      "execution": "staged",
+      "weight_read_policy": "uncached"
+    },
+    "weight_cache_peak_bytes": 0,
+    "before": {
+      "files": [
+        {
+          "path": "<LOCAL_HOME>/.local/share/qwen-image21-turbo8/models/ddalcu/Qwen-Image-2.1-Turbo-MLX-Serve-8bit/text_encoder/model.safetensors",
+          "bytes": 9367829459,
+          "resident_bytes": 0
+        },
+        {
+          "path": "<LOCAL_HOME>/.local/share/qwen-image21-turbo8/models/ddalcu/Qwen-Image-2.1-Turbo-MLX-Serve-8bit/transformer/diffusion_pytorch_model-00001-of-00002.safetensors",
+          "bytes": 5407063648,
+          "resident_bytes": 0
+        },
+        {
+          "path": "<LOCAL_HOME>/.local/share/qwen-image21-turbo8/models/ddalcu/Qwen-Image-2.1-Turbo-MLX-Serve-8bit/transformer/diffusion_pytorch_model-00002-of-00002.safetensors",
+          "bytes": 2280158619,
+          "resident_bytes": 0
+        },
+        {
+          "path": "<LOCAL_HOME>/.local/share/qwen-image21-turbo8/models/ddalcu/Qwen-Image-2.1-Turbo-MLX-Serve-8bit/vae/diffusion_pytorch_model.safetensors",
+          "bytes": 662000745,
+          "resident_bytes": 0
+        },
+        {
+          "path": "<LOCAL_HOME>/.local/share/qwen-image21-turbo8/models/ddalcu/Qwen-Image-2.1-Turbo-MLX-Serve-8bit/vision/model.safetensors",
+          "bytes": 742557480,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-00.safetensors",
+          "bytes": 218286068,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-01.safetensors",
+          "bytes": 218286062,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-02.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-03.safetensors",
+          "bytes": 218286060,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-04.safetensors",
+          "bytes": 218286058,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-05.safetensors",
+          "bytes": 218286076,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-06.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-07.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-08.safetensors",
+          "bytes": 218286052,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-09.safetensors",
+          "bytes": 218286060,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-10.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-11.safetensors",
+          "bytes": 218286068,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-12.safetensors",
+          "bytes": 218286082,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-13.safetensors",
+          "bytes": 218286074,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-14.safetensors",
+          "bytes": 218286068,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-15.safetensors",
+          "bytes": 218286078,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-16.safetensors",
+          "bytes": 218286084,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-17.safetensors",
+          "bytes": 218286066,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-18.safetensors",
+          "bytes": 218286064,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-19.safetensors",
+          "bytes": 218286070,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-20.safetensors",
+          "bytes": 218286066,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-21.safetensors",
+          "bytes": 218286096,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-22.safetensors",
+          "bytes": 218286078,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-23.safetensors",
+          "bytes": 218286080,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-24.safetensors",
+          "bytes": 218286068,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-25.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-26.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-27.safetensors",
+          "bytes": 218286084,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-28.safetensors",
+          "bytes": 218286086,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-29.safetensors",
+          "bytes": 218286086,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-30.safetensors",
+          "bytes": 218286070,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-31.safetensors",
+          "bytes": 218286074,
+          "resident_bytes": 0
+        }
+      ],
+      "bytes": 25444764261,
+      "resident_bytes": 0
+    },
+    "after": {
+      "files": [
+        {
+          "path": "<LOCAL_HOME>/.local/share/qwen-image21-turbo8/models/ddalcu/Qwen-Image-2.1-Turbo-MLX-Serve-8bit/text_encoder/model.safetensors",
+          "bytes": 9367829459,
+          "resident_bytes": 0
+        },
+        {
+          "path": "<LOCAL_HOME>/.local/share/qwen-image21-turbo8/models/ddalcu/Qwen-Image-2.1-Turbo-MLX-Serve-8bit/transformer/diffusion_pytorch_model-00001-of-00002.safetensors",
+          "bytes": 5407063648,
+          "resident_bytes": 0
+        },
+        {
+          "path": "<LOCAL_HOME>/.local/share/qwen-image21-turbo8/models/ddalcu/Qwen-Image-2.1-Turbo-MLX-Serve-8bit/transformer/diffusion_pytorch_model-00002-of-00002.safetensors",
+          "bytes": 2280158619,
+          "resident_bytes": 0
+        },
+        {
+          "path": "<LOCAL_HOME>/.local/share/qwen-image21-turbo8/models/ddalcu/Qwen-Image-2.1-Turbo-MLX-Serve-8bit/vae/diffusion_pytorch_model.safetensors",
+          "bytes": 662000745,
+          "resident_bytes": 0
+        },
+        {
+          "path": "<LOCAL_HOME>/.local/share/qwen-image21-turbo8/models/ddalcu/Qwen-Image-2.1-Turbo-MLX-Serve-8bit/vision/model.safetensors",
+          "bytes": 742557480,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-00.safetensors",
+          "bytes": 218286068,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-01.safetensors",
+          "bytes": 218286062,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-02.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-03.safetensors",
+          "bytes": 218286060,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-04.safetensors",
+          "bytes": 218286058,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-05.safetensors",
+          "bytes": 218286076,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-06.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-07.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-08.safetensors",
+          "bytes": 218286052,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-09.safetensors",
+          "bytes": 218286060,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-10.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-11.safetensors",
+          "bytes": 218286068,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-12.safetensors",
+          "bytes": 218286082,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-13.safetensors",
+          "bytes": 218286074,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-14.safetensors",
+          "bytes": 218286068,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-15.safetensors",
+          "bytes": 218286078,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-16.safetensors",
+          "bytes": 218286084,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-17.safetensors",
+          "bytes": 218286066,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-18.safetensors",
+          "bytes": 218286064,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-19.safetensors",
+          "bytes": 218286070,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-20.safetensors",
+          "bytes": 218286066,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-21.safetensors",
+          "bytes": 218286096,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-22.safetensors",
+          "bytes": 218286078,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-23.safetensors",
+          "bytes": 218286080,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-24.safetensors",
+          "bytes": 218286068,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-25.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-26.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-27.safetensors",
+          "bytes": 218286084,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-28.safetensors",
+          "bytes": 218286086,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-29.safetensors",
+          "bytes": 218286086,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-30.safetensors",
+          "bytes": 218286070,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-31.safetensors",
+          "bytes": 218286074,
+          "resident_bytes": 0
+        }
+      ],
+      "bytes": 25444764261,
+      "resident_bytes": 0
+    },
+    "system_before": {
+      "monotonic": 228961.695423416,
+      "wall_time": 1794586020.200395,
+      "page_size": 16384,
+      "vm": {
+        "Pages free": 1075186,
+        "Pages active": 470293,
+        "Pages inactive": 384016,
+        "Pages speculative": 85876,
+        "Pages throttled": 0,
+        "Pages wired down": 330500,
+        "Pages purgeable": 18121,
+        "Translation faults": 5403703382,
+        "Pages copy-on-write": 155749503,
+        "Pages zero filled": 17365679218,
+        "Pages reactivated": 240957550,
+        "Pages purged": 42160333,
+        "File-backed pages": 186958,
+        "Anonymous pages": 753227,
+        "Pages stored in compressor": 1670089,
+        "Pages occupied by compressor": 738425,
+        "Decompressions": 689306057,
+        "Compressions": 736601111,
+        "Pageins": 1162481708,
+        "Pageouts": 303807,
+        "Swapins": 38435289,
+        "Swapouts": 44976174,
+        "Pages tagged": 140038,
+        "Pages tagged resident": 106000,
+        "Pages tagged compressed": 34038,
+        "Pages tag-storage": 98304,
+        "Pages tag-storage holding tags": 5240,
+        "Pages tag-storage free": 1512,
+        "Pages tag-storage non-tag pageable": 91543,
+        "Pages tag-storage non-tag wired": 9,
+        "Bytes of compressed tags": 4765440,
+        "Tagged compressions": 3545785,
+        "Tagged decompressions": 3288169
+      },
+      "swap_used_bytes": 2904429690.88,
+      "pressure": 1
+    },
+    "system_after": {
+      "monotonic": 229009.689594458,
+      "wall_time": 1794586068.194649,
+      "page_size": 16384,
+      "vm": {
+        "Pages free": 1048867,
+        "Pages active": 471879,
+        "Pages inactive": 379185,
+        "Pages speculative": 91937,
+        "Pages throttled": 0,
+        "Pages wired down": 354438,
+        "Pages purgeable": 13830,
+        "Translation faults": 5404689501,
+        "Pages copy-on-write": 155797380,
+        "Pages zero filled": 17384829913,
+        "Pages reactivated": 240958073,
+        "Pages purged": 42162144,
+        "File-backed pages": 202309,
+        "Anonymous pages": 740692,
+        "Pages stored in compressor": 1668746,
+        "Pages occupied by compressor": 738033,
+        "Decompressions": 689307418,
+        "Compressions": 736601111,
+        "Pageins": 1162493576,
+        "Pageouts": 303807,
+        "Swapins": 38435289,
+        "Swapouts": 44976174,
+        "Pages tagged": 139890,
+        "Pages tagged resident": 105860,
+        "Pages tagged compressed": 34030,
+        "Pages tag-storage": 98304,
+        "Pages tag-storage holding tags": 5240,
+        "Pages tag-storage free": 1568,
+        "Pages tag-storage non-tag pageable": 91487,
+        "Pages tag-storage non-tag wired": 9,
+        "Bytes of compressed tags": 4764160,
+        "Tagged compressions": 3545785,
+        "Tagged decompressions": 3288177
+      },
+      "swap_used_bytes": 2904429690.88,
+      "pressure": 1
+    },
+    "system_disk_read_bytes": 64294440960,
+    "rgb_sha256": "079610eee585ac38743c301c1323f9ba0c73d11c31b65b5deda2929d97d2bba9"
+  },
+  {
+    "name": "1024-micro-fast-2",
+    "size": 1024,
+    "mode": "micro-fast",
+    "trial": 2,
+    "cache_verified": true,
+    "violations": [],
+    "metrics": {
+      "model": "qwen-image-2.1-turbo",
+      "backend": "w8a8",
+      "memory_mode": "micro-fast",
+      "profile": "complete",
+      "steps": 8,
+      "seed": 42,
+      "stages": [
+        {
+          "peak_bytes": 656639104,
+          "disk_read_bytes": 7408263168,
+          "stage": "text",
+          "elapsed_ms": 1855,
+          "mlx_peak_bytes": 229565424,
+          "weight_io": {
+            "calls": 959,
+            "logical_bytes": 7392537133,
+            "aligned_bytes": 7408260980,
+            "errors": 0
+          },
+          "wall_seconds": 1.9447116660012398,
+          "progress": []
+        },
+        {
+          "peak_bytes": 1398817896,
+          "disk_read_bytes": 56192425984,
+          "stage": "dit",
+          "elapsed_ms": 33849,
+          "mlx_peak_bytes": 1003545644,
+          "weight_io": {
+            "calls": 2639,
+            "logical_bytes": 56152684213,
+            "aligned_bytes": 56191892452,
+            "errors": 0
+          },
+          "wall_seconds": 33.9411375419877,
+          "progress": [
+            {
+              "stage": "Denoising",
+              "step": 1,
+              "total": 8
+            },
+            {
+              "stage": "Denoising",
+              "step": 2,
+              "total": 8
+            },
+            {
+              "stage": "Denoising",
+              "step": 3,
+              "total": 8
+            },
+            {
+              "stage": "Denoising",
+              "step": 4,
+              "total": 8
+            },
+            {
+              "stage": "Denoising",
+              "step": 5,
+              "total": 8
+            },
+            {
+              "stage": "Denoising",
+              "step": 6,
+              "total": 8
+            },
+            {
+              "stage": "Denoising",
+              "step": 7,
+              "total": 8
+            },
+            {
+              "stage": "Denoising",
+              "step": 8,
+              "total": 8
+            }
+          ]
+        },
+        {
+          "peak_bytes": 1146127080,
+          "disk_read_bytes": 508276736,
+          "stage": "vae",
+          "elapsed_ms": 12617,
+          "mlx_peak_bytes": 1282335498,
+          "weight_io": {
+            "calls": 131,
+            "logical_bytes": 506169509,
+            "aligned_bytes": 508271845,
+            "errors": 0
+          },
+          "wall_seconds": 12.711704250017647,
+          "progress": []
+        }
+      ],
+      "preparation": [],
+      "worker_peak_bytes": 1398817896,
+      "disk_read_bytes": 64108965888,
+      "generation_seconds": 48.62044283299474,
+      "execution": "staged",
+      "weight_read_policy": "uncached"
+    },
+    "weight_cache_peak_bytes": 0,
+    "before": {
+      "files": [
+        {
+          "path": "<LOCAL_HOME>/.local/share/qwen-image21-turbo8/models/ddalcu/Qwen-Image-2.1-Turbo-MLX-Serve-8bit/text_encoder/model.safetensors",
+          "bytes": 9367829459,
+          "resident_bytes": 0
+        },
+        {
+          "path": "<LOCAL_HOME>/.local/share/qwen-image21-turbo8/models/ddalcu/Qwen-Image-2.1-Turbo-MLX-Serve-8bit/transformer/diffusion_pytorch_model-00001-of-00002.safetensors",
+          "bytes": 5407063648,
+          "resident_bytes": 0
+        },
+        {
+          "path": "<LOCAL_HOME>/.local/share/qwen-image21-turbo8/models/ddalcu/Qwen-Image-2.1-Turbo-MLX-Serve-8bit/transformer/diffusion_pytorch_model-00002-of-00002.safetensors",
+          "bytes": 2280158619,
+          "resident_bytes": 0
+        },
+        {
+          "path": "<LOCAL_HOME>/.local/share/qwen-image21-turbo8/models/ddalcu/Qwen-Image-2.1-Turbo-MLX-Serve-8bit/vae/diffusion_pytorch_model.safetensors",
+          "bytes": 662000745,
+          "resident_bytes": 0
+        },
+        {
+          "path": "<LOCAL_HOME>/.local/share/qwen-image21-turbo8/models/ddalcu/Qwen-Image-2.1-Turbo-MLX-Serve-8bit/vision/model.safetensors",
+          "bytes": 742557480,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-00.safetensors",
+          "bytes": 218286068,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-01.safetensors",
+          "bytes": 218286062,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-02.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-03.safetensors",
+          "bytes": 218286060,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-04.safetensors",
+          "bytes": 218286058,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-05.safetensors",
+          "bytes": 218286076,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-06.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-07.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-08.safetensors",
+          "bytes": 218286052,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-09.safetensors",
+          "bytes": 218286060,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-10.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-11.safetensors",
+          "bytes": 218286068,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-12.safetensors",
+          "bytes": 218286082,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-13.safetensors",
+          "bytes": 218286074,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-14.safetensors",
+          "bytes": 218286068,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-15.safetensors",
+          "bytes": 218286078,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-16.safetensors",
+          "bytes": 218286084,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-17.safetensors",
+          "bytes": 218286066,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-18.safetensors",
+          "bytes": 218286064,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-19.safetensors",
+          "bytes": 218286070,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-20.safetensors",
+          "bytes": 218286066,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-21.safetensors",
+          "bytes": 218286096,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-22.safetensors",
+          "bytes": 218286078,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-23.safetensors",
+          "bytes": 218286080,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-24.safetensors",
+          "bytes": 218286068,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-25.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-26.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-27.safetensors",
+          "bytes": 218286084,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-28.safetensors",
+          "bytes": 218286086,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-29.safetensors",
+          "bytes": 218286086,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-30.safetensors",
+          "bytes": 218286070,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-31.safetensors",
+          "bytes": 218286074,
+          "resident_bytes": 0
+        }
+      ],
+      "bytes": 25444764261,
+      "resident_bytes": 0
+    },
+    "after": {
+      "files": [
+        {
+          "path": "<LOCAL_HOME>/.local/share/qwen-image21-turbo8/models/ddalcu/Qwen-Image-2.1-Turbo-MLX-Serve-8bit/text_encoder/model.safetensors",
+          "bytes": 9367829459,
+          "resident_bytes": 0
+        },
+        {
+          "path": "<LOCAL_HOME>/.local/share/qwen-image21-turbo8/models/ddalcu/Qwen-Image-2.1-Turbo-MLX-Serve-8bit/transformer/diffusion_pytorch_model-00001-of-00002.safetensors",
+          "bytes": 5407063648,
+          "resident_bytes": 0
+        },
+        {
+          "path": "<LOCAL_HOME>/.local/share/qwen-image21-turbo8/models/ddalcu/Qwen-Image-2.1-Turbo-MLX-Serve-8bit/transformer/diffusion_pytorch_model-00002-of-00002.safetensors",
+          "bytes": 2280158619,
+          "resident_bytes": 0
+        },
+        {
+          "path": "<LOCAL_HOME>/.local/share/qwen-image21-turbo8/models/ddalcu/Qwen-Image-2.1-Turbo-MLX-Serve-8bit/vae/diffusion_pytorch_model.safetensors",
+          "bytes": 662000745,
+          "resident_bytes": 0
+        },
+        {
+          "path": "<LOCAL_HOME>/.local/share/qwen-image21-turbo8/models/ddalcu/Qwen-Image-2.1-Turbo-MLX-Serve-8bit/vision/model.safetensors",
+          "bytes": 742557480,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-00.safetensors",
+          "bytes": 218286068,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-01.safetensors",
+          "bytes": 218286062,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-02.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-03.safetensors",
+          "bytes": 218286060,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-04.safetensors",
+          "bytes": 218286058,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-05.safetensors",
+          "bytes": 218286076,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-06.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-07.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-08.safetensors",
+          "bytes": 218286052,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-09.safetensors",
+          "bytes": 218286060,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-10.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-11.safetensors",
+          "bytes": 218286068,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-12.safetensors",
+          "bytes": 218286082,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-13.safetensors",
+          "bytes": 218286074,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-14.safetensors",
+          "bytes": 218286068,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-15.safetensors",
+          "bytes": 218286078,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-16.safetensors",
+          "bytes": 218286084,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-17.safetensors",
+          "bytes": 218286066,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-18.safetensors",
+          "bytes": 218286064,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-19.safetensors",
+          "bytes": 218286070,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-20.safetensors",
+          "bytes": 218286066,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-21.safetensors",
+          "bytes": 218286096,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-22.safetensors",
+          "bytes": 218286078,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-23.safetensors",
+          "bytes": 218286080,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-24.safetensors",
+          "bytes": 218286068,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-25.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-26.safetensors",
+          "bytes": 218286072,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-27.safetensors",
+          "bytes": 218286084,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-28.safetensors",
+          "bytes": 218286086,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-29.safetensors",
+          "bytes": 218286086,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-30.safetensors",
+          "bytes": 218286070,
+          "resident_bytes": 0
+        },
+        {
+          "path": "outputs/qwen-stream-experiment/cache-build/prepared/block-31.safetensors",
+          "bytes": 218286074,
+          "resident_bytes": 0
+        }
+      ],
+      "bytes": 25444764261,
+      "resident_bytes": 0
+    },
+    "system_before": {
+      "monotonic": 229010.205549583,
+      "wall_time": 1794586068.7106051,
+      "page_size": 16384,
+      "vm": {
+        "Pages free": 1047354,
+        "Pages active": 475405,
+        "Pages inactive": 382171,
+        "Pages speculative": 92009,
+        "Pages throttled": 0,
+        "Pages wired down": 349434,
+        "Pages purgeable": 18312,
+        "Translation faults": 5404704423,
+        "Pages copy-on-write": 155798166,
+        "Pages zero filled": 17384850502,
+        "Pages reactivated": 240958080,
+        "Pages purged": 42162144,
+        "File-backed pages": 202431,
+        "Anonymous pages": 747154,
+        "Pages stored in compressor": 1668738,
+        "Pages occupied by compressor": 738032,
+        "Decompressions": 689307426,
+        "Compressions": 736601111,
+        "Pageins": 1162493622,
+        "Pageouts": 303807,
+        "Swapins": 38435289,
+        "Swapouts": 44976174,
+        "Pages tagged": 139896,
+        "Pages tagged resident": 105866,
+        "Pages tagged compressed": 34030,
+        "Pages tag-storage": 98304,
+        "Pages tag-storage holding tags": 5240,
+        "Pages tag-storage free": 1568,
+        "Pages tag-storage non-tag pageable": 91487,
+        "Pages tag-storage non-tag wired": 9,
+        "Bytes of compressed tags": 4764160,
+        "Tagged compressions": 3545785,
+        "Tagged decompressions": 3288177
+      },
+      "swap_used_bytes": 2904429690.88,
+      "pressure": 1
+    },
+    "system_after": {
+      "monotonic": 229059.342941875,
+      "wall_time": 1794586117.8480818,
+      "page_size": 16384,
+      "vm": {
+        "Pages free": 1010625,
+        "Pages active": 493005,
+        "Pages inactive": 395560,
+        "Pages speculative": 96070,
+        "Pages throttled": 0,
+        "Pages wired down": 352406,
+        "Pages purgeable": 21562,
+        "Translation faults": 5405876089,
+        "Pages copy-on-write": 155845843,
+        "Pages zero filled": 17404014286,
+        "Pages reactivated": 240958894,
+        "Pages purged": 42164640,
+        "File-backed pages": 213840,
+        "Anonymous pages": 770795,
+        "Pages stored in compressor": 1665633,
+        "Pages occupied by compressor": 736545,
+        "Decompressions": 689310490,
+        "Compressions": 736601111,
+        "Pageins": 1162504322,
+        "Pageouts": 303807,
+        "Swapins": 38435289,
+        "Swapouts": 44976174,
+        "Pages tagged": 139862,
+        "Pages tagged resident": 105908,
+        "Pages tagged compressed": 33954,
+        "Pages tag-storage": 98304,
+        "Pages tag-storage holding tags": 5240,
+        "Pages tag-storage free": 1714,
+        "Pages tag-storage non-tag pageable": 91341,
+        "Pages tag-storage non-tag wired": 9,
+        "Bytes of compressed tags": 4750848,
+        "Tagged compressions": 3545785,
+        "Tagged decompressions": 3288253
+      },
+      "swap_used_bytes": 2904429690.88,
+      "pressure": 1
+    },
+    "system_disk_read_bytes": 64225566720,
+    "rgb_sha256": "079610eee585ac38743c301c1323f9ba0c73d11c31b65b5deda2929d97d2bba9"
+  }
+]
