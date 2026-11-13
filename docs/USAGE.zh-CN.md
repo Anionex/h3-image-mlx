@@ -13,6 +13,32 @@ h3-image-mlx fetch --models ./models
 
 默认从 ModelScope 下载；在 `fetch` 后加 `--source huggingface` 可切换来源。下载支持断点续传。模型权重和 VAE 配置单独下载，不包含在 Python 软件包里。
 
+## BF16 权重
+
+选择 `--precision bf16` 可使用未量化的 BF16 DiT 和文本编码器，同时保留现有 AdaLN 裁剪。默认仍为 INT8。BF16 使用标准 MLX 浮点计算，不将激活量化为 INT8；`--backend w8a8` 仅适用于 INT8 权重。FP16 VAE、tokenizer 和 VAE 配置沿用并复用现有文件。
+
+此选项已在源码版提供；下一次软件包发布前，请在源码目录执行 `python -m pip install -e .` 安装。全新 BF16 模型目录需要 **92.92 GB** 磁盘空间；如果已有公共组件，新增两份 BF16 权重需要 **91.74 GB**。下载前会检查剩余空间。
+
+```bash
+h3-image-mlx fetch --models ./models --precision bf16
+h3-image-mlx verify --models ./models --precision bf16
+h3-image-mlx generate --models ./models --precision bf16 --dit-mode stream \
+  --prompt 'A yellow enamel teapot on a blue wooden table.' --output bf16.png
+```
+
+仍优先从 ModelScope 下载，在 `fetch` 后加 `--source huggingface` 可切换来源。两套精度可共用一个目录。每条命令都显式选择 `--precision`，下载 BF16 不会改变默认的 INT8 选择。Python 接口使用 `generate(..., precision="bf16")`。
+
+BF16 模式下，`--dit-mode auto` 在所有芯片上均选择分块读取；内存充足时仍可显式选择 `resident`。分块、预读/异步设置与参考图顺序保持原有行为。使用 `H3_DIT` 覆盖 DiT 时，所选文件也必须为浮点权重。
+
+除公共的 VAE 和 tokenizer 外，BF16 使用以下文件：
+
+```text
+diffusion_models/minimax_h3_image_pruned_bf16.safetensors
+text_encoders/qwen3vl_32b_minimax_h3_bf16.safetensors
+```
+
+DiT 来自 [Comfy-Org/MiniMax-H3-Image](https://huggingface.co/Comfy-Org/MiniMax-H3-Image)，配套的 50 层文本编码器来自 [Comfy-Org/MiniMax-H3](https://huggingface.co/Comfy-Org/MiniMax-H3)。固定版本、文件大小和 SHA-256 见 [weights-bf16.json](../src/h3_image_mlx/weights-bf16.json)。
+
 ## 生图与编辑
 
 ```bash
@@ -31,6 +57,7 @@ h3-image-mlx generate --models ./models --output edit.png \
 | 参数 | 默认值 | 用途 |
 | --- | --- | --- |
 | `--models` | 必填 | `fetch`、`verify` 和 `generate` 使用的模型目录 |
+| `--precision` | `int8` | `int8` 或 `bf16`，适用于 `fetch`、`verify` 和 `generate` |
 | `--prompt` | 必填 | 非空的生图或编辑指令 |
 | `--output` | 必填 | 以 `.png` 结尾的输出路径 |
 | `--width`、`--height` | 各为 `1024` | 256 到 4096 之间的 32 的倍数 |

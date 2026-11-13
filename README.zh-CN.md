@@ -75,6 +75,8 @@ M5 Pro 48 GB，`0.1.0a3`，1024×1024，相同权重、提示词和 seed，原�
 
 ## 生成第一张图
 
+源码版还支持 **未量化的 BF16 DiT 和文本编码器权重**，保留 AdaLN 裁剪和分阶段分块推理。使用 `--precision bf16` 选择，默认仍为 INT8。[BF16 下载与使用](docs/USAGE.zh-CN.md#bf16-权重)
+
 使用支持 Metal 的 Apple Silicon Mac 和 Python 3.11 或更高版本。首次下载模型需要 49.30 GB 磁盘空间。模型的适用地区和使用条件见 [MiniMax 模型许可](https://huggingface.co/MiniMaxAI/MiniMax-H3-Image/blob/main/LICENSE)。
 
 ```bash

@@ -80,6 +80,8 @@ Generated locally with H3 Image MLX: food, wildlife, product photography, archit
 
 ## Generate your first image
 
+Source builds also support **unquantized BF16 DiT and text-encoder weights**, retaining AdaLN pruning and staged streaming. Select `--precision bf16`; INT8 remains the default. [BF16 download and usage](docs/USAGE.md#bf16-weights)
+
 Use Python 3.11 or later on a Mac with Metal. Allow 49.30 GB of disk space for a fresh model download. Check the [MiniMax model license](https://huggingface.co/MiniMaxAI/MiniMax-H3-Image/blob/main/LICENSE) for regional and usage restrictions.
 
 ```bash
