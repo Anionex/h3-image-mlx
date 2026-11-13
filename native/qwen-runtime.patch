@@ -1,0 +1,3188 @@
+diff --git a/build.zig b/build.zig
+index 51237c9..749588f 100644
+--- a/build.zig
++++ b/build.zig
+@@ -60,6 +60,13 @@ pub fn build(b: *std.Build) void {
+     if (builtin.os.tag != .macos) return;
+ 
+     const graph: macos.Graph = .init(b, target, optimize, host, units);
++    if (b.option(bool, "qwen-probe", "Build the isolated Qwen streaming experiment") orelse false) {
++        graph.exe_mod.root_source_file = b.path("src/qwen_stream_probe.zig");
++        graph.exe_mod.linkSystemLibrary("proc", .{});
++        const probe = b.addExecutable(.{ .name = "qwen-stream-probe", .root_module = graph.exe_mod });
++        b.installArtifact(probe);
++        return;
++    }
+     // `install`, `units`, `units-check`, `run`.
+     macos.addServer(&graph, plugin_names);
+     // `test-build`, `test`.
+diff --git a/src/abi/media.zig b/src/abi/media.zig
+index 04d208b..d4b3584 100644
+--- a/src/abi/media.zig
++++ b/src/abi/media.zig
+@@ -190,6 +190,8 @@ pub const MediaTable = extern struct {
+     /// The last job's extra response members (`,"key":value`, valid as `encode`'s result) that a streamed audio
+     /// result's `complete` event carries beside the WAV; null or empty = none.
+     extras: ?*const fn (e: *anyopaque, out: *Str) callconv(.c) void = null,
++    /// Release job-owned outputs and conditioning after the host consumes the response.
++    finish_request: ?*const fn (e: *anyopaque) callconv(.c) void = null,
+ };
+ 
+ // ── tests ──
+diff --git a/src/engines/mlx/media_encode.zig b/src/engines/mlx/media_encode.zig
+index 51d408a..591b9a5 100644
+--- a/src/engines/mlx/media_encode.zig
++++ b/src/engines/mlx/media_encode.zig
+@@ -41,10 +41,14 @@ pub fn runVisionEncode(sch: *Scheduler, req: *VisionEncodeRequest) void {
+     var emb_parts = std.ArrayList(mlx.mlx_array).empty;
+     defer emb_parts.deinit(req.allocator);
+     var cached: usize = 0;
++    const cache_inputs = std.c.getenv("SHENGTU_NO_PE_INPUT_CACHE") == null;
++    defer if (!cache_inputs) {
++        if (vision_enc.plugin_media) |*pm| pm.clearRuns();
++    };
+     const epoch = vision_enc.emb_cache.beginRequest();
+     for (req.items, req.item_keys, 0..) |item, key, i| {
+         var emb: mlx.mlx_array = undefined;
+-        var hit = vision_enc.emb_cache.get(key);
++        var hit = if (cache_inputs) vision_enc.emb_cache.get(key) else null;
+         // A plugin's cached rows expand only beside the run kept for them.
+         if (hit != null and vision_enc.plugin_media != null and vision_enc.plugin_media.?.run(key) == null) {
+             _ = mlx.mlx_array_free(hit.?);
+@@ -59,7 +63,7 @@ pub fn runVisionEncode(sch: *Scheduler, req: *VisionEncodeRequest) void {
+                 finishVisionRequest(sch, req, @errorName(err));
+                 return;
+             };
+-            vision_enc.emb_cache.put(vision_enc.allocator, key, emb, vision_mod.EmbeddingCache.CAP_BYTES, epoch);
++            if (cache_inputs) vision_enc.emb_cache.put(vision_enc.allocator, key, emb, vision_mod.EmbeddingCache.CAP_BYTES, epoch);
+         }
+         req.item_tokens[i] = @intCast(mlx.getShape(emb)[1]);
+         if (vision_enc.plugin_media) |*pm| keepRun(req, pm, key, i) catch |err| {
+diff --git a/src/engines/mlx/plugin/media.zig b/src/engines/mlx/plugin/media.zig
+index c7d0733..8be9938 100644
+--- a/src/engines/mlx/plugin/media.zig
++++ b/src/engines/mlx/plugin/media.zig
+@@ -23,7 +23,7 @@ pub const PluginMedia = struct {
+         pm.runs.deinit(pm.a);
+     }
+ 
+-    fn clearRuns(pm: *PluginMedia) void {
++    pub fn clearRuns(pm: *PluginMedia) void {
+         var it = pm.runs.valueIterator();
+         while (it.next()) |r| pm.a.free(r.*);
+         pm.runs.clearRetainingCapacity();
+diff --git a/src/host/media_jobs/plugin/http.zig b/src/host/media_jobs/plugin/http.zig
+index b077920..bb3fd83 100644
+--- a/src/host/media_jobs/plugin/http.zig
++++ b/src/host/media_jobs/plugin/http.zig
+@@ -55,6 +55,9 @@ pub fn handle(allocator: std.mem.Allocator, conn: *Conn, body: []const u8, e: *E
+     job.req.inputs = .of(spans);
+     job.req.dir = &e.pack;
+     const had_error = mlx.errorPending();
++    defer if (t.size >= @offsetOf(abi.MediaTable, "finish_request") + @sizeOf(@TypeOf(t.finish_request))) {
++        if (t.finish_request) |finish| finish(e.handle);
++    };
+     const v = t.step(e.handle, &job.req, &job.sink.progress());
+     if (!v.isOk() and job.sink.left) {
+         log.info("[gen] {s} job cancelled: the client left\n", .{t.name.slice()});
+diff --git a/src/plugins/mage_flow/mage_flow.zig b/src/plugins/mage_flow/mage_flow.zig
+index b8b9cb0..d9d225f 100644
+--- a/src/plugins/mage_flow/mage_flow.zig
++++ b/src/plugins/mage_flow/mage_flow.zig
+@@ -3482,7 +3482,7 @@ fn mergerForward(mw: *const VitMergerW, cfg: VitConfig, hidden: mlx.mlx_array, p
+ const TE_HEADS: c_int = 32;
+ const TE_KV: c_int = 8;
+ const TE_HEAD_DIM: c_int = 128;
+-const TE_LAYERS = 36;
++pub const TE_LAYERS = 36;
+ const TE_THETA: f64 = 5_000_000.0;
+ const TE_EPS: f32 = 1e-6;
+ /// Template tokens dropped from the front of the conditioning sequence
+@@ -3513,7 +3513,7 @@ const TeLin = struct {
+     }
+ };
+ 
+-const TeLayerW = struct {
++pub const TeLayerW = struct {
+     input_ln: mlx.mlx_array, // f32
+     post_ln: mlx.mlx_array, // f32
+     q: TeLin,
+@@ -3525,7 +3525,7 @@ const TeLayerW = struct {
+     gate: TeLin,
+     up: TeLin,
+     down: TeLin,
+-    fn deinit(self: *TeLayerW) void {
++    pub fn deinit(self: *TeLayerW) void {
+         inline for (.{ &self.q, &self.k, &self.v, &self.o, &self.gate, &self.up, &self.down }) |f| f.l.deinit();
+         inline for (.{ self.input_ln, self.post_ln, self.q_norm, self.k_norm }) |f|
+             _ = mlx.mlx_array_free(f);
+@@ -3600,46 +3600,103 @@ pub const TextEncoder = struct {
+         const inter: u32 = @intCast(mlx.getShape(gate0)[0]);
+ 
+         for (&self.layers, 0..) |*layer, i| {
+-            const p_in = try std.fmt.allocPrint(a, "{s}layers.{d}.input_layernorm", .{ pfx, i });
+-            defer a.free(p_in);
+-            const p_post = try std.fmt.allocPrint(a, "{s}layers.{d}.post_attention_layernorm", .{ pfx, i });
+-            defer a.free(p_post);
+-            const qn = try std.fmt.allocPrint(a, "{s}layers.{d}.self_attn.q_norm", .{ pfx, i });
+-            defer a.free(qn);
+-            const kn = try std.fmt.allocPrint(a, "{s}layers.{d}.self_attn.k_norm", .{ pfx, i });
+-            defer a.free(kn);
+-            const qp = try std.fmt.allocPrint(a, "{s}layers.{d}.self_attn.q_proj", .{ pfx, i });
+-            defer a.free(qp);
+-            const kp = try std.fmt.allocPrint(a, "{s}layers.{d}.self_attn.k_proj", .{ pfx, i });
+-            defer a.free(kp);
+-            const vp = try std.fmt.allocPrint(a, "{s}layers.{d}.self_attn.v_proj", .{ pfx, i });
+-            defer a.free(vp);
+-            const op = try std.fmt.allocPrint(a, "{s}layers.{d}.self_attn.o_proj", .{ pfx, i });
+-            defer a.free(op);
+-            const gp = try std.fmt.allocPrint(a, "{s}layers.{d}.mlp.gate_proj", .{ pfx, i });
+-            defer a.free(gp);
+-            const upp = try std.fmt.allocPrint(a, "{s}layers.{d}.mlp.up_proj", .{ pfx, i });
+-            defer a.free(upp);
+-            const dp = try std.fmt.allocPrint(a, "{s}layers.{d}.mlp.down_proj", .{ pfx, i });
+-            defer a.free(dp);
+-            layer.* = .{
+-                .input_ln = try loadVec(w, a, p_in, "weight", s),
+-                .post_ln = try loadVec(w, a, p_post, "weight", s),
+-                .q = .{ .l = try MfLinear.load(w, a, qp, hidden, dtype, s) },
+-                .k = .{ .l = try MfLinear.load(w, a, kp, hidden, dtype, s) },
+-                .v = .{ .l = try MfLinear.load(w, a, vp, hidden, dtype, s) },
+-                .o = .{ .l = try MfLinear.load(w, a, op, TE_HEADS * TE_HEAD_DIM, dtype, s) },
+-                .q_norm = try loadVec(w, a, qn, "weight", s),
+-                .k_norm = try loadVec(w, a, kn, "weight", s),
+-                .gate = .{ .l = try MfLinear.load(w, a, gp, hidden, dtype, s) },
+-                .up = .{ .l = try MfLinear.load(w, a, upp, hidden, dtype, s) },
+-                .down = .{ .l = try MfLinear.load(w, a, dp, inter, dtype, s) },
+-            };
++            layer.* = try loadLayer(w, a, s, dtype, hidden, inter, pfx, i);
+         }
+         self.final_norm = try loadVec(w, a, pfx ++ "norm", "weight", s);
+         return self;
+     }
+ 
++    pub fn loadLayer(w: *const Weights, a: std.mem.Allocator, s: S, dtype: mlx.mlx_dtype, hidden: u32, inter: u32, pfx: []const u8, i: usize) !TeLayerW {
++        const p_in = try std.fmt.allocPrint(a, "{s}layers.{d}.input_layernorm", .{ pfx, i });
++        defer a.free(p_in);
++        const p_post = try std.fmt.allocPrint(a, "{s}layers.{d}.post_attention_layernorm", .{ pfx, i });
++        defer a.free(p_post);
++        const qn = try std.fmt.allocPrint(a, "{s}layers.{d}.self_attn.q_norm", .{ pfx, i });
++        defer a.free(qn);
++        const kn = try std.fmt.allocPrint(a, "{s}layers.{d}.self_attn.k_norm", .{ pfx, i });
++        defer a.free(kn);
++        const qp = try std.fmt.allocPrint(a, "{s}layers.{d}.self_attn.q_proj", .{ pfx, i });
++        defer a.free(qp);
++        const kp = try std.fmt.allocPrint(a, "{s}layers.{d}.self_attn.k_proj", .{ pfx, i });
++        defer a.free(kp);
++        const vp = try std.fmt.allocPrint(a, "{s}layers.{d}.self_attn.v_proj", .{ pfx, i });
++        defer a.free(vp);
++        const op = try std.fmt.allocPrint(a, "{s}layers.{d}.self_attn.o_proj", .{ pfx, i });
++        defer a.free(op);
++        const gp = try std.fmt.allocPrint(a, "{s}layers.{d}.mlp.gate_proj", .{ pfx, i });
++        defer a.free(gp);
++        const upp = try std.fmt.allocPrint(a, "{s}layers.{d}.mlp.up_proj", .{ pfx, i });
++        defer a.free(upp);
++        const dp = try std.fmt.allocPrint(a, "{s}layers.{d}.mlp.down_proj", .{ pfx, i });
++        defer a.free(dp);
++        return .{
++            .input_ln = try loadVec(w, a, p_in, "weight", s),
++            .post_ln = try loadVec(w, a, p_post, "weight", s),
++            .q = .{ .l = try MfLinear.load(w, a, qp, hidden, dtype, s) },
++            .k = .{ .l = try MfLinear.load(w, a, kp, hidden, dtype, s) },
++            .v = .{ .l = try MfLinear.load(w, a, vp, hidden, dtype, s) },
++            .o = .{ .l = try MfLinear.load(w, a, op, TE_HEADS * TE_HEAD_DIM, dtype, s) },
++            .q_norm = try loadVec(w, a, qn, "weight", s),
++            .k_norm = try loadVec(w, a, kn, "weight", s),
++            .gate = .{ .l = try MfLinear.load(w, a, gp, hidden, dtype, s) },
++            .up = .{ .l = try MfLinear.load(w, a, upp, hidden, dtype, s) },
++            .down = .{ .l = try MfLinear.load(w, a, dp, inter, dtype, s) },
++        };
++    }
++    pub fn encodeStream(io: std.Io, allocator: std.mem.Allocator, s: S, model_dir: []const u8, ids: []const i32, mask: []const i32, prefetch: bool) !mlx.mlx_array {
++        const reader = @import("../../sdk/weights/block_reader.zig");
++        const dir = try std.fmt.allocPrint(allocator, "{s}/text_encoder", .{model_dir});
++        defer allocator.free(dir);
++        var source = try reader.Source.open(io, dir);
++        defer source.deinit();
++        const pfx = "model.language_model.";
++        var x = try source.rows(pfx ++ "embed_tokens.weight", ids);
++        errdefer _ = mlx.mlx_array_free(x);
++        const hidden: u32 = @intCast(mlx.getShape(x)[2]);
++        const seq: c_int = @intCast(ids.len);
++        const dtype = mlx.mlx_array_dtype(x);
++        const attn_mask = try buildTeMask(allocator, mask, seq, dtype, s);
++        defer _ = mlx.mlx_array_free(attn_mask);
++        const rope = try buildTeRope(allocator, @intCast(seq), dtype, s);
++        defer {
++            _ = mlx.mlx_array_free(rope.cos);
++            _ = mlx.mlx_array_free(rope.sin);
++        }
++        var pending: ?*reader.Batch = try source.batch(pfx ++ "layers.0.", false, prefetch);
++        defer if (pending) |b| b.deinit();
++        for (0..TE_LAYERS) |i| {
++            var w = try pending.?.weights();
++            pending.?.deinit();
++            pending = null;
++            defer w.deinit();
++            var buf: [128]u8 = undefined;
++            const gate = w.get(try std.fmt.bufPrint(&buf, pfx ++ "layers.{d}.mlp.gate_proj.weight", .{i})).?;
++            var layer = try loadLayer(&w, allocator, s, dtype, hidden, @intCast(mlx.getShape(gate)[0]), pfx, i);
++            defer layer.deinit();
++            const nx = try teLayerForward(&layer, x, attn_mask, rope.cos, rope.sin, seq, s);
++            _ = mlx.mlx_array_free(x);
++            x = nx;
++            if (prefetch) {
++                const arrays = mlx.mlx_vector_array_new_value(x);
++                defer _ = mlx.mlx_vector_array_free(arrays);
++                try mlx.check(mlx.mlx_async_eval(arrays));
++            }
++            if (i + 1 < TE_LAYERS) pending = try source.batch(try std.fmt.bufPrint(&buf, pfx ++ "layers.{d}.", .{i + 1}), false, prefetch);
++            try mlx.check(mlx.mlx_array_eval(x));
++            _ = mlx.mlx_clear_cache();
++        }
++        const batch = try source.batch(pfx ++ "norm.", false, false);
++        defer batch.deinit();
++        var w = try batch.weights();
++        defer w.deinit();
++        const final_norm = try loadVec(&w, allocator, pfx ++ "norm", "weight", s);
++        defer _ = mlx.mlx_array_free(final_norm);
++        const normed = try rmsNormLast(x, final_norm, TE_EPS, s);
++        errdefer _ = mlx.mlx_array_free(normed);
++        try mlx.check(mlx.mlx_array_eval(normed));
++        _ = mlx.mlx_array_free(x);
++        return normed;
++    }
+     pub fn deinit(self: *TextEncoder) void {
+         _ = mlx.mlx_array_free(self.embed_table);
+         _ = mlx.mlx_array_free(self.final_norm);
+diff --git a/src/plugins/qwen_image/edit.zig b/src/plugins/qwen_image/edit.zig
+index f19e7c4..5d4418a 100644
+--- a/src/plugins/qwen_image/edit.zig
++++ b/src/plugins/qwen_image/edit.zig
+@@ -30,10 +30,11 @@ const mrope = @import("../../sdk/vision/mrope.zig");
+ const qvis = @import("../../sdk/vision/qwen_vision.zig");
+ 
+ const Weights = model_mod.Weights;
++const block_reader = @import("../../sdk/weights/block_reader.zig");
+ const S = mlx.mlx_stream;
+ const A = mlx.mlx_array;
+ const TextEncoder = mage_flow.TextEncoder;
+-const VisionTower = mage_flow.VisionTower;
++pub const VisionTower = mage_flow.VisionTower;
+ 
+ /// `<|image_pad|>` — also `TextEncoder`'s splice marker (private there).
+ const TE_IMAGE_TOKEN: i32 = 151655;
+@@ -346,6 +347,25 @@ fn buildEditRope(allocator: std.mem.Allocator, ids: []const i32, grids: []const
+ 
+ // ── the joint encode ──
+ 
++/// A jointly encoded, ordered set of reference images. The tower has no text input.
++pub const VisionFeatures = struct {
++    merged: A,
++    deepstack: [3]A,
++
++    pub fn init(vit: *const VisionTower, pixels: A, grids: []const [3]i64) !VisionFeatures {
++        const out = try vit.forward(pixels, grids);
++        var features = VisionFeatures{ .merged = out.merged, .deepstack = out.deepstack };
++        errdefer features.deinit();
++        try mlx.evalFields(features);
++        return features;
++    }
++
++    pub fn deinit(self: *VisionFeatures) void {
++        free(self.merged);
++        for (self.deepstack) |v| free(v);
++    }
++};
++
+ /// ti2i conditioning: hidden states [1, n, hidden] PRE-final-norm plus the
+ /// image-pad mask the DiT's token metadata needs (1 at pad positions,
+ /// post-drop, aligned with `hidden`'s rows).
+@@ -368,6 +388,36 @@ pub const EditCond = struct {
+ /// count and the merged feature count must agree — a mismatch is a
+ /// preprocessing bug, and the scatter would die on the shape inside mlx.
+ pub fn encodeTi2i(allocator: std.mem.Allocator, s: S, te: *TextEncoder, vit: *const VisionTower, ids: []const i32, mask: []const i32, pixel_values: A, grids: []const [3]i64, drop: usize) !EditCond {
++    var features = try VisionFeatures.init(vit, pixel_values, grids);
++    defer features.deinit();
++    return encodeTi2iFeatures(allocator, s, te, &features, ids, mask, grids, drop);
++}
++
++pub fn encodeTi2iFeatures(allocator: std.mem.Allocator, s: S, te: *TextEncoder, vout: *const VisionFeatures, ids: []const i32, mask: []const i32, grids: []const [3]i64, drop: usize) !EditCond {
++    return encodeFeatures(allocator, s, te, null, false, vout, ids, mask, grids, drop);
++}
++
++pub fn encodeTi2iStreamFeatures(io: std.Io, a: std.mem.Allocator, s: S, model: []const u8, prefetch: bool, vout: *const VisionFeatures, ids: []const i32, mask: []const i32, grids: []const [3]i64, drop: usize) !EditCond {
++    const dir = try std.fmt.allocPrint(a, "{s}/text_encoder", .{model});
++    defer a.free(dir);
++    var source = try block_reader.Source.open(io, dir);
++    defer source.deinit();
++    return encodeFeatures(a, s, null, &source, prefetch, vout, ids, mask, grids, drop);
++}
++
++pub fn loadTowerStream(io: std.Io, a: std.mem.Allocator, s: S, model: []const u8, dtype: mlx.mlx_dtype) !VisionTower {
++    const dir = try std.fmt.allocPrint(a, "{s}/text_encoder", .{model});
++    defer a.free(dir);
++    var source = try block_reader.Source.open(io, dir);
++    defer source.deinit();
++    const batch = try source.batch("model.visual.", false, false);
++    defer batch.deinit();
++    var weights = try batch.weights();
++    defer weights.deinit();
++    return towerFromWeights(io, a, s, model, dtype, &weights);
++}
++
++fn encodeFeatures(allocator: std.mem.Allocator, s: S, te: ?*TextEncoder, source: ?*block_reader.Source, prefetch: bool, vout: *const VisionFeatures, ids: []const i32, mask: []const i32, grids: []const [3]i64, drop: usize) !EditCond {
+     const a = allocator;
+     const seq: c_int = @intCast(ids.len);
+ 
+@@ -377,12 +427,14 @@ pub fn encodeTi2i(allocator: std.mem.Allocator, s: S, te: *TextEncoder, vit: *co
+     defer free(id_arr);
+     var taken = mlx.mlx_array_new();
+     defer free(taken);
+-    try mlx.check(mlx.mlx_take_axis(&taken, te.embed_table, id_arr, 0, s));
+-
+-    // Vision tower → merged + DeepStack features.
+-    const vout = try vit.forward(pixel_values, grids);
+-    defer free(vout.merged);
+-    defer for (vout.deepstack) |d| free(d);
++    if (source) |src| {
++        const rows = try src.rows("model.language_model.embed_tokens.weight", ids);
++        defer free(rows);
++        const shape = [_]c_int{ seq, -1 };
++        try mlx.check(mlx.mlx_reshape(&taken, rows, &shape, 2, s));
++    } else try mlx.check(mlx.mlx_take_axis(&taken, te.?.embed_table, id_arr, 0, s));
++    const dtype = mlx.mlx_array_dtype(taken);
++    const hidden_size = mlx.getShape(taken)[1];
+ 
+     // Visual-token positions (host scan of the placeholder runs).
+     var poslist: std.ArrayList(i32) = .empty;
+@@ -401,35 +453,60 @@ pub fn encodeTi2i(allocator: std.mem.Allocator, s: S, te: *TextEncoder, vit: *co
+     defer free(pos_arr);
+ 
+     // Splice-REPLACE the placeholder embeddings with the merged vision rows.
+-    const merged_dt = try astype(vout.merged, te.dtype, s);
++    const merged_dt = try astype(vout.merged, dtype, s);
+     defer free(merged_dt);
+     const replaced = try mage_flow.scatterRows(taken, pos_arr, merged_dt, false, s);
+     defer free(replaced);
+-    var x = try reshape(replaced, &[_]c_int{ 1, seq, te.hidden }, s);
++    var x = try reshape(replaced, &[_]c_int{ 1, seq, hidden_size }, s);
+ 
+-    const attn_mask = try mage_flow.buildTeMask(a, mask, seq, te.dtype, s);
++    const attn_mask = try mage_flow.buildTeMask(a, mask, seq, dtype, s);
+     defer free(attn_mask);
+-    const rope = try buildEditRope(a, ids, grids, te.dtype, s);
++    const rope = try buildEditRope(a, ids, grids, dtype, s);
+     defer {
+         free(rope.cos);
+         free(rope.sin);
+     }
+ 
+-    for (&te.layers, 0..) |*layer, i| {
++    const pfx = "model.language_model.";
++    var pending: ?*block_reader.Batch = if (source) |src| try src.batch(pfx ++ "layers.0.", false, prefetch) else null;
++    defer if (pending) |batch| batch.deinit();
++    for (0..mage_flow.TE_LAYERS) |i| {
++        var loaded: ?mage_flow.TeLayerW = null;
++        defer if (loaded) |*layer| layer.deinit();
++        var buf: [128]u8 = undefined;
++        if (pending) |batch| {
++            var weights = try batch.weights();
++            defer weights.deinit();
++            const gate = weights.get(try std.fmt.bufPrint(&buf, pfx ++ "layers.{d}.mlp.gate_proj.weight", .{i})).?;
++            loaded = try TextEncoder.loadLayer(&weights, a, s, dtype, @intCast(hidden_size), @intCast(mlx.getShape(gate)[0]), pfx, i);
++            batch.deinit();
++            pending = null;
++        }
++        const layer = if (loaded) |*v| v else &te.?.layers[i];
+         const nx = try mage_flow.teLayerForward(layer, x, attn_mask, rope.cos, rope.sin, seq, s);
+         free(x);
+         x = nx;
+         if (i < 3) { // DeepStack scatter-ADD at LM layers 0/1/2 (Qwen3-VL).
+-            const ds_dt = try astype(vout.deepstack[i], te.dtype, s);
++            const ds_dt = try astype(vout.deepstack[i], dtype, s);
+             defer free(ds_dt);
+-            const xf = try reshape(x, &[_]c_int{ seq, te.hidden }, s);
++            const xf = try reshape(x, &[_]c_int{ seq, hidden_size }, s);
+             defer free(xf);
+             const scat = try mage_flow.scatterRows(xf, pos_arr, ds_dt, true, s);
+             defer free(scat);
+-            const nx2 = try reshape(scat, &[_]c_int{ 1, seq, te.hidden }, s);
++            const nx2 = try reshape(scat, &[_]c_int{ 1, seq, hidden_size }, s);
+             free(x);
+             x = nx2;
+         }
++        if (source) |src| {
++            if (prefetch) {
++                const arrays = mlx.mlx_vector_array_new_value(x);
++                defer _ = mlx.mlx_vector_array_free(arrays);
++                try mlx.check(mlx.mlx_async_eval(arrays));
++            }
++            if (i + 1 < mage_flow.TE_LAYERS) pending = try src.batch(try std.fmt.bufPrint(&buf, pfx ++ "layers.{d}.", .{i + 1}), false, prefetch);
++            try mlx.check(mlx.mlx_array_eval(x));
++            _ = mlx.mlx_clear_cache();
++        }
+     }
+ 
+     // NO final RMS norm: the DiT reads the hidden BEFORE the LM's norm.
+@@ -510,6 +587,19 @@ pub fn loadTeWithTower(io: std.Io, allocator: std.mem.Allocator, s: S, model_dir
+     // tower keys as a `--no-vision` tower) — both consumers share it.
+     var w = try VisionTower.openWeights(io, a, model_dir);
+     defer w.deinit();
++    var te = try TextEncoder.loadFrom(a, s, &w, dtype);
++    errdefer te.deinit();
++    return .{ .te = te, .vit = try towerFromWeights(io, a, s, model_dir, dtype, &w) };
++}
++
++/// A resident LM from text-to-image can serve the next edit without loading it twice.
++pub fn loadTower(io: std.Io, a: std.mem.Allocator, s: S, model_dir: []const u8, dtype: mlx.mlx_dtype) !VisionTower {
++    var w = try VisionTower.openWeights(io, a, model_dir);
++    defer w.deinit();
++    return towerFromWeights(io, a, s, model_dir, dtype, &w);
++}
++
++fn towerFromWeights(io: std.Io, a: std.mem.Allocator, s: S, model_dir: []const u8, dtype: mlx.mlx_dtype, w: *const Weights) !VisionTower {
+     var cfg = parseTowerVitConfig(io, a, model_dir) catch |e| switch (e) {
+         error.QwenEditNoVisionConfig => {
+             // No config: still tell a tower-without-its-config apart from no
+@@ -529,15 +619,13 @@ pub fn loadTeWithTower(io: std.Io, allocator: std.mem.Allocator, s: S, model_dir
+     } else if (w.get("vision_tower.patch_embed.proj.weight") != null) {
+         cfg.prefix = "vision_tower";
+     } else return error.QwenEditNoTower; // config present, tower weights absent
+-    var te = try TextEncoder.loadFrom(a, s, &w, dtype);
+-    errdefer te.deinit();
+-    var vit = try VisionTower.loadFrom(a, s, &w, cfg, dtype);
++    var vit = try VisionTower.loadFrom(a, s, w, cfg, dtype);
+     errdefer vit.deinit();
+     // The loaded pos table must match the parsed geometry (a config/weights
+     // disagreement is a silent wrong-shape tower).
+     const pe = mlx.getShape(vit.pos_embed);
+     if (pe[0] != VIT_POS_TABLE or pe[1] != cfg.hidden) return error.QwenEditTowerGeometryMismatch;
+-    return .{ .te = te, .vit = vit };
++    return vit;
+ }
+ 
+ // ── Tests ──
+diff --git a/src/plugins/qwen_image/plugin.zig b/src/plugins/qwen_image/plugin.zig
+index 854b52b..caccbcd 100644
+--- a/src/plugins/qwen_image/plugin.zig
++++ b/src/plugins/qwen_image/plugin.zig
+@@ -29,6 +29,7 @@ pub const table = abi.MediaTable{
+     .set_loras = &setLoras,
+     .step = &step,
+     .encode = &encode,
++    .finish_request = &finishRequest,
+ };
+ 
+ const gpa = std.heap.c_allocator;
+@@ -38,6 +39,7 @@ const Engine = struct {
+     m: *qi.Engine,
+     loras: LoraSet = .{},
+     png: []u8 = &.{},
++    private: bool = false,
+ };
+ 
+ fn load(ctx: *const abi.LoadCtx, out: *Verdict) callconv(.c) ?*anyopaque {
+@@ -77,6 +79,12 @@ fn step(ep: *anyopaque, req: *const abi.Request, progress: *const abi.Progress)
+     const e: *Engine = @ptrCast(@alignCast(ep));
+     var body = job.Body.parse(gpa, req.body.slice()) orelse return Verdict.refuse(.unsupported, "invalid JSON body");
+     defer body.deinit();
++    e.private = body.flag("shengtu_private");
++    if (e.private) e.m.clearEditCache();
++    if (body.get("shengtu_w8a8")) |mode| {
++        if (mode != .bool) return Verdict.refuse(.unsupported, "invalid shengtu_w8a8");
++        e.m.setExecutionMode(mode.bool) catch |err| return job.failure(err, "could not change W8A8 layout");
++    }
+     var inputs: [config.edit_ref_cap][]const u8 = undefined;
+     const in = req.inputs.slice();
+     const spec: image_request.Spec = .{
+@@ -96,9 +104,19 @@ fn step(ep: *anyopaque, req: *const abi.Request, progress: *const abi.Progress)
+     };
+     const w = image_request.clamp16(j.req_w);
+     const h = image_request.clamp16(j.req_h);
+-    const steps = e.m.stepsFor(j.steps);
++    var sigma_buf: [100]f32 = undefined;
++    const sigmas = qi.requestSigmas(body.get("sample_sigmas"), j.steps, &sigma_buf) catch
++        return Verdict.refuse(.unsupported, "invalid Qwen-Image request sample_sigmas: expected a decreasing numeric array in (0,1] matching steps");
++    const steps: u32 = if (sigmas) |g| @intCast(g.len) else e.m.stepsFor(j.steps);
++    if (j.mode != .edit) e.m.clearEditCache();
+     const sp = job.progressOf(progress);
+-    var gen: qi.GenOpts = .{ .guidance_scale = j.guidance_scale, .negative_prompt = j.negative_prompt, .transparent = j.transparent };
++    var gen: qi.GenOpts = .{ .sample_sigmas = sigmas, .guidance_scale = j.guidance_scale, .negative_prompt = j.negative_prompt, .transparent = j.transparent };
++    const previous_staging = e.m.staged;
++    defer e.m.staged = previous_staging;
++    if (j.mode != .edit and config.genTransientBytes(w, h) > job.gpuHeadroom() and (e.m.tower != null or e.m.te != null)) {
++        e.m.releaseEditEncoders();
++        e.m.staged = true;
++    }
+     const img = switch (j.mode) {
+         .generate => blk: {
+             if (canvasRefusal(req, w, h)) |v| return v;
+@@ -113,7 +131,7 @@ fn step(ep: *anyopaque, req: *const abi.Request, progress: *const abi.Progress)
+             gen.start_step = image_request.img2imgStartStep(steps, j.strength);
+             break :blk e.m.generateImage(gpa, j.prompt, w, h, j.seed, steps, gen, sp);
+         },
+-        .edit => return edit(e, &j, sp),
++        .edit => return edit(e, &j, sigmas, sp),
+     } catch |err| return if (err == error.Cancelled) job.client_left else job.failure(err, "generation failed");
+     return finish(e, img);
+ }
+@@ -129,7 +147,7 @@ fn canvasRefusal(req: *const abi.Request, w: u32, h: u32) ?Verdict {
+ 
+ /// The edit output follows the LAST condition image; its working set (references + target) is checked against the
+ /// GPU's live headroom, and the prefix cache rides only where it fits too.
+-fn edit(e: *Engine, j: *const image_request.Job, sp: anytype) Verdict {
++fn edit(e: *Engine, j: *const image_request.Job, sigmas: ?[]const f32, sp: anytype) Verdict {
+     var refs: [config.edit_ref_cap][]const u8 = undefined;
+     refs[0] = j.image.?;
+     for (j.refs, 1..) |r, i| refs[i] = r;
+@@ -143,9 +161,25 @@ fn edit(e: *Engine, j: *const image_request.Job, sp: anytype) Verdict {
+     const cfg = e.m.dit_cfg;
+     const base = config.editTransientBytes(@intCast(n), j.ref_resolution, dims.w, dims.h);
+     const prefix = config.editPrefixBytes(@intCast(n), j.ref_resolution, cfg.layers, cfg.hidden(), if (j.guidance_scale != 1) 2 else 1);
+-    const steps = qi.resolveSteps(null, j.steps);
+-    const room = job.gpuHeadroom();
+-    const cache = config.editPlan(steps, base, prefix, room) orelse {
++    const steps = qi.resolveSteps(sigmas, j.steps);
++    var room = job.gpuHeadroom();
++    var plan = config.editPlan(steps, base, prefix, room);
++    if (e.m.edit_cache != null and !(plan orelse false)) {
++        // Optional reuse must never turn a previously admissible edit into a refusal.
++        e.m.clearEditCache();
++        room = job.gpuHeadroom();
++        plan = config.editPlan(steps, base, prefix, room);
++    }
++    // Preserve the staged path for a real request that cannot fit with the optional encoders.
++    const normally_staged = e.m.staged;
++    defer e.m.staged = normally_staged;
++    if (plan == null and (e.m.tower != null or e.m.te != null)) {
++        e.m.releaseEditEncoders();
++        e.m.staged = true;
++        room = job.gpuHeadroom();
++        plan = config.editPlan(steps, base, prefix, room);
++    }
++    const cache = plan orelse {
+         log.info("[image] edit bill refused: {d} refs at refres {d} + {d}x{d} target needs {d} MB over the reserve, headroom {d} MB\n", .{
+             n, j.ref_resolution, dims.w, dims.h, (base -| config.EDIT_TRANSIENT_BYTES) >> 20, room >> 20,
+         });
+@@ -160,6 +194,7 @@ fn edit(e: *Engine, j: *const image_request.Job, sp: anytype) Verdict {
+         .ref_resolution = j.ref_resolution,
+         .transparent = j.transparent,
+         .prefix_cache = cache,
++        .sample_sigmas = sigmas,
+     }, sp) catch |err| return if (err == error.Cancelled) job.client_left else job.failure(err, "generation failed");
+     return finish(e, img);
+ }
+@@ -173,6 +208,15 @@ fn finish(e: *Engine, img: mlx.mlx_array) Verdict {
+     return .ok;
+ }
+ 
++fn finishRequest(ep: *anyopaque) callconv(.c) void {
++    const e: *Engine = @ptrCast(@alignCast(ep));
++    gpa.free(e.png);
++    e.png = &.{};
++    if (e.private) e.m.clearEditCache();
++    e.private = false;
++    @import("../../sdk/blocks/dit/w8a8.zig").dropMemo();
++}
++
+ fn encode(ep: *anyopaque, out: *abi.Str) callconv(.c) Verdict {
+     const e: *Engine = @ptrCast(@alignCast(ep));
+     if (e.png.len == 0) return Verdict.refuse(.failed, "qwen_image: no finished job to encode");
+diff --git a/src/plugins/qwen_image/qwen_image.zig b/src/plugins/qwen_image/qwen_image.zig
+index 4c48350..2acda31 100644
+--- a/src/plugins/qwen_image/qwen_image.zig
++++ b/src/plugins/qwen_image/qwen_image.zig
+@@ -69,9 +69,9 @@ const COMPUTE: mlx.mlx_dtype = .bfloat16;
+ pub const MAX_PROMPT_TOKENS: usize = 2048;
+ 
+ // Raw template string, not the chat template: the checkpoint was trained on it.
+-const SYSTEM_PREFIX = "<|im_start|>system\nComprehend and analyze the provided prompt.<|im_end|>\n";
+-const USER_PREFIX = "<|im_start|>user\n";
+-const PROMPT_SUFFIX = "<|im_end|>\n<|im_start|>assistant\n";
++pub const SYSTEM_PREFIX = "<|im_start|>system\nComprehend and analyze the provided prompt.<|im_end|>\n";
++pub const USER_PREFIX = "<|im_start|>user\n";
++pub const PROMPT_SUFFIX = "<|im_end|>\n<|im_start|>assistant\n";
+ 
+ // ── mlx primitives (file-local, mirroring krea.zig / mage_flow.zig) ──
+ inline fn free(a: A) void {
+@@ -126,7 +126,7 @@ fn concat(arrs: []const A, axis: c_int, s: S) !A {
+     return o;
+ }
+ /// `x[..., lo:hi, ...]` on one axis, materialized: a live slice pins its parent.
+-fn sliceAxis(x: A, axis: usize, lo_v: c_int, hi_v: c_int, s: S) !A {
++pub fn sliceAxis(x: A, axis: usize, lo_v: c_int, hi_v: c_int, s: S) !A {
+     const sh = mlx.getShape(x);
+     var lo: [8]c_int = @splat(0);
+     var hi: [8]c_int = @splat(0);
+@@ -356,6 +356,21 @@ pub fn scheduleSigmas(a: std.mem.Allocator, grid: ?[]const f32, steps: u32, imag
+     return out;
+ }
+ 
++/// Optional per-request noise levels. Borrow the caller's stack buffer for this job only.
++pub fn requestSigmas(value: ?std.json.Value, steps: u32, buf: *[100]f32) !?[]const f32 {
++    const v = value orelse return null;
++    if (v != .array) return error.BadSampleSigmas;
++    const items = v.array.items;
++    if (items.len == 0 or items.len > buf.len or (steps != 0 and steps != items.len))
++        return error.BadSampleSigmas;
++    for (items, 0..) |item, i| {
++        const sigma = jsonF32(item) orelse return error.BadSampleSigmas;
++        if (!(sigma > 0 and sigma <= 1) or (i != 0 and sigma >= buf[i - 1])) return error.BadSampleSigmas;
++        buf[i] = sigma;
++    }
++    return buf[0..items.len];
++}
++
+ /// `model_index.json` `sample_sigmas` (owned), or null when the file or key is absent.
+ pub fn parseSampleSigmas(io: std.Io, a: std.mem.Allocator, model_dir: []const u8) !?[]f32 {
+     const path = try std.fmt.allocPrint(a, "{s}/model_index.json", .{model_dir});
+@@ -375,6 +390,9 @@ pub fn parseSampleSigmas(io: std.Io, a: std.mem.Allocator, model_dir: []const u8
+ 
+ /// Per-request constants of the joint [text | image] sequence.
+ pub const Geometry = struct {
++    // Borrowed low-rank row gains for an automatic Lightning edit.
++    layout_rows: ?A = null,
++    layout_target_only: bool = false,
+     text_len: c_int,
+     cos: A, // [1, L, 1, head_dim/2, 1] f32
+     sin: A,
+@@ -468,13 +486,13 @@ const PrefixKV = struct {
+     }
+ };
+ 
+-const PrefixCache = struct {
++pub const PrefixCache = struct {
+     allocator: std.mem.Allocator,
+     layers: []?PrefixKV,
+     image_geo: Geometry,
+     ready: bool = false,
+ 
+-    fn init(a: std.mem.Allocator, n_layers: usize, geo: *const Geometry, s: S) !PrefixCache {
++    pub fn init(a: std.mem.Allocator, n_layers: usize, geo: *const Geometry, s: S) !PrefixCache {
+         const layers = try a.alloc(?PrefixKV, n_layers);
+         errdefer a.free(layers);
+         @memset(layers, null);
+@@ -485,7 +503,7 @@ const PrefixCache = struct {
+         return init(a, n_layers, &geo.ropeGeometry(), s);
+     }
+ 
+-    fn deinit(self: *PrefixCache) void {
++    pub fn deinit(self: *PrefixCache) void {
+         for (self.layers) |*kv| if (kv.*) |*pair| pair.deinit();
+         self.allocator.free(self.layers);
+         self.image_geo.deinit();
+@@ -740,6 +758,20 @@ fn linForward(lin: *const MfLinear, slot: *const lora_mod.Slot, x: A, s: S) !A {
+     return lora_mod.addSlot(try lin.forward(x, null, s), x, slot, s);
+ }
+ 
++/// Use a stronger adapter residual on conditioning rows than on target rows in a layout-preserving edit.
++fn projectAttention(lin: *const MfLinear, slot: *const lora_mod.Slot, x: A, geo: *const Geometry, s: S) !A {
++    if (slot.count == 0 or (geo.layout_rows == null and !geo.layout_target_only)) return linForward(lin, slot, x, s);
++    const base_output = try lin.forward(x, null, s);
++    defer free(base_output);
++    // The marked Lightning adapter is first and covers all four attention projections.
++    // Style adapters keep their own scalar strengths on every token.
++    const refs = slot.active();
++    const lightning = try lora_mod.addToWithGain(base_output, x, refs[0..1], s, geo.layout_rows, if (geo.layout_target_only) 0.25 else 1.0);
++    if (refs.len == 1) return lightning;
++    defer free(lightning);
++    return lora_mod.addTo(lightning, x, refs[1..], s);
++}
++
+ /// `silu(g) * p`, consuming both.
+ fn gluMul(g: A, p: A, s: S) !A {
+     defer free(g);
+@@ -750,6 +782,7 @@ fn gluMul(g: A, p: A, s: S) !A {
+ }
+ 
+ const Block = struct {
++    packed_mode: bool = false,
+     q: MfLinear,
+     k: MfLinear,
+     v: MfLinear,
+@@ -803,7 +836,34 @@ fn loadLinear(w: *const Weights, a: std.mem.Allocator, in_features: u32, dtype:
+     return MfLinear.load(w, a, prefix, in_features, dtype, s);
+ }
+ 
++const block_reader = @import("../../sdk/weights/block_reader.zig");
++pub var request_streaming = false;
++pub var request_prefetch = false;
++pub var micro_memory = false;
++pub var micro_ffn_rows: c_int = 256;
++pub var micro_vae_rows: c_int = 8;
++pub var micro_prefetch = false;
++pub var micro_mmap = false;
++pub var micro_reuse_cache = false;
++pub var micro_ffn_async = false;
++pub var micro_mapped_copy = false;
++pub var micro_native_blocks = false;
++var trace_first_block = true;
++pub fn traceMicro(label: []const u8) void {
++    if (!micro_memory) return;
++    var active: usize = 0;
++    var peak: usize = 0;
++    _ = mlx.mlx_get_active_memory(&active);
++    _ = mlx.mlx_get_peak_memory(&peak);
++    std.debug.print("MEM {s} active={d} peak={d}\n", .{ label, active, peak });
++}
+ pub const Dit = struct {
++    const CachedStep = struct { t: f32, embedding: A, modulation: A, norm: A };
++    prepared_steps: []CachedStep = &.{},
++    prepared_text: ?A = null,
++    source: ?block_reader.Source = null,
++    prefetch: bool = false,
++    layout_adapter: bool = false,
+     allocator: std.mem.Allocator,
+     s: S,
+     cfg: DitConfig,
+@@ -816,18 +876,32 @@ pub const Dit = struct {
+     t2: MfLinear,
+     modulation: MfLinear,
+     blocks: []Block,
++    stream_loras: ?[]BlockLora = null,
+     norm_out: MfLinear,
+     proj_out: MfLinear,
+ 
+     pub fn load(io: std.Io, allocator: std.mem.Allocator, s: S, model_dir: []const u8, cfg: DitConfig, dtype: mlx.mlx_dtype) !Dit {
++        return loadMode(io, allocator, s, model_dir, cfg, dtype, request_streaming, request_prefetch);
++    }
++    pub fn loadMode(io: std.Io, allocator: std.mem.Allocator, s: S, model_dir: []const u8, cfg: DitConfig, dtype: mlx.mlx_dtype, streaming: bool, prefetch: bool) !Dit {
+         const dir = try std.fmt.allocPrint(allocator, "{s}/transformer", .{model_dir});
+         defer allocator.free(dir);
+-        var w = try model_mod.loadWeights(io, allocator, dir);
++        var source: ?block_reader.Source = if (streaming) try block_reader.Source.open(io, dir) else null;
++        errdefer if (source) |*r| r.deinit();
++        const root_batch = if (source) |*r| try r.batch("transformer_blocks.", true, false) else null;
++        defer if (root_batch) |b| b.deinit();
++        var w = if (root_batch) |b| try b.weights() else try model_mod.loadWeights(io, allocator, dir);
+         defer w.deinit();
+         const a = allocator;
+         const H = cfg.hidden();
+ 
+         var self: Dit = undefined;
++        self.stream_loras = null;
++        self.prepared_steps = &.{};
++        self.prepared_text = null;
++        self.source = source;
++        self.prefetch = prefetch;
++        self.layout_adapter = false;
+         self.allocator = allocator;
+         self.s = s;
+         self.cfg = cfg;
+@@ -856,34 +930,191 @@ pub const Dit = struct {
+         self.norm_out = try loadLinear(&w, a, H, dtype, s, "norm_out.linear", .{});
+         self.proj_out = try loadLinear(&w, a, H, dtype, s, "proj_out", .{});
+ 
+-        self.blocks = try a.alloc(Block, cfg.layers);
++        self.blocks = try a.alloc(Block, if (streaming) 0 else cfg.layers);
+         for (self.blocks, 0..) |*b, i| {
+-            const p = "transformer_blocks.{d}.";
+-            b.* = .{
+-                .q = try loadLinear(&w, a, H, dtype, s, p ++ "attn.to_q", .{i}),
+-                .k = try loadLinear(&w, a, H, dtype, s, p ++ "attn.to_k", .{i}),
+-                .v = try loadLinear(&w, a, H, dtype, s, p ++ "attn.to_v", .{i}),
+-                .o = try loadLinear(&w, a, H, dtype, s, p ++ "attn.to_out.0", .{i}),
+-                .norm_q = try loadVecF32(&w, a, p ++ "attn.norm_q.weight", .{i}, s),
+-                .norm_k = try loadVecF32(&w, a, p ++ "attn.norm_k.weight", .{i}, s),
+-                .proj = try loadLinear(&w, a, H, dtype, s, p ++ "img_mlp.proj", .{i}),
+-                .gate = try loadLinear(&w, a, H, dtype, s, p ++ "img_mlp.gate_layer", .{i}),
+-                .out = try loadLinear(&w, a, H * cfg.mlp_ratio, dtype, s, p ++ "img_mlp.out", .{i}),
+-            };
+-            inline for (.{ &b.q, &b.k, &b.v, &b.o, &b.proj, &b.gate }) |l| try l.toW8a8(s);
+-            try b.out.toW8a8(s);
+-            b.qkv = try w8a8.fuse(&.{ &b.q.w8, &b.k.w8, &b.v.w8 }, .stack, s);
+-            b.gp = try w8a8.fuse(&.{ &b.gate.w8, &b.proj.w8 }, .interleave, s);
++            b.* = try readBlock(&w, a, s, cfg, dtype, i);
+             if (w8a8.w8a8State().enabled) w.dropBlock("transformer_blocks.{d}.", i);
+         }
+         return self;
+     }
+ 
++    pub fn prepareSteps(self: *Dit, sigmas: []const f32) !void {
++        if (self.prepared_steps.len != 0) return error.StepsAlreadyPrepared;
++        const steps = try self.allocator.alloc(CachedStep, sigmas.len);
++        for (sigmas, steps) |t, *step| {
++            const embedding = try self.timeEmbed(t);
++            const act = try silu(embedding, self.s);
++            defer free(act);
++            step.* = .{ .t = t, .embedding = embedding, .modulation = try self.modulation.forward(act, null, self.s), .norm = try self.norm_out.forward(act, null, self.s) };
++            try mlx.evalFields(step.*);
++        }
++        self.prepared_steps = steps;
++        inline for (.{ &self.t1, &self.t2, &self.modulation, &self.norm_out }) |l| {
++            l.deinit();
++            l.* = cacheLinear(null, self.dtype);
++        }
++        _ = mlx.mlx_clear_cache();
++    }
++    fn prepared(self: *const Dit, t: f32) ?CachedStep {
++        for (self.prepared_steps) |v| if (v.t == t) return v;
++        return null;
++    }
++    fn ownArray(v: A) !A {
++        var out = mlx.mlx_array_new();
++        try mlx.check(mlx.mlx_array_set(&out, v));
++        return out;
++    }
++    pub fn useCache(self: *Dit, io: std.Io, path: []const u8) !void {
++        if (self.source == null or !w8a8.w8a8State().enabled) return error.CacheRequiresStreamW8a8;
++        var next = try block_reader.Source.open(io, path);
++        next.mapped = micro_memory and micro_mmap;
++        next.mapped_copy = micro_mapped_copy;
++        if (micro_memory and micro_native_blocks and !micro_mmap) try next.enableReuse();
++        errdefer next.deinit();
++        for (0..self.cfg.layers) |i| {
++            var buf: [80]u8 = undefined;
++            const key = try std.fmt.bufPrint(&buf, "transformer_blocks.{d}.qkv.wq", .{i});
++            var found = false;
++            for (next.tensors.items) |t| if (std.mem.eql(u8, t.name, key)) {
++                found = true;
++                break;
++            };
++            if (!found) return error.IncompleteW8a8Cache;
++        }
++        self.source.?.deinit();
++        self.source = next;
++    }
++    pub fn makeResident(self: *Dit) !void {
++        const source = if (self.source) |*r| r else return;
++        const blocks = try self.allocator.alloc(Block, self.cfg.layers);
++        var loaded: usize = 0;
++        errdefer {
++            for (blocks[0..loaded]) |*b| b.deinit();
++            self.allocator.free(blocks);
++        }
++        for (blocks, 0..) |*b, i| {
++            var buf: [80]u8 = undefined;
++            const batch = try source.batch(try std.fmt.bufPrint(&buf, "transformer_blocks.{d}.", .{i}), false, false);
++            defer batch.deinit();
++            var w = try batch.weights();
++            defer w.deinit();
++            b.* = try readBlock(&w, self.allocator, self.s, self.cfg, self.dtype, i);
++            loaded += 1;
++        }
++        self.allocator.free(self.blocks);
++        self.blocks = blocks;
++        source.deinit();
++        self.source = null;
++    }
++    fn cachedWeight(w: *const Weights, comptime part: []const u8, i: usize) !w8a8.Weight {
++        var buf: [100]u8 = undefined;
++        const raw = w.get(try std.fmt.bufPrint(&buf, "transformer_blocks.{d}." ++ part ++ ".wq", .{i})) orelse return error.MissingW8a8Cache;
++        const scale = w.get(try std.fmt.bufPrint(&buf, "transformer_blocks.{d}." ++ part ++ ".ws", .{i})) orelse return error.MissingW8a8Cache;
++        var q = mlx.mlx_array_new();
++        errdefer free(q);
++        try mlx.check(mlx.mlx_array_set(&q, raw));
++        var sc = mlx.mlx_array_new();
++        errdefer free(sc);
++        try mlx.check(mlx.mlx_array_set(&sc, scale));
++        const shape = mlx.getShape(q);
++        if (shape.len != 2 or mlx.mlx_array_dtype(q) != .int8 or mlx.getShape(sc).len != 1 or mlx.getShape(sc)[0] != shape[0]) return error.InvalidW8a8Cache;
++        return .{ .wq = q, .ws = sc, .n = shape[0], .k = shape[1] };
++    }
++    fn cacheLinear(weight: ?w8a8.Weight, dtype: mlx.mlx_dtype) MfLinear {
++        return .{ .quantized = false, .w = .{ .ctx = null }, .dtype = dtype, .w8 = weight };
++    }
++    pub fn prepareCache(io: std.Io, allocator: std.mem.Allocator, stream: S, model: []const u8, output: []const u8) !void {
++        if (!w8a8.w8a8State().enabled) return error.CacheRequiresW8a8;
++        const dir = try std.fmt.allocPrint(allocator, "{s}/transformer", .{model});
++        defer allocator.free(dir);
++        var source = try block_reader.Source.open(io, dir);
++        defer source.deinit();
++        const cfg = try DitConfig.parse(io, allocator, model);
++        for (0..cfg.layers) |i| {
++            var buf: [100]u8 = undefined;
++            const batch = try source.batch(try std.fmt.bufPrint(&buf, "transformer_blocks.{d}.", .{i}), false, false);
++            defer batch.deinit();
++            var w = try batch.weights();
++            defer w.deinit();
++            var b = try readBlock(&w, allocator, stream, cfg, .bfloat16, i);
++            defer b.deinit();
++            const map = mlx.mlx_map_string_to_array_new();
++            defer _ = mlx.mlx_map_string_to_array_free(map);
++            const meta = mlx.mlx_map_string_to_string_new();
++            defer _ = mlx.mlx_map_string_to_string_free(meta);
++            inline for (.{ "qkv", "gp", "o", "out" }) |part| {
++                const v = if (comptime std.mem.eql(u8, part, "qkv") or std.mem.eql(u8, part, "gp")) @field(b, part).? else @field(b, part).w8.?;
++                const kq = try std.fmt.bufPrintSentinel(&buf, "transformer_blocks.{d}." ++ part ++ ".wq", .{i}, 0);
++                try mlx.check(mlx.mlx_map_string_to_array_insert(map, kq, v.wq));
++                const ks = try std.fmt.bufPrintSentinel(&buf, "transformer_blocks.{d}." ++ part ++ ".ws", .{i}, 0);
++                try mlx.check(mlx.mlx_map_string_to_array_insert(map, ks, v.ws));
++            }
++            inline for (.{ "norm_q", "norm_k" }) |part| {
++                const key = try std.fmt.bufPrintSentinel(&buf, "transformer_blocks.{d}.attn." ++ part ++ ".weight", .{i}, 0);
++                try mlx.check(mlx.mlx_map_string_to_array_insert(map, key, @field(b, part)));
++            }
++            const path = try std.fmt.allocPrintSentinel(allocator, "{s}/block-{d:0>2}.safetensors", .{ output, i }, 0);
++            defer allocator.free(path);
++            try mlx.check(mlx.mlx_save_safetensors(path, map, meta));
++            _ = mlx.mlx_clear_cache();
++            log.info("prepared block {d}/{d}\n", .{ i + 1, cfg.layers });
++        }
++    }
++    fn readBlock(w: *const Weights, a: std.mem.Allocator, s: S, cfg: DitConfig, dtype: mlx.mlx_dtype, i: usize) !Block {
++        const H = cfg.hidden();
++        var keybuf: [100]u8 = undefined;
++        if (w.get(try std.fmt.bufPrint(&keybuf, "transformer_blocks.{d}.qkv.wq", .{i})) != null) {
++            if (!w8a8.w8a8State().enabled) return error.CacheRequiresW8a8;
++            const qkv = try cachedWeight(w, "qkv", i);
++            return .{
++                .packed_mode = true,
++                .q = cacheLinear(try qkv.rows(0, @intCast(H), s), dtype),
++                .k = cacheLinear(try qkv.rows(@intCast(H), @intCast(H), s), dtype),
++                .v = cacheLinear(try qkv.rows(@intCast(2 * H), @intCast(H), s), dtype),
++                .o = cacheLinear(try cachedWeight(w, "o", i), dtype),
++                .out = cacheLinear(try cachedWeight(w, "out", i), dtype),
++                .gate = cacheLinear(null, dtype),
++                .proj = cacheLinear(null, dtype),
++                .qkv = qkv,
++                .gp = try cachedWeight(w, "gp", i),
++                .norm_q = try loadVecF32(w, a, "transformer_blocks.{d}.attn.norm_q.weight", .{i}, s),
++                .norm_k = try loadVecF32(w, a, "transformer_blocks.{d}.attn.norm_k.weight", .{i}, s),
++            };
++        }
++        const p = "transformer_blocks.{d}.";
++        var b: Block = .{
++            .q = try loadLinear(w, a, H, dtype, s, p ++ "attn.to_q", .{i}),
++            .k = try loadLinear(w, a, H, dtype, s, p ++ "attn.to_k", .{i}),
++            .v = try loadLinear(w, a, H, dtype, s, p ++ "attn.to_v", .{i}),
++            .o = try loadLinear(w, a, H, dtype, s, p ++ "attn.to_out.0", .{i}),
++            .norm_q = try loadVecF32(w, a, p ++ "attn.norm_q.weight", .{i}, s),
++            .norm_k = try loadVecF32(w, a, p ++ "attn.norm_k.weight", .{i}, s),
++            .proj = try loadLinear(w, a, H, dtype, s, p ++ "img_mlp.proj", .{i}),
++            .gate = try loadLinear(w, a, H, dtype, s, p ++ "img_mlp.gate_layer", .{i}),
++            .out = try loadLinear(w, a, H * cfg.mlp_ratio, dtype, s, p ++ "img_mlp.out", .{i}),
++        };
++        inline for (.{ &b.q, &b.k, &b.v, &b.o, &b.proj, &b.gate }) |l| try l.toW8a8(s);
++        try b.out.toW8a8(s);
++        b.qkv = try w8a8.fuse(&.{ &b.q.w8, &b.k.w8, &b.v.w8 }, .stack, s);
++        b.gp = try w8a8.fuse(&.{ &b.gate.w8, &b.proj.w8 }, .interleave, s);
++        b.packed_mode = w8a8.w8a8State().enabled;
++        return b;
++    }
++
+     pub fn deinit(self: *Dit) void {
++        if (self.prepared_text) |v| free(v);
++        for (self.prepared_steps) |v| {
++            free(v.embedding);
++            free(v.modulation);
++            free(v.norm);
++        }
++        if (self.prepared_steps.len > 0) self.allocator.free(self.prepared_steps);
++        if (self.source) |*r| r.deinit();
+         inline for (.{ &self.img_in, &self.txt_in, &self.txt_out, &self.t1, &self.t2, &self.modulation, &self.norm_out, &self.proj_out }) |l| l.deinit();
+         free(self.txt_norm);
+         for (self.blocks) |*b| b.deinit();
+         self.allocator.free(self.blocks);
++        if (self.stream_loras) |slots| self.allocator.free(slots);
+     }
+ 
+     /// Attach every adapter in `stack` to its block linear. Returns the number
+@@ -892,10 +1123,18 @@ pub const Dit = struct {
+     /// Non-owning: `stack` must outlive the attach.
+     pub fn attachLora(self: *Dit, stack: *const lora_mod.Stack) u32 {
+         self.detachLora();
++        if (std.c.getenv("SHENGTU_LIGHTNING_AUTO_ADAPTER")) |path| {
++            self.layout_adapter = stack.count > 0 and std.mem.eql(u8, stack.paths[0], std.mem.span(path));
++        }
+         var matched: u32 = 0;
+         var kbuf: [96]u8 = undefined;
+         var rbuf: [lora_mod.MAX_LORAS]lora_mod.Ref = undefined;
+-        for (self.blocks, 0..) |*b, i| {
++        if (self.blocks.len == 0 and self.stream_loras == null) {
++            self.stream_loras = self.allocator.alloc(BlockLora, self.cfg.layers) catch return 0;
++            @memset(self.stream_loras.?, .{});
++        }
++        for (0..self.cfg.layers) |i| {
++            const slots = if (self.stream_loras) |v| &v[i] else &self.blocks[i].lora;
+             inline for (.{
+                 .{ "attn.to_q", "q" },       .{ "attn.to_k", "k" },
+                 .{ "attn.to_v", "v" },       .{ "attn.to_out", "o" },
+@@ -905,7 +1144,7 @@ pub const Dit = struct {
+                 const key = std.fmt.bufPrint(&kbuf, "transformer_blocks.{d}." ++ m[0], .{i}) catch unreachable;
+                 const refs = stack.findAll(key, &rbuf);
+                 if (refs.len > 0) {
+-                    @field(b.lora, m[1]).set(refs);
++                    @field(slots.*, m[1]).set(refs);
+                     matched += @intCast(refs.len);
+                 }
+             }
+@@ -914,6 +1153,8 @@ pub const Dit = struct {
+     }
+ 
+     pub fn detachLora(self: *Dit) void {
++        self.layout_adapter = false;
++        if (self.stream_loras) |slots| @memset(slots, .{});
+         for (self.blocks) |*b| b.lora = .{};
+     }
+ 
+@@ -921,6 +1162,7 @@ pub const Dit = struct {
+     /// The sinusoid (cos half first) is f32, cast to the compute dtype BEFORE
+     /// the embedder so an f32 modulation never widens the hidden stream.
+     fn timeEmbed(self: *const Dit, t: f32) !A {
++        if (self.prepared(t)) |v| return ownArray(v.embedding);
+         const s = self.s;
+         var buf: [2 * 256]f32 = undefined;
+         for ([_]f32{ t, 0 }, 0..) |tv, row| timestep.sinusoid(f32, buf[row * 256 ..][0..256], tv * 1000.0, .cos_first);
+@@ -953,7 +1195,7 @@ pub const Dit = struct {
+     fn headsOf(self: *const Dit, lin: *const MfLinear, slot: *const lora_mod.Slot, norm: ?A, x: A, geo: *const Geometry) !A {
+         const s = self.s;
+         const sh = mlx.getShape(x);
+-        const y = try linForward(lin, slot, x, s);
++        const y = try projectAttention(lin, slot, x, geo, s);
+         defer free(y);
+         const y4 = try reshape(y, &[_]c_int{ sh[0], sh[1], @intCast(self.cfg.heads), @intCast(self.cfg.head_dim) }, s);
+         defer free(y4);
+@@ -981,7 +1223,9 @@ pub const Dit = struct {
+         defer free(y2);
+         const hq: c_int = @intCast(self.cfg.heads * self.cfg.head_dim);
+         const h: c_int = @intCast(self.cfg.heads);
+-        return try dit_kernels.qkvHeads(y2, .{ .heads = h, .kv_heads = h, .q_off = 0, .k_off = hq, .v_off = 2 * hq }, b.norm_q, b.norm_k, geo.cos, geo.sin, self.cfg.eps, false, self.s);
++        const result = try dit_kernels.qkvHeads(y2, .{ .heads = h, .kv_heads = h, .q_off = 0, .k_off = hq, .v_off = 2 * hq }, b.norm_q, b.norm_k, geo.cos, geo.sin, self.cfg.eps, false, self.s);
++        if (micro_memory and (!micro_native_blocks or geo.text_len != 0)) try mlx.evalFields(result);
++        return result;
+     }
+ 
+     /// Block-causal attention as the reference segments it: causal over the
+@@ -1080,12 +1324,112 @@ pub const Dit = struct {
+ 
+     /// One block: sdk pre-norm adaLN (no-affine LayerNorm, scale-only modulation, tanh gates), the attention arm
+     /// the caller's.
+-    fn block(self: *const Dit, b: *const Block, x: A, mod: *const StepMod, attend: Attend) !A {
++    const NextBlock = struct { index: usize, pending: *?*block_reader.Batch };
++
++    fn microBlock(self: *const Dit, b: *const Block, x: A, mod: *const StepMod, attend: Attend, next: ?NextBlock) !A {
++        const s = self.s;
++        if (trace_first_block) traceMicro("block-start");
++        const h = blk: {
++            const n = try layerNorm(x, DIT_EPS, s);
++            defer free(n);
++            const scaled = try mulA(n, mod.scale1, s);
++            defer free(scaled);
++            const att = switch (attend) {
++                .t2i => |t| try self.attention(b, scaled, t.geo, t.cache, t.cached),
++                .edit => |e| try self.editAttention(b, scaled, e.geo, e.rope, e.slot, e.cached),
++            };
++            defer free(att);
++            const gated = try mulA(att, mod.gate1, s);
++            defer free(gated);
++            const out = try addA(x, gated, s);
++            const slot = switch (attend) {
++                .t2i => |t| t.cache,
++                .edit => |e| e.slot,
++            };
++            try mlx.evalFields(.{ out, if (slot) |kv| kv.* else null });
++            break :blk out;
++        };
++        defer free(h);
++        if (trace_first_block) traceMicro("attention-end");
++        // Attention has released its large intermediates. Read the next
++        // block while this block's smaller FFN tiles execute.
++        if (next) |n| if (self.source) |*src| {
++            var buf: [80]u8 = undefined;
++            n.pending.* = try src.batch(try std.fmt.bufPrint(&buf, "transformer_blocks.{d}.", .{n.index}), false, true);
++        };
++        const vec = mlx.mlx_vector_array_new();
++        defer _ = mlx.mlx_vector_array_free(vec);
++        const length = mlx.getShape(h)[1];
++        // The first step also carries text modulation and prefix-cache setup.
++        const tile_rows = if (mlx.getShape(mod.scale2)[1] == 1) micro_ffn_rows else @min(micro_ffn_rows, 1024);
++        var row: c_int = 0;
++        var previous: ?A = null;
++        defer if (previous) |value| free(value);
++        while (row < length) : (row += tile_rows) {
++            const end = @min(row + tile_rows, length);
++            const part = try sliceAxis(h, 1, row, end, s);
++            defer free(part);
++            const scale = if (mlx.getShape(mod.scale2)[1] == 1) try ownArray(mod.scale2) else try sliceAxis(mod.scale2, 1, row, end, s);
++            defer free(scale);
++            const gate = if (mlx.getShape(mod.gate2)[1] == 1) try ownArray(mod.gate2) else try sliceAxis(mod.gate2, 1, row, end, s);
++            defer free(gate);
++            const n = try layerNorm(part, DIT_EPS, s);
++            defer free(n);
++            const scaled = try mulA(n, scale, s);
++            defer free(scaled);
++            const gp = try self.swiglu(b, scaled);
++            defer free(gp);
++            const f = try linForward(&b.out, &b.lora.out, gp, s);
++            defer free(f);
++            const gated = try mulA(f, gate, s);
++            defer free(gated);
++            const out = try addA(part, gated, s);
++            defer free(out);
++            if (micro_ffn_async) {
++                const pending_arrays = mlx.mlx_vector_array_new_value(out);
++                defer _ = mlx.mlx_vector_array_free(pending_arrays);
++                try mlx.check(mlx.mlx_async_eval(pending_arrays));
++                if (previous) |value| {
++                    try mlx.check(mlx.mlx_array_eval(value));
++                    free(value);
++                    previous = null;
++                }
++                previous = try ownArray(out);
++            } else try mlx.check(mlx.mlx_array_eval(out));
++            _ = mlx.mlx_vector_array_append_value(vec, out);
++        }
++        var out = mlx.mlx_array_new();
++        try mlx.check(mlx.mlx_concatenate_axis(&out, vec, 1, s));
++        if (!micro_ffn_async or mlx.getShape(mod.scale2)[1] != 1) try mlx.check(mlx.mlx_array_eval(out));
++        if (trace_first_block) traceMicro("ffn-end");
++        trace_first_block = false;
++        return out;
++    }
++
++    fn block(self: *const Dit, b: *const Block, x: A, mod: *const StepMod, attend: Attend, next: ?NextBlock) !A {
++        if (micro_memory and (!micro_native_blocks or mlx.getShape(mod.scale2)[1] != 1)) return self.microBlock(b, x, mod, attend, next);
+         const m: dit_base.Mods = .{ .scale_a = mod.scale1, .gate_a = mod.gate1, .scale_f = mod.scale2, .gate_f = mod.gate2 };
+         return graph_call(self.s, BlockHooks.forward, .{ b, x, m, BlockHooks.Ctx{ .dit = self, .attend = attend } });
+     }
+ 
++    /// Fixed conditioning for one generation; release both dense text projections.
++    pub fn prepareText(self: *Dit, txt: A) !void {
++        if (self.prepared_text != null) return error.TextAlreadyPrepared;
++        const value = try self.textIn(txt);
++        errdefer free(value);
++        try mlx.check(mlx.mlx_array_eval(value));
++        self.prepared_text = value;
++        self.txt_in.deinit();
++        self.txt_in = cacheLinear(null, self.dtype);
++        self.txt_out.deinit();
++        self.txt_out = cacheLinear(null, self.dtype);
++        free(self.txt_norm);
++        self.txt_norm = mlx.mlx_array_new();
++        _ = mlx.mlx_clear_cache();
++    }
++
+     fn textIn(self: *const Dit, txt: A) !A {
++        if (self.prepared_text) |value| return ownArray(value);
+         const s = self.s;
+         const tf = try astype(txt, .float32, s);
+         defer free(tf);
+@@ -1104,7 +1448,7 @@ pub const Dit = struct {
+         return self.forwardCached(img, txt, t, geo, null);
+     }
+ 
+-    fn forwardCached(self: *const Dit, img: A, txt: A, t: f32, joint_geo: *const Geometry, cache: ?*PrefixCache) !A {
++    pub fn forwardCached(self: *const Dit, img: A, txt: A, t: f32, joint_geo: *const Geometry, cache: ?*PrefixCache) !A {
+         const s = self.s;
+         const cached = if (cache) |c| c.ready else false;
+         const geo = if (cached) &cache.?.image_geo else joint_geo;
+@@ -1112,22 +1456,64 @@ pub const Dit = struct {
+         defer free(temb);
+         const temb_act = try silu(temb, s);
+         defer free(temb_act);
+-        var mod = try self.modRows(temb_act, geo.mod_row);
++        // Cached t2i steps contain image tokens only: one modulation row
++        // broadcasts exactly, without four sequence-sized duplicate arrays.
++        const mod_rows = if (micro_memory and cached) try sliceAxis(geo.mod_row, 0, 0, 1, s) else try ownArray(geo.mod_row);
++        defer free(mod_rows);
++        var mod = try self.modRows(temb_act, mod_rows, if (self.prepared(t)) |v| v.modulation else null);
+         defer mod.deinit();
+ 
+-        const ih = try self.img_in.forward(img, null, s);
+-        defer free(ih);
+-        var x = if (cached) try contig(ih, s) else blk: {
++        var x = blk: {
++            const ih = try self.img_in.forward(img, null, s);
++            defer free(ih);
++            if (cached) break :blk try contig(ih, s);
+             const th = try self.textIn(txt);
+             defer free(th);
+             break :blk try concat(&.{ th, ih }, 1, s);
+         };
+         defer free(x);
+-        for (self.blocks, 0..) |*b, i| {
++        var pending: ?*block_reader.Batch = null;
++        defer if (pending) |batch| batch.deinit();
++        if (self.source) |*src| pending = try src.batch("transformer_blocks.0.", false, self.prefetch);
++        for (0..self.cfg.layers) |i| {
++            var loaded: ?Block = null;
++            defer if (loaded) |*b| b.deinit();
++            if (pending) |batch| {
++                var weights = try batch.weights();
++                defer weights.deinit();
++                loaded = try readBlock(&weights, self.allocator, s, self.cfg, self.dtype, i);
++                if (self.stream_loras) |slots| loaded.?.lora = slots[i];
++                batch.deinit();
++                pending = null;
++            }
++            const b = if (loaded) |*v| v else &self.blocks[i];
+             const slot = if (cache) |c| &c.layers[i] else null;
+-            const nx = try self.block(b, x, &mod, .{ .t2i = .{ .geo = geo, .cache = slot, .cached = cached } });
++            const next: ?NextBlock = if (micro_memory and micro_prefetch and cached and i + 1 < self.cfg.layers) .{ .index = i + 1, .pending = &pending } else null;
++            const nx = try self.block(b, x, &mod, .{ .t2i = .{ .geo = geo, .cache = slot, .cached = cached } }, next);
+             free(x);
+             x = nx;
++            if (micro_memory) if (loaded) |*b2| {
++                b2.deinit();
++                loaded = null;
++            };
++            if (self.source) |*src| {
++                const native_pipeline = micro_memory and micro_native_blocks and micro_ffn_async and cached;
++                if (self.prefetch or (micro_memory and micro_ffn_async and cached)) {
++                    const arrays = mlx.mlx_vector_array_new_value(x);
++                    defer _ = mlx.mlx_vector_array_free(arrays);
++                    try mlx.check(mlx.mlx_async_eval(arrays));
++                }
++                if (!native_pipeline and i + 1 < self.cfg.layers and pending == null) {
++                    var buf: [80]u8 = undefined;
++                    pending = try src.batch(try std.fmt.bufPrint(&buf, "transformer_blocks.{d}.", .{i + 1}), false, self.prefetch);
++                }
++                if (native_pipeline and i + 1 < self.cfg.layers) {
++                    var buf: [80]u8 = undefined;
++                    pending = try src.batch(try std.fmt.bufPrint(&buf, "transformer_blocks.{d}.", .{i + 1}), false, true);
++                }
++                if (native_pipeline or !micro_memory or !micro_ffn_async or !cached) try mlx.evalFields(.{ x, if (slot) |kv| kv.* else null });
++                if (!micro_memory or !micro_reuse_cache) _ = mlx.mlx_clear_cache();
++            }
+         }
+ 
+         // Only image tokens leave the model, and LayerNorm is per token, so the
+@@ -1137,7 +1523,7 @@ pub const Dit = struct {
+         defer free(xi);
+         const n = try layerNorm(xi, self.cfg.eps, s);
+         defer free(n);
+-        const sc2 = try self.norm_out.forward(temb_act, null, s); // [2, H]
++        const sc2 = if (self.prepared(t)) |v| try ownArray(v.norm) else try self.norm_out.forward(temb_act, null, s); // [2, H]
+         defer free(sc2);
+         const sc = try sliceAxis(sc2, 0, 0, 1, s);
+         defer free(sc);
+@@ -1155,10 +1541,10 @@ pub const Dit = struct {
+ 
+     /// The step's modulation per token: `mod_row` picks the sampled-t row (image or target tokens) or the t=0 row
+     /// (text, and an edit's condition images).
+-    fn modRows(self: *const Dit, temb_act: A, mod_row: A) !StepMod {
++    fn modRows(self: *const Dit, temb_act: A, mod_row: A, prepared_mod: ?A) !StepMod {
+         const s = self.s;
+         const H: c_int = @intCast(self.cfg.hidden());
+-        const mod = try self.modulation.forward(temb_act, null, s);
++        const mod = if (prepared_mod) |v| try ownArray(v) else try self.modulation.forward(temb_act, null, s);
+         defer free(mod);
+         const opm = try addScalar(mod, 1.0, s);
+         defer free(opm);
+@@ -1204,7 +1590,7 @@ pub const Dit = struct {
+         defer free(back);
+         const flat = try reshape(back, &[_]c_int{ sh[0], sh[1], sh[2] }, s);
+         defer free(flat);
+-        return linForward(&b.o, &b.lora.o, flat, s);
++        return projectAttention(&b.o, &b.lora.o, flat, rope, s);
+     }
+ 
+     /// Velocity for one edit flow step: `latents` are the PACKED [refs |
+@@ -1222,13 +1608,31 @@ pub const Dit = struct {
+         _ = mask;
+         const s = self.s;
+         const cached = if (cache) |c| c.ready else false;
+-        const full_rope = geo.ropeGeometry();
+-        const rope = if (cached) &cache.?.image_geo else &full_rope;
++        var step_geo = if (cached) cache.?.image_geo else geo.ropeGeometry();
++        var owned_rows: ?A = null;
++        defer if (owned_rows) |rows| free(rows);
++        if (self.layout_adapter) {
++            if (cached) {
++                step_geo.layout_target_only = true;
++            } else {
++                const values = try self.allocator.alloc(f32, @intCast(geo.joint_len));
++                defer self.allocator.free(values);
++                const first_target: usize = @intCast(geo.target_start);
++                @memset(values[0..first_target], 0.50);
++                @memset(values[first_target..], 0.25);
++                const dims = [_]c_int{ 1, geo.joint_len, 1 };
++                const raw = mlx.mlx_array_new_data(values.ptr, &dims, 3, .float32);
++                defer free(raw);
++                owned_rows = try astype(raw, self.dtype, s);
++                step_geo.layout_rows = owned_rows;
++            }
++        }
++        const rope = &step_geo;
+         const temb = try self.timeEmbed(t);
+         defer free(temb);
+         const temb_act = try silu(temb, s);
+         defer free(temb_act);
+-        var mod = try self.modRows(temb_act, rope.mod_row);
++        var mod = try self.modRows(temb_act, rope.mod_row, null);
+         defer mod.deinit();
+ 
+         const H: c_int = @intCast(self.cfg.hidden());
+@@ -1255,11 +1659,38 @@ pub const Dit = struct {
+             break :blk joint;
+         };
+         defer free(x);
+-        for (self.blocks, 0..) |*b, i| {
++        var pending: ?*block_reader.Batch = null;
++        defer if (pending) |batch| batch.deinit();
++        if (self.source) |*src| pending = try src.batch("transformer_blocks.0.", false, self.prefetch);
++        for (0..self.cfg.layers) |i| {
++            var loaded: ?Block = null;
++            defer if (loaded) |*b| b.deinit();
++            if (pending) |batch| {
++                var weights = try batch.weights();
++                defer weights.deinit();
++                loaded = try readBlock(&weights, self.allocator, s, self.cfg, self.dtype, i);
++                if (self.stream_loras) |slots| loaded.?.lora = slots[i];
++                batch.deinit();
++                pending = null;
++            }
++            const b = if (loaded) |*v| v else &self.blocks[i];
+             const slot = if (cache) |c| &c.layers[i] else null;
+-            const nx = try self.block(b, x, &mod, .{ .edit = .{ .geo = geo, .rope = rope, .slot = slot, .cached = cached } });
++            const nx = try self.block(b, x, &mod, .{ .edit = .{ .geo = geo, .rope = rope, .slot = slot, .cached = cached } }, null);
+             free(x);
+             x = nx;
++            if (self.source) |*src| {
++                if (self.prefetch) {
++                    const arrays = mlx.mlx_vector_array_new_value(x);
++                    defer _ = mlx.mlx_vector_array_free(arrays);
++                    try mlx.check(mlx.mlx_async_eval(arrays));
++                }
++                if (i + 1 < self.cfg.layers) {
++                    var buf: [80]u8 = undefined;
++                    pending = try src.batch(try std.fmt.bufPrint(&buf, "transformer_blocks.{d}.", .{i + 1}), false, self.prefetch);
++                }
++                try mlx.evalFields(.{ x, if (slot) |kv| kv.* else null });
++                _ = mlx.mlx_clear_cache();
++            }
+         }
+         // Prefix rows use t=0; target-only steps retain their original t row.
+         const n = try layerNorm(x, self.cfg.eps, s);
+@@ -1355,16 +1786,21 @@ fn segmentSdpaWalk(q: A, k: A, v: A, geo: *const EditGeometry, scale: f32, s: S,
+ /// lets every conv run on the half-precision matrix path.
+ const vae_dt: mlx.mlx_dtype = .float16;
+ 
+-fn vaeCast(x: A, s: S) !A {
++const VaeWeights = struct {
++    weights: *const Weights,
++    dtype: mlx.mlx_dtype,
++};
++
++fn vaeCast(x: A, dtype: mlx.mlx_dtype, s: S) !A {
+     defer free(x);
+-    return astype(x, vae_dt, s);
++    return astype(x, dtype, s);
+ }
+ 
+ const Conv = struct {
+     w: A, // OHWI
+     b: A,
+ 
+-    fn load(w: *const Weights, a: std.mem.Allocator, s: S, comptime fmt: []const u8, args: anytype) !Conv {
++    fn load(w: *const VaeWeights, a: std.mem.Allocator, s: S, comptime fmt: []const u8, args: anytype) !Conv {
+         return (try loadOpt(w, a, s, fmt, args)) orelse {
+             const prefix = try std.fmt.allocPrint(a, fmt, args);
+             defer a.free(prefix);
+@@ -1373,10 +1809,10 @@ const Conv = struct {
+         };
+     }
+ 
+-    fn loadOpt(w: *const Weights, a: std.mem.Allocator, s: S, comptime fmt: []const u8, args: anytype) !?Conv {
++    fn loadOpt(w: *const VaeWeights, a: std.mem.Allocator, s: S, comptime fmt: []const u8, args: anytype) !?Conv {
+         const wk = try std.fmt.allocPrint(a, fmt ++ ".weight", args);
+         defer a.free(wk);
+-        const raw = w.get(wk) orelse return null;
++        const raw = w.weights.get(wk) orelse return null;
+         // Diffusers stores OIHW, mlx-community's VAE OHWI (square kernel in the
+         // middle, channels last). Only in == k reads either way; taken as OIHW,
+         // and no conv here has it (RGBA in, >= 64 channels after).
+@@ -1388,9 +1824,9 @@ const Conv = struct {
+             break :blk try contig(t, s);
+         };
+         defer free(tc);
+-        const wf = try astype(tc, vae_dt, s);
++        const wf = try astype(tc, w.dtype, s);
+         errdefer free(wf);
+-        return .{ .w = wf, .b = try vaeCast(try loadVecF32(w, a, fmt ++ ".bias", args, s), s) };
++        return .{ .w = wf, .b = try vaeCast(try loadVecF32(w.weights, a, fmt ++ ".bias", args, s), w.dtype, s) };
+     }
+ 
+     fn deinit(self: *Conv) void {
+@@ -1443,19 +1879,19 @@ const Conv = struct {
+ /// MLX's 3x3 conv holds an unfolded copy of its input (H·W·9·C_in floats): 11 GB
+ /// for the decoder's 288-channel stage at 1024², invisible to MLX's own memory
+ /// counters. Past this budget a conv runs in strips.
+-const CONV_UNFOLD_BUDGET_BYTES: u64 = 512 << 20;
++pub var conv_unfold_budget_bytes: u64 = 512 << 20;
+ 
+ fn stripCount(x_shape: []const c_int, w_shape: []const c_int, stride: c_int) c_int {
+     if (stride != 1 or w_shape[1] != 3 or w_shape[2] != 3) return 1;
+     var unfold: u64 = 9 * @sizeOf(f32);
+     for (x_shape) |d| unfold *= @intCast(d);
+-    const n = (unfold + CONV_UNFOLD_BUDGET_BYTES - 1) / CONV_UNFOLD_BUDGET_BYTES;
++    const n = (unfold + conv_unfold_budget_bytes - 1) / conv_unfold_budget_bytes;
+     return @intCast(@min(n, @as(u64, @intCast(x_shape[1]))));
+ }
+ 
+ /// Input rows per band of a stage (even, so a stride-2 stage cuts on cell
+ /// boundaries), sized so the stage's widest activation stays under the budget.
+-var band_budget_bytes: u64 = 256 << 20; // var: the parity test forces bands on a tiny pack
++pub var band_budget_bytes: u64 = 256 << 20; // var: the parity test forces bands on a tiny pack
+ 
+ fn bandRows(x_shape: []const c_int, out_ch: c_int, grow: c_int) c_int {
+     const width: u64 = @intCast(x_shape[2] * grow);
+@@ -1466,10 +1902,10 @@ fn bandRows(x_shape: []const c_int, out_ch: c_int, grow: c_int) c_int {
+ }
+ 
+ /// Wan-style norm gamma, flattened to [C].
+-fn loadVaeNorm(w: *const Weights, a: std.mem.Allocator, s: S, comptime fmt: []const u8, args: anytype) !A {
+-    const g = try loadVecF32(w, a, fmt ++ ".gamma", args, s);
++fn loadVaeNorm(w: *const VaeWeights, a: std.mem.Allocator, s: S, comptime fmt: []const u8, args: anytype) !A {
++    const g = try loadVecF32(w.weights, a, fmt ++ ".gamma", args, s);
+     defer free(g);
+-    return vaeCast(try reshape(g, &[_]c_int{-1}, s), s);
++    return vaeCast(try reshape(g, &[_]c_int{-1}, s), w.dtype, s);
+ }
+ 
+ /// x/‖x‖₂ · √C · gamma over channels IS rms_norm (‖x‖₂/√C = rms), and the fused
+@@ -1486,7 +1922,7 @@ const Res = struct {
+     c2: Conv,
+     shortcut: ?Conv,
+ 
+-    fn load(w: *const Weights, a: std.mem.Allocator, s: S, comptime fmt: []const u8, args: anytype) !Res {
++    fn load(w: *const VaeWeights, a: std.mem.Allocator, s: S, comptime fmt: []const u8, args: anytype) !Res {
+         return .{
+             .n1 = try loadVaeNorm(w, a, s, fmt ++ ".norm1", args),
+             .c1 = try Conv.load(w, a, s, fmt ++ ".conv1", args),
+@@ -1531,7 +1967,7 @@ const Mid = struct {
+     qkv: Conv,
+     proj: Conv,
+ 
+-    fn load(w: *const Weights, a: std.mem.Allocator, s: S, comptime side: []const u8) !Mid {
++    fn load(w: *const VaeWeights, a: std.mem.Allocator, s: S, comptime side: []const u8) !Mid {
+         const p = side ++ ".mid_block.";
+         return .{
+             .r0 = try Res.load(w, a, s, p ++ "resnets.0", .{}),
+@@ -1616,7 +2052,7 @@ const Stage = struct {
+     out_ch: c_int,
+     temporal: bool,
+ 
+-    fn load(w: *const Weights, a: std.mem.Allocator, s: S, comptime fmt: []const u8, comptime sampler: []const u8, i: usize, n_res: usize, out_ch: u32, temporal: bool) !Stage {
++    fn load(w: *const VaeWeights, a: std.mem.Allocator, s: S, comptime fmt: []const u8, comptime sampler: []const u8, i: usize, n_res: usize, out_ch: u32, temporal: bool) !Stage {
+         const res = try a.alloc(Res, n_res);
+         for (res, 0..) |*r, j| r.* = try Res.load(w, a, s, fmt ++ ".resnets.{d}", .{ i, j });
+         return .{
+@@ -1745,11 +2181,11 @@ fn loadVaeWeights(io: std.Io, a: std.mem.Allocator, model_dir: []const u8) !Weig
+     return model_mod.loadWeights(io, a, dir);
+ }
+ 
+-fn channelVec(vals: []const f32, s: S) !A {
++fn channelVec(vals: []const f32, dtype: mlx.mlx_dtype, s: S) !A {
+     const sh = [_]c_int{@intCast(vals.len)};
+     const raw = mlx.mlx_array_new_data(vals.ptr, &sh, 1, .float32);
+     defer free(raw);
+-    return vaeCast(try contig(raw, s), s);
++    return vaeCast(try contig(raw, s), dtype, s);
+ }
+ 
+ /// Everything both halves of the VAE share: stem, stages, mid block, head.
+@@ -1789,9 +2225,164 @@ const VaeHalf = struct {
+ pub const VaeDecoder = struct {
+     h: VaeHalf,
+ 
++    /// Release decoder weights after each stage; all spatial context is preserved.
++    pub fn decodeStream(io: std.Io, a: std.mem.Allocator, s: S, model: []const u8, cfg: VaeConfig, latent: A, dtype: mlx.mlx_dtype) !A {
++        const dir = try std.fmt.allocPrint(a, "{s}/vae", .{model});
++        defer a.free(dir);
++        var source = try block_reader.Source.open(io, dir);
++        defer source.deinit();
++        const lf = try astype(latent, dtype, s);
++        defer free(lf);
++        const nhwc = try transpose(lf, &.{ 0, 2, 3, 1 }, s);
++        defer free(nhwc);
++        const mean = try channelVec(cfg.mean, dtype, s);
++        defer free(mean);
++        const dev = try channelVec(cfg.std, dtype, s);
++        defer free(dev);
++        const scaled = try mulA(nhwc, dev, s);
++        defer free(scaled);
++        var x = try addA(scaled, mean, s);
++        defer free(x);
++        inline for (.{ "post_quant_conv", "decoder.conv_in" }) |prefix| {
++            const batch = try source.batch(prefix ++ ".", false, false);
++            var w = try batch.weights();
++            batch.deinit();
++            const vw = VaeWeights{ .weights = &w, .dtype = dtype };
++            var c = Conv.load(&vw, a, s, prefix, .{}) catch |err| {
++                w.deinit();
++                return err;
++            };
++            w.deinit();
++            defer c.deinit();
++            const y = try c.forward(x, 1, if (comptime std.mem.eql(u8, prefix, "post_quant_conv")) 0 else 1, s);
++            free(x);
++            x = y;
++            try mlx.check(mlx.mlx_array_eval(x));
++        }
++        {
++            const batch = try source.batch("decoder.mid_block.", false, false);
++            var w = try batch.weights();
++            batch.deinit();
++            var mid = Mid.load(&.{ .weights = &w, .dtype = dtype }, a, s, "decoder") catch |err| {
++                w.deinit();
++                return err;
++            };
++            w.deinit();
++            defer mid.deinit();
++            const y = try mid.forward(x, s);
++            free(x);
++            x = y;
++            try mlx.check(mlx.mlx_array_eval(x));
++        }
++        if (cfg.n_mult < 2) return error.UnsupportedStreamingVae;
++        for (0..cfg.n_mult - 2) |i| {
++            var buf: [80]u8 = undefined;
++            const batch = try source.batch(try std.fmt.bufPrint(&buf, "decoder.up_blocks.{d}.", .{i}), false, false);
++            var w = try batch.weights();
++            batch.deinit();
++            const out_mult = cfg.mult[cfg.n_mult - 1 - i];
++            var stage = Stage.load(&.{ .weights = &w, .dtype = dtype }, a, s, "decoder.up_blocks.{d}", "upsampler", i, cfg.num_res_blocks + 1, cfg.dec_dim * out_mult, i + 1 < cfg.n_mult and cfg.temporal[cfg.n_mult - 2 - i]) catch |err| {
++                w.deinit();
++                return err;
++            };
++            w.deinit();
++            defer stage.deinit(a);
++            const y = try stage.up(x, s);
++            free(x);
++            x = y;
++            try mlx.check(mlx.mlx_array_eval(x));
++            traceMicro(try std.fmt.bufPrint(&buf, "vae-stage-{d}", .{i}));
++            _ = mlx.mlx_clear_cache();
++        }
++        // Keep the two small tail stages together so their 1024² hidden maps
++        // never need to be assembled. Only final RGBA strips are retained.
++        var tail: [2]Stage = undefined;
++        var tail_loaded: usize = 0;
++        defer for (tail[0..tail_loaded]) |*st| st.deinit(a);
++        for (&tail, cfg.n_mult - 2..) |*st, i| {
++            var buf: [80]u8 = undefined;
++            const tb = try source.batch(try std.fmt.bufPrint(&buf, "decoder.up_blocks.{d}.", .{i}), false, false);
++            var tw = try tb.weights();
++            tb.deinit();
++            defer tw.deinit();
++            st.* = try Stage.load(&.{ .weights = &tw, .dtype = dtype }, a, s, "decoder.up_blocks.{d}", "upsampler", i, cfg.num_res_blocks + 1, cfg.dec_dim * cfg.mult[cfg.n_mult - 1 - i], i + 1 < cfg.n_mult and cfg.temporal[cfg.n_mult - 2 - i]);
++            tail_loaded += 1;
++        }
++        const norm_batch = try source.batch("decoder.norm_out.", false, false);
++        var nw = try norm_batch.weights();
++        norm_batch.deinit();
++        const gamma = try loadVaeNorm(&.{ .weights = &nw, .dtype = dtype }, a, s, "decoder.norm_out", .{});
++        nw.deinit();
++        defer free(gamma);
++        const batch = try source.batch("decoder.conv_out.", false, false);
++        var w = try batch.weights();
++        batch.deinit();
++        var conv = Conv.load(&.{ .weights = &w, .dtype = dtype }, a, s, "decoder.conv_out", .{}) catch |err| {
++            w.deinit();
++            return err;
++        };
++        w.deinit();
++        defer conv.deinit();
++        // Two tail stages: conservative input halo covers all residual and head convolutions.
++        const vec = mlx.mlx_vector_array_new();
++        defer _ = mlx.mlx_vector_array_free(vec);
++        const height = mlx.getShape(x)[1];
++        var row: c_int = 0;
++        while (row < height) : (row += micro_vae_rows) {
++            const end = @min(row + micro_vae_rows, height);
++            // Two 3x3 convs per first-stage resnet, then nearest 2x + 3x3,
++            // second-stage resnets and the output 3x3. Round to an even
++            // input boundary so the shortcut's spatial fold stays aligned.
++            const radius = 2 * tail[0].res.len + tail[1].res.len + 1;
++            const halo: c_int = @intCast((radius + 1) & ~@as(usize, 1));
++            const lo = @max(0, row - halo);
++            const part = try sliceAxis(x, 1, lo, @min(height, end + halo), s);
++            defer free(part);
++            const act = blk: {
++                const v = inner: {
++                    const u = try tail[0].upWhole(part, s);
++                    defer free(u);
++                    try mlx.check(mlx.mlx_array_eval(u));
++                    const v = try tail[1].upWhole(u, s);
++                    errdefer free(v);
++                    try mlx.check(mlx.mlx_array_eval(v));
++                    break :inner v;
++                };
++                defer free(v);
++                const n = try vaeNorm(v, gamma, s);
++                defer free(n);
++                const act = try silu(n, s);
++                errdefer free(act);
++                try mlx.check(mlx.mlx_array_eval(act));
++                break :blk act;
++            };
++            defer free(act);
++            const y = try conv.forward(act, 1, 1, s);
++            defer free(y);
++            const kept = try sliceAxis(y, 1, 2 * (row - lo), 2 * (end - lo), s);
++            defer free(kept);
++            try mlx.check(mlx.mlx_array_eval(kept));
++            _ = mlx.mlx_vector_array_append_value(vec, kept);
++        }
++        var out = mlx.mlx_array_new();
++        defer free(out);
++        try mlx.check(mlx.mlx_concatenate_axis(&out, vec, 1, s));
++        try mlx.check(mlx.mlx_array_eval(out));
++        free(x);
++        x = mlx.mlx_array_new();
++        const wide = try astype(out, .float32, s);
++        defer free(wide);
++        return transpose(wide, &.{ 0, 3, 1, 2 }, s);
++    }
++
+     pub fn load(io: std.Io, a: std.mem.Allocator, s: S, model_dir: []const u8, cfg: VaeConfig) !VaeDecoder {
+-        var w = try loadVaeWeights(io, a, model_dir);
+-        defer w.deinit();
++        return loadWithDtype(io, a, s, model_dir, cfg, vae_dt);
++    }
++
++    pub fn loadWithDtype(io: std.Io, a: std.mem.Allocator, s: S, model_dir: []const u8, cfg: VaeConfig, dtype: mlx.mlx_dtype) !VaeDecoder {
++        var weights = try loadVaeWeights(io, a, model_dir);
++        defer weights.deinit();
++        const w = VaeWeights{ .weights = &weights, .dtype = dtype };
+         // dims = dec_dim · [m[-1], m[-1], …, m[0]]: one stage per transition,
+         // all but the last upsample.
+         const n = cfg.n_mult;
+@@ -1809,8 +2400,8 @@ pub const VaeDecoder = struct {
+             .stages = stages,
+             .norm_out = try loadVaeNorm(&w, a, s, "decoder.norm_out", .{}),
+             .conv_out = try Conv.load(&w, a, s, "decoder.conv_out", .{}),
+-            .mean = try channelVec(cfg.mean, s),
+-            .std = try channelVec(cfg.std, s),
++            .mean = try channelVec(cfg.mean, w.dtype, s),
++            .std = try channelVec(cfg.std, w.dtype, s),
+         } };
+     }
+ 
+@@ -1828,7 +2419,7 @@ pub const VaeDecoder = struct {
+     /// The fourth channel is native alpha; preserve it for transparent PNG output.
+     pub fn decodeRgba(self: *const VaeDecoder, latent: A) !A {
+         const s = self.h.s;
+-        const lf = try astype(latent, vae_dt, s);
++        const lf = try astype(latent, mlx.mlx_array_dtype(self.h.quant.w), s);
+         defer free(lf);
+         const nhwc = try transpose(lf, &[_]c_int{ 0, 2, 3, 1 }, s);
+         defer free(nhwc);
+@@ -1862,8 +2453,9 @@ pub const VaeEncoder = struct {
+     z_dim: c_int,
+ 
+     pub fn load(io: std.Io, a: std.mem.Allocator, s: S, model_dir: []const u8, cfg: VaeConfig) !VaeEncoder {
+-        var w = try loadVaeWeights(io, a, model_dir);
+-        defer w.deinit();
++        var weights = try loadVaeWeights(io, a, model_dir);
++        defer weights.deinit();
++        const w = VaeWeights{ .weights = &weights, .dtype = vae_dt };
+         const n = cfg.n_mult;
+         const stages = try a.alloc(Stage, n);
+         for (stages, 0..) |*st, i|
+@@ -1877,8 +2469,8 @@ pub const VaeEncoder = struct {
+             .stages = stages,
+             .norm_out = try loadVaeNorm(&w, a, s, "encoder.norm_out", .{}),
+             .conv_out = try Conv.load(&w, a, s, "encoder.conv_out", .{}),
+-            .mean = try channelVec(cfg.mean, s),
+-            .std = try channelVec(cfg.std, s),
++            .mean = try channelVec(cfg.mean, w.dtype, s),
++            .std = try channelVec(cfg.std, w.dtype, s),
+         } };
+     }
+ 
+@@ -1969,6 +2561,7 @@ fn logMemory(stage: []const u8) void {
+ }
+ 
+ pub const GenOpts = struct {
++    sample_sigmas: ?[]const f32 = null,
+     transparent: bool = false,
+     /// img2img source [1,3,H,W] f32 [0,1], already at the target size.
+     init_image: ?A = null,
+@@ -1989,6 +2582,7 @@ fn defaultDqGemmFloor(first: ?*const MfLinear) ?usize {
+ }
+ 
+ pub const EditOpts = struct {
++    sample_sigmas: ?[]const f32 = null,
+     guidance_scale: f32 = 1.0,
+     negative_prompt: []const u8 = "",
+     /// Selected by request memory admission; direct callers default to uncached.
+@@ -2036,7 +2630,81 @@ fn refResizeDimsAt(src_w: u32, src_h: u32, res: u32) struct { w: u32, h: u32 } {
+     return .{ .w = snap32(t.w), .h = snap32(t.h) };
+ }
+ 
++const EditCacheKey = [32]u8;
++const ReferenceHash = std.crypto.hash.sha2.Sha256;
++
++fn hashField(h: *ReferenceHash, bytes: []const u8) void {
++    h.update(std.mem.asBytes(&bytes.len));
++    h.update(bytes);
++}
++
++fn referenceKey(images: []const []const u8, resolution: u32) EditCacheKey {
++    var h = ReferenceHash.init(.{});
++    h.update(std.mem.asBytes(&resolution));
++    for (images) |bytes| hashField(&h, bytes);
++    return h.finalResult();
++}
++
++fn conditionKey(prompt: []const u8, negative: ?[]const u8) EditCacheKey {
++    var h = ReferenceHash.init(.{});
++    hashField(&h, prompt);
++    if (negative) |text| hashField(&h, text);
++    return h.finalResult();
++}
++
++const EditBranches = struct {
++    key: EditCacheKey,
++    pos: qwen_image_edit.EditCond,
++    neg: ?qwen_image_edit.EditCond,
++
++    fn deinit(self: *EditBranches, a: std.mem.Allocator) void {
++        self.pos.deinit(a);
++        if (self.neg) |*n| n.deinit(a);
++    }
++};
++
++fn arrayBytes(x: A) usize {
++    return mlx.mlx_array_size(x) * mlx.mlx_array_itemsize(x);
++}
++
++fn branchBytes(c: qwen_image_edit.EditCond) usize {
++    return arrayBytes(c.hidden) + c.pad_mask.len * @sizeOf(i32);
++}
++
++/// One evaluated entry per engine. It holds no encoder weights, input files or denoised target.
++const EditInputs = struct {
++    const cache_limit = 128 << 20;
++    key: EditCacheKey,
++    latents: A,
++    grids: [][3]i64,
++    slots: []usize,
++    vision: ?qwen_image_edit.VisionFeatures,
++    branches: ?EditBranches = null,
++
++    fn bytes(self: EditInputs) usize {
++        var n = arrayBytes(self.latents) + self.grids.len * @sizeOf([3]i64) + self.slots.len * @sizeOf(usize);
++        if (self.vision) |v| {
++            n += arrayBytes(v.merged);
++            for (v.deepstack) |x| n += arrayBytes(x);
++        }
++        if (self.branches) |b| {
++            n += branchBytes(b.pos);
++            if (b.neg) |c| n += branchBytes(c);
++        }
++        return n;
++    }
++
++    fn deinit(self: *EditInputs, a: std.mem.Allocator) void {
++        free(self.latents);
++        a.free(self.grids);
++        a.free(self.slots);
++        if (self.vision) |*v| v.deinit();
++        if (self.branches) |*b| b.deinit(a);
++    }
++};
++
+ pub const Engine = struct {
++    edit_cache: ?EditInputs = null,
+     allocator: std.mem.Allocator,
+     io: std.Io,
+     s: S,
+@@ -2055,6 +2723,7 @@ pub const Engine = struct {
+     te: ?TextEncoder = null,
+     /// Loaded on the first img2img request; txt2img never pays for it.
+     vae_enc: ?VaeEncoder = null,
++    tower: ?qwen_image_edit.VisionTower = null,
+     /// The pack's text_encoder/ carries the Qwen3-VL tower (edit capability),
+     /// probed at load by `towerPresentIn`; the tower weights load on demand.
+     has_tower: bool = false,
+@@ -2111,8 +2780,80 @@ pub const Engine = struct {
+         return self;
+     }
+ 
++    /// Swap only the seven projections per block. Commit whole blocks so an allocation
++    /// failure is retryable, retaining the VAE, text encoder, norms and LoRA bindings.
++    pub fn setExecutionMode(self: *Engine, enabled: bool) !void {
++        w8a8.w8a8State().enabled = enabled;
++        for (self.dit.blocks) |b| {
++            if (b.packed_mode != enabled) break;
++        } else return;
++        self.clearEditCache();
++        w8a8.dropMemo();
++        var originals: ?Weights = null;
++        defer if (originals) |*ws| ws.deinit();
++        if (!enabled) {
++            const dir = try std.fmt.allocPrint(self.allocator, "{s}/transformer", .{self.model_dir});
++            defer self.allocator.free(dir);
++            originals = try model_mod.loadWeights(self.io, self.allocator, dir);
++        }
++        const h = self.dit_cfg.hidden();
++        for (self.dit.blocks, 0..) |*b, i| {
++            if (b.packed_mode == enabled) continue;
++            var next: [7]MfLinear = undefined;
++            var count: usize = 0;
++            errdefer for (next[0..count]) |*l| l.deinit();
++            const linears = [_]*MfLinear{ &b.q, &b.k, &b.v, &b.o, &b.gate, &b.proj, &b.out };
++            inline for (.{ "attn.to_q", "attn.to_k", "attn.to_v", "attn.to_out.0", "img_mlp.gate_layer", "img_mlp.proj", "img_mlp.out" }, 0..) |name, k| {
++                if (originals) |*ws| {
++                    next[k] = try loadLinear(ws, self.allocator, if (k == 6) h * self.dit_cfg.mlp_ratio else h, self.dit.dtype, self.s, "transformer_blocks.{d}." ++ name, .{i});
++                } else {
++                    // Share the active affine handles while deriving this block's int8 layout.
++                    const old = linears[k];
++                    next[k] = .{ .quantized = old.quantized, .dtype = old.dtype, .bits = old.bits, .group_size = old.group_size, .w = mlx.mlx_array_new() };
++                    count += 1;
++                    try mlx.check(mlx.mlx_array_set(&next[k].w, old.w));
++                    if (old.quantized) {
++                        try mlx.check(mlx.mlx_array_set(&next[k].scales, old.scales));
++                        try mlx.check(mlx.mlx_array_set(&next[k].biases, old.biases));
++                    }
++                    try next[k].toW8a8(self.s);
++                }
++                if (!enabled) count += 1;
++            }
++            var qkv = try w8a8.fuse(&.{ &next[0].w8, &next[1].w8, &next[2].w8 }, .stack, self.s);
++            errdefer if (qkv) |*q| q.deinit();
++            const gp = try w8a8.fuse(&.{ &next[4].w8, &next[5].w8 }, .interleave, self.s);
++            if (b.qkv) |*q| q.deinit();
++            if (b.gp) |*q| q.deinit();
++            b.qkv = qkv;
++            b.gp = gp;
++            for (linears, next) |old, new| {
++                old.deinit();
++                old.* = new;
++            }
++            b.packed_mode = enabled;
++            if (originals) |*ws| ws.dropBlock("transformer_blocks.{d}.", i);
++        }
++        log.info("[qwen-image] switched resident W8A8 layout: {}\n", .{enabled});
++    }
++
++    pub fn releaseEditEncoders(self: *Engine) void {
++        if (self.tower) |*v| v.deinit();
++        self.tower = null;
++        if (self.te) |*t| t.deinit();
++        self.te = null;
++        _ = mlx.mlx_clear_cache();
++    }
++
++    pub fn clearEditCache(self: *Engine) void {
++        if (self.edit_cache) |*entry| entry.deinit(self.allocator);
++        self.edit_cache = null;
++    }
++
+     pub fn deinit(self: *Engine) void {
++        self.clearEditCache();
+         if (self.te) |*t| t.deinit();
++        if (self.tower) |*v| v.deinit();
+         if (self.vae_enc) |*e| e.deinit();
+         self.vae.deinit();
+         self.dit.deinit();
+@@ -2143,8 +2884,10 @@ pub const Engine = struct {
+             ids[i] = @intCast(enc[i]);
+             mask[i] = 1;
+         }
+-        const te = if (self.te) |*t| t else return error.TextEncoderNotLoaded;
+-        const hidden = try te.encode(ids, mask);
++        const hidden = if (request_streaming) try TextEncoder.encodeStream(self.io, self.allocator, self.s, self.model_dir, ids, mask, request_prefetch) else blk: {
++            const te = if (self.te) |*t| t else return error.TextEncoderNotLoaded;
++            break :blk try te.encode(ids, mask);
++        };
+         defer free(hidden);
+         const out = try sliceAxis(hidden, 1, @intCast(@min(self.drop_tokens, n)), @intCast(n), self.s);
+         errdefer free(out);
+@@ -2155,8 +2898,8 @@ pub const Engine = struct {
+     const Cond = struct { pos: A, neg: ?A };
+ 
+     fn encodeConditioning(self: *Engine, allocator: std.mem.Allocator, prompt: []const u8, opts: GenOpts) !Cond {
+-        if (self.te == null) self.te = try TextEncoder.load(self.io, self.allocator, self.s, self.model_dir, COMPUTE);
+-        defer if (self.staged) {
++        if (!request_streaming and self.te == null) self.te = try TextEncoder.load(self.io, self.allocator, self.s, self.model_dir, COMPUTE);
++        defer if (self.staged and self.te != null) {
+             self.te.?.deinit();
+             self.te = null;
+             _ = mlx.mlx_clear_cache();
+@@ -2167,6 +2910,123 @@ pub const Engine = struct {
+         return .{ .pos = pos, .neg = neg };
+     }
+ 
++    fn encodeEditReferences(self: *Engine, key: EditCacheKey, image_bytes: []const []const u8, resolution: u32, te: *?TextEncoder) !EditInputs {
++        const a = self.allocator;
++        const s = self.s;
++        const z: c_int = @intCast(self.dit_cfg.in_ch);
++        // 1. Per reference: decode, resize at its own aspect, patchify for the
++        //    tower, VAE-encode the clean latent. The patch grid and the latent
++        //    grid are the same pixels/16 (one DiT token per 16px tile).
++        if (self.vae_enc == null) self.vae_enc = try VaeEncoder.load(self.io, self.allocator, s, self.model_dir, self.vae_cfg);
++        var pv_chunks: std.ArrayList(A) = .empty;
++        defer {
++            for (pv_chunks.items) |p| free(p);
++            pv_chunks.deinit(a);
++        }
++        var ref_lats: std.ArrayList(A) = .empty;
++        defer {
++            for (ref_lats.items) |l| free(l);
++            ref_lats.deinit(a);
++        }
++        var grids: std.ArrayList([3]i64) = .empty;
++        defer grids.deinit(a);
++        var slots: std.ArrayList(usize) = .empty;
++        defer slots.deinit(a);
++        // Capacity up front: the per-ref appends are assume-capacity, so a
++        // failed ref leaks nothing it already handed to the lists.
++        try pv_chunks.ensureTotalCapacity(a, image_bytes.len);
++        try ref_lats.ensureTotalCapacity(a, image_bytes.len);
++        try grids.ensureTotalCapacity(a, image_bytes.len);
++        try slots.ensureTotalCapacity(a, image_bytes.len);
++
++        for (image_bytes) |bytes| {
++            var sw: c_int = 0;
++            var sh: c_int = 0;
++            var ch: c_int = 0;
++            if (stb.stbi_info_from_memory(bytes.ptr, @intCast(bytes.len), &sw, &sh, &ch) == 0) return error.ImageDecodeFailed;
++            const tgt = refResizeDimsAt(@intCast(sw), @intCast(sh), resolution);
++            var e = try qwen_image_edit.prepareEditImage(a, s, bytes, tgt.w, tgt.h);
++            defer e.deinit();
++            const gh: u32 = tgt.h / VAE_DOWNSAMPLE;
++            const gw: u32 = tgt.w / VAE_DOWNSAMPLE;
++            const pv = try qwen_image_edit.vlmPixelValues(a, s, e.rgb, gh, gw);
++            errdefer free(pv);
++            const lat_mean = try self.vae_enc.?.encodeRgba(e.vae_in); // [1, z, gh, gw]
++            defer free(lat_mean);
++            // Pack [1, tokens, z] like `noisedSource`; refs stay CLEAN (constant
++            // across steps — never noised, never re-encoded).
++            const nhwc = try transpose(lat_mean, &[_]c_int{ 0, 2, 3, 1 }, s);
++            defer free(nhwc);
++            const packed_z = try reshape(nhwc, &[_]c_int{ 1, @intCast(gh * gw), z }, s);
++            defer free(packed_z);
++            const lat = try astype(packed_z, COMPUTE, s);
++            pv_chunks.appendAssumeCapacity(pv);
++            ref_lats.appendAssumeCapacity(lat);
++            grids.appendAssumeCapacity(.{ 1, @intCast(gh), @intCast(gw) });
++            slots.appendAssumeCapacity(@as(usize, gh) * gw / 4);
++        }
++        const pixel_values = try concat(pv_chunks.items, 0, s);
++        defer free(pixel_values);
++        const ref_latents = try concat(ref_lats.items, 1, s); // [1, ref_tokens, z]
++        errdefer free(ref_latents);
++        try mlx.check(mlx.mlx_array_eval(ref_latents));
++
++        if (self.tower == null) self.tower = if (request_streaming) try qwen_image_edit.loadTowerStream(self.io, a, s, self.model_dir, COMPUTE) else if (te.* != null) try qwen_image_edit.loadTower(self.io, a, s, self.model_dir, COMPUTE) else blk: {
++            const joint = try qwen_image_edit.loadTeWithTower(self.io, a, s, self.model_dir, COMPUTE);
++            te.* = joint.te;
++            break :blk joint.vit;
++        };
++        defer if (self.staged) {
++            self.tower.?.deinit();
++            self.tower = null;
++        };
++        var vision = try qwen_image_edit.VisionFeatures.init(&self.tower.?, pixel_values, grids.items);
++        errdefer vision.deinit();
++        const grid_slice = try grids.toOwnedSlice(a);
++        errdefer a.free(grid_slice);
++        return .{ .key = key, .latents = ref_latents, .vision = vision, .grids = grid_slice, .slots = try slots.toOwnedSlice(a) };
++    }
++
++    fn takeEditInputs(self: *Engine, images: []const []const u8, resolution: u32, prompt: []const u8, negative: ?[]const u8) !EditInputs {
++        const a = self.allocator;
++        const key = referenceKey(images, resolution);
++        const ref_hit = if (self.edit_cache) |entry| std.mem.eql(u8, &entry.key, &key) else false;
++        if (!ref_hit) self.clearEditCache();
++        // On non-staged machines return the encoder to the engine, independently of request caches.
++        var te = self.te;
++        self.te = null;
++        defer {
++            if (self.staged) {
++                if (te) |*t| t.deinit();
++                _ = mlx.mlx_clear_cache();
++            } else self.te = te;
++        }
++        var inputs = if (self.edit_cache) |entry| entry else try self.encodeEditReferences(key, images, resolution, &te);
++        self.edit_cache = null;
++        errdefer inputs.deinit(a);
++        const ck = conditionKey(prompt, negative);
++        const text_hit = if (inputs.branches) |branch| std.mem.eql(u8, &branch.key, &ck) else false;
++        log.info("[qwen-image] edit inputs: reference_cache={s} conditioning_cache={s}\n", .{
++            if (ref_hit) "hit" else "miss", if (text_hit) "hit" else "miss",
++        });
++        if (!text_hit) {
++            if (inputs.branches) |*branch| branch.deinit(a);
++            inputs.branches = null;
++            if (!request_streaming and te == null) te = try TextEncoder.load(self.io, a, self.s, self.model_dir, COMPUTE);
++            const vision = &inputs.vision.?;
++            var pos = try self.encodeTi2iPrompt(a, if (te) |*t| t else null, vision, prompt, inputs.slots, inputs.grids);
++            errdefer pos.deinit(a);
++            const neg = if (negative) |text| try self.encodeTi2iPrompt(a, if (te) |*t| t else null, vision, text, inputs.slots, inputs.grids) else null;
++            inputs.branches = .{ .key = ck, .pos = pos, .neg = neg };
++        }
++        if (inputs.bytes() > EditInputs.cache_limit) {
++            // This request still runs normally; release its oversized tower outputs before denoise.
++            inputs.vision.?.deinit();
++            inputs.vision = null;
++        }
++        return inputs;
++    }
++
+     /// One ti2i conditioning arm: template (the negative renders through it
+     /// too, only the text differs) → tokenize (text-capped like t2i) →
+     /// placeholder expansion → the joint VLM encode. Mask all-ones: one
+@@ -2174,11 +3034,10 @@ pub const Engine = struct {
+     fn encodeTi2iPrompt(
+         self: *Engine,
+         allocator: std.mem.Allocator,
+-        te: *TextEncoder,
+-        vit: *const VisionTower,
++        te: ?*TextEncoder,
++        vision: *const qwen_image_edit.VisionFeatures,
+         prompt: []const u8,
+         slots_per_image: []const usize,
+-        pixel_values: A,
+         grids: []const [3]i64,
+     ) !qwen_image_edit.EditCond {
+         const a = allocator;
+@@ -2195,13 +3054,15 @@ pub const Engine = struct {
+         const mask = try a.alloc(i32, expanded.len);
+         defer a.free(mask);
+         @memset(mask, 1);
+-        return qwen_image_edit.encodeTi2i(a, self.s, te, vit, expanded, mask, pixel_values, grids, self.drop_tokens);
++        if (request_streaming) return qwen_image_edit.encodeTi2iStreamFeatures(self.io, a, self.s, self.model_dir, request_prefetch, vision, expanded, mask, grids, self.drop_tokens);
++        return qwen_image_edit.encodeTi2iFeatures(a, self.s, te.?, vision, expanded, mask, grids, self.drop_tokens);
+     }
+ 
+     /// Returns the image [1,3,H,W] f32 in [0,1] (owned; caller frees).
+     pub fn generateImage(self: *Engine, allocator: std.mem.Allocator, prompt: []const u8, width: u32, height: u32, seed: u64, steps: u32, opts: GenOpts, progress: ?sse.Progress) !A {
+         const s = self.s;
+-        const n_steps = self.stepsFor(steps);
++        const noise_levels: ?[]const f32 = opts.sample_sigmas orelse self.sample_sigmas;
++        const n_steps = resolveSteps(noise_levels, steps);
+         const lat_h: usize = height / VAE_DOWNSAMPLE;
+         const lat_w: usize = width / VAE_DOWNSAMPLE;
+         const n_img: c_int = @intCast(lat_h * lat_w);
+@@ -2224,7 +3085,7 @@ pub const Engine = struct {
+         var neg_geo: ?Geometry = if (cond.neg) |n| try Geometry.init(allocator, self.dit_cfg, @intCast(mlx.getShape(n)[1]), lat_h, lat_w) else null;
+         defer if (neg_geo) |*g| g.deinit();
+ 
+-        const sigmas = try scheduleSigmas(allocator, self.sample_sigmas, n_steps, @intCast(n_img));
++        const sigmas = try scheduleSigmas(allocator, noise_levels, n_steps, @intCast(n_img));
+         defer allocator.free(sigmas);
+         const start: u32 = if (opts.init_image != null) @min(opts.start_step, n_steps - 1) else 0;
+ 
+@@ -2249,9 +3110,9 @@ pub const Engine = struct {
+         {
+             // Request-local lifetime also covers cancellation and failed forwards.
+             const use_prefix_cache = run > 1;
+-            var pos_cache: ?PrefixCache = if (use_prefix_cache) try PrefixCache.init(allocator, self.dit.blocks.len, &geo, s) else null;
++            var pos_cache: ?PrefixCache = if (use_prefix_cache) try PrefixCache.init(allocator, self.dit_cfg.layers, &geo, s) else null;
+             defer if (pos_cache) |*c| c.deinit();
+-            var neg_cache: ?PrefixCache = if (use_prefix_cache and neg_geo != null) try PrefixCache.init(allocator, self.dit.blocks.len, &neg_geo.?, s) else null;
++            var neg_cache: ?PrefixCache = if (use_prefix_cache and neg_geo != null) try PrefixCache.init(allocator, self.dit_cfg.layers, &neg_geo.?, s) else null;
+             defer if (neg_cache) |*c| c.deinit();
+             for (start..n_steps) |i| {
+                 if (progress) |p| if (p.boundary()) return error.Cancelled;
+@@ -2280,7 +3141,7 @@ pub const Engine = struct {
+         defer free(grid);
+         const latent = try transpose(grid, &[_]c_int{ 0, 3, 1, 2 }, s);
+         defer free(latent);
+-        const decoded = if (opts.transparent) try self.vae.decodeRgba(latent) else try self.vae.decode(latent);
++        const decoded = try self.decodeChecked(latent, opts.transparent);
+         defer free(decoded);
+         try mlx.check(mlx.mlx_array_eval(decoded));
+         log.info("[qwen-image] stages: prompt {d} ms, denoise {d} ms ({d} steps), vae decode {d} ms\n", .{ prompt_ms, denoise_ms, run, stageMs(self.io, &stage_t0) });
+@@ -2288,6 +3149,36 @@ pub const Engine = struct {
+         return denormImage(decoded, s);
+     }
+ 
++    // Validate the requested output channels before denormalization/clamping can hide NaNs.
++    fn decodeChecked(self: *Engine, latent: A, transparent: bool) !A {
++        if (request_streaming and micro_memory) {
++            var decoded = try VaeDecoder.decodeStream(self.io, self.allocator, self.s, self.model_dir, self.vae_cfg, latent, .float16);
++            if (!try allPixelsFinite(decoded, self.s)) {
++                free(decoded);
++                decoded = try VaeDecoder.decodeStream(self.io, self.allocator, self.s, self.model_dir, self.vae_cfg, latent, .float32);
++            }
++            errdefer free(decoded);
++            if (!try allPixelsFinite(decoded, self.s)) return error.NonFiniteVaeOutput;
++            if (transparent) return decoded;
++            defer free(decoded);
++            return sliceAxis(decoded, 1, 0, 3, self.s);
++        }
++
++        {
++            const fast = if (transparent) try self.vae.decodeRgba(latent) else try self.vae.decode(latent);
++            errdefer free(fast);
++            if (try allPixelsFinite(fast, self.s)) return fast;
++            free(fast);
++        }
++        log.info("[qwen-image] non-finite FP16 VAE output; retrying FP32 decode on the same latent\n", .{});
++        var decoder = try VaeDecoder.loadWithDtype(self.io, self.allocator, self.s, self.model_dir, self.vae_cfg, .float32);
++        defer decoder.deinit();
++        const wide = if (transparent) try decoder.decodeRgba(latent) else try decoder.decode(latent);
++        errdefer free(wide);
++        if (!try allPixelsFinite(wide, self.s)) return error.NonFiniteVaeOutput;
++        return wide;
++    }
++
+     /// img2img start latent: (1 − σ)·encode(source) + σ·noise, packed [1, N, z].
+     fn noisedSource(self: *Engine, pixels: A, noise: A, sigma: f32) !A {
+         const s = self.s;
+@@ -2326,7 +3217,8 @@ pub const Engine = struct {
+         if (image_bytes.len == 0) return error.NoReferenceImages;
+         const a = allocator;
+         const s = self.s;
+-        const n_steps = self.stepsFor(steps);
++        const noise_levels: ?[]const f32 = opts.sample_sigmas orelse self.sample_sigmas;
++        const n_steps = resolveSteps(noise_levels, steps);
+         const lat_h: usize = out_h / VAE_DOWNSAMPLE;
+         const lat_w: usize = out_w / VAE_DOWNSAMPLE;
+         const target_tokens: usize = lat_h * lat_w;
+@@ -2339,96 +3231,15 @@ pub const Engine = struct {
+         });
+         if (progress) |p| p.emit("Encoding prompt", 0, n_steps);
+ 
+-        // 1. Per reference: decode, resize at its own aspect, patchify for the
+-        //    tower, VAE-encode the clean latent. The patch grid and the latent
+-        //    grid are the same pixels/16 (one DiT token per 16px tile).
+-        if (self.vae_enc == null) self.vae_enc = try VaeEncoder.load(self.io, self.allocator, s, self.model_dir, self.vae_cfg);
+-        var pv_chunks: std.ArrayList(A) = .empty;
+-        defer {
+-            for (pv_chunks.items) |p| free(p);
+-            pv_chunks.deinit(a);
+-        }
+-        var ref_lats: std.ArrayList(A) = .empty;
+-        defer {
+-            for (ref_lats.items) |l| free(l);
+-            ref_lats.deinit(a);
+-        }
+-        var grids: std.ArrayList([3]i64) = .empty;
+-        defer grids.deinit(a);
++        var inputs = try self.takeEditInputs(image_bytes, opts.ref_resolution, prompt, if (opts.guidance_scale != 1) opts.negative_prompt else null);
++        errdefer inputs.deinit(self.allocator);
++        const cond = inputs.branches.?.pos;
++        const neg_cond = inputs.branches.?.neg;
++        const ref_latents = inputs.latents;
+         var shapes: std.ArrayList([3]u32) = .empty;
+         defer shapes.deinit(a);
+-        var slots: std.ArrayList(usize) = .empty;
+-        defer slots.deinit(a);
+-        // Capacity up front: the per-ref appends are assume-capacity, so a
+-        // failed ref leaks nothing it already handed to the lists.
+-        try pv_chunks.ensureTotalCapacity(a, image_bytes.len);
+-        try ref_lats.ensureTotalCapacity(a, image_bytes.len);
+-        try grids.ensureTotalCapacity(a, image_bytes.len);
+-        try shapes.ensureTotalCapacity(a, image_bytes.len);
+-        try slots.ensureTotalCapacity(a, image_bytes.len);
+-
+-        for (image_bytes) |bytes| {
+-            var sw: c_int = 0;
+-            var sh: c_int = 0;
+-            var ch: c_int = 0;
+-            if (stb.stbi_info_from_memory(bytes.ptr, @intCast(bytes.len), &sw, &sh, &ch) == 0) return error.ImageDecodeFailed;
+-            const tgt = refResizeDimsAt(@intCast(sw), @intCast(sh), opts.ref_resolution);
+-            var e_owned = true;
+-            var e = try qwen_image_edit.prepareEditImage(a, s, bytes, tgt.w, tgt.h);
+-            errdefer if (e_owned) e.deinit();
+-            const gh: u32 = tgt.h / VAE_DOWNSAMPLE;
+-            const gw: u32 = tgt.w / VAE_DOWNSAMPLE;
+-            const pv = try qwen_image_edit.vlmPixelValues(a, s, e.rgb, gh, gw);
+-            errdefer free(pv);
+-            const lat_mean = try self.vae_enc.?.encodeRgba(e.vae_in); // [1, z, gh, gw]
+-            e.deinit();
+-            e_owned = false;
+-            // Pack [1, tokens, z] like `noisedSource`; refs stay CLEAN (constant
+-            // across steps — never noised, never re-encoded).
+-            const nhwc = try transpose(lat_mean, &[_]c_int{ 0, 2, 3, 1 }, s);
+-            free(lat_mean);
+-            const packed_z = try reshape(nhwc, &[_]c_int{ 1, @intCast(gh * gw), z }, s);
+-            free(nhwc);
+-            const lat = try astype(packed_z, COMPUTE, s);
+-            free(packed_z);
+-            pv_chunks.appendAssumeCapacity(pv);
+-            ref_lats.appendAssumeCapacity(lat);
+-            grids.appendAssumeCapacity(.{ 1, @intCast(gh), @intCast(gw) });
+-            shapes.appendAssumeCapacity(.{ 1, @intCast(gh), @intCast(gw) });
+-            slots.appendAssumeCapacity(@as(usize, gh) * gw / 4);
+-        }
+-        const pixel_values = try concat(pv_chunks.items, 0, s);
+-        defer free(pixel_values);
+-        const ref_latents = try concat(ref_lats.items, 1, s); // [1, ref_tokens, z]
+-        defer free(ref_latents);
+-
+-        // 2. Conditioning (positive, + negative when guiding — a blank negative
+-        //    still encodes, t2i's convention): TE and tower load as ONE
+-        //    per-request unit and free before the denoise. A resident
+-        //    text-only TE frees first — exactly one LM is ever live, staged
+-        //    or not (the next t2i request reloads it lazily).
+-        if (self.te) |*te| {
+-            te.deinit();
+-            self.te = null;
+-            _ = mlx.mlx_clear_cache();
+-        }
+-        var vlm = try qwen_image_edit.loadTeWithTower(self.io, self.allocator, s, self.model_dir, COMPUTE);
+-        var vlm_freed = false;
+-        defer if (!vlm_freed) {
+-            vlm.te.deinit();
+-            vlm.vit.deinit();
+-        };
+-        var cond = try self.encodeTi2iPrompt(a, &vlm.te, &vlm.vit, prompt, slots.items, pixel_values, grids.items);
+-        defer cond.deinit(a);
+-        var neg_cond: ?qwen_image_edit.EditCond = if (opts.guidance_scale != 1.0)
+-            try self.encodeTi2iPrompt(a, &vlm.te, &vlm.vit, opts.negative_prompt, slots.items, pixel_values, grids.items)
+-        else
+-            null;
+-        defer if (neg_cond) |*nc| nc.deinit(a);
+-        vlm.te.deinit();
+-        vlm.vit.deinit();
+-        vlm_freed = true;
+-        _ = mlx.mlx_clear_cache();
++        try shapes.ensureTotalCapacity(a, inputs.grids.len + 1);
++        for (inputs.grids) |grid| shapes.appendAssumeCapacity(.{ 1, @intCast(grid[1]), @intCast(grid[2]) });
+         logMemory("edit conditioning");
+ 
+         // 3. Target noise — the t2i seed semantics on the target's token grid.
+@@ -2466,16 +3277,16 @@ pub const Engine = struct {
+ 
+         // 5. The mu/shift input counts TARGET tokens only (the reference
+         //    pipeline feeds the target latents' length, never the joint's).
+-        const sigmas = try scheduleSigmas(a, self.sample_sigmas, n_steps, @intCast(target_tokens));
++        const sigmas = try scheduleSigmas(a, noise_levels, n_steps, @intCast(target_tokens));
+         defer a.free(sigmas);
+ 
+         // 6. Euler denoise: the packed stream is [refs (constant clean) |
+         //    target]; only the target rows step.
+         {
+             const use_cache = n_steps > 1 and opts.prefix_cache;
+-            var cache: ?PrefixCache = if (use_cache) try PrefixCache.initEdit(a, self.dit.blocks.len, &geo, s) else null;
++            var cache: ?PrefixCache = if (use_cache) try PrefixCache.initEdit(a, self.dit_cfg.layers, &geo, s) else null;
+             defer if (cache) |*c| c.deinit();
+-            var neg_cache: ?PrefixCache = if (use_cache and neg_geo != null) try PrefixCache.initEdit(a, self.dit.blocks.len, &neg_geo.?, s) else null;
++            var neg_cache: ?PrefixCache = if (use_cache and neg_geo != null) try PrefixCache.initEdit(a, self.dit_cfg.layers, &neg_geo.?, s) else null;
+             defer if (neg_cache) |*c| c.deinit();
+             log.info("[qwen-image] edit prefix cache enabled={} target={d} prefix={d} negative_prefix={d}\n", .{
+                 use_cache, geo.target_tokens, geo.target_start, if (neg_geo) |ng| ng.target_start else @as(c_int, 0),
+@@ -2512,11 +3323,13 @@ pub const Engine = struct {
+         defer free(grid);
+         const latent = try transpose(grid, &[_]c_int{ 0, 3, 1, 2 }, s);
+         defer free(latent);
+-        const decoded = if (opts.transparent) try self.vae.decodeRgba(latent) else try self.vae.decode(latent);
++        const decoded = try self.decodeChecked(latent, opts.transparent);
+         defer free(decoded);
+         try mlx.check(mlx.mlx_array_eval(decoded));
+         logMemory("vae decode");
+-        return denormImage(decoded, s);
++        const result = try denormImage(decoded, s);
++        if (inputs.vision != null) self.edit_cache = inputs else inputs.deinit(self.allocator);
++        return result;
+     }
+ };
+ 
+@@ -2570,10 +3383,22 @@ fn cfgBlend(cond: A, uncond: A, scale: f32, s: S) !A {
+ }
+ 
+ /// One Euler step x + v·dt, dt in v's dtype.
+-fn eulerStep(x: A, v: A, dt: f32, s: S) !A {
++pub fn eulerStep(x: A, v: A, dt: f32, s: S) !A {
+     return graph_call(s, flow_match.eulerStep, .{ x, v, dt, mlx.mlx_array_dtype(v) });
+ }
+ 
++pub fn allPixelsFinite(pixels: A, s: S) !bool {
++    var mask = mlx.mlx_array_new();
++    defer free(mask);
++    try mlx.check(mlx.mlx_isfinite(&mask, pixels, s));
++    var all = mlx.mlx_array_new();
++    defer free(all);
++    try mlx.check(mlx.mlx_all(&all, mask, false, s));
++    var finite: bool = false;
++    try mlx.check(mlx.mlx_array_item_bool(&finite, all));
++    return finite;
++}
++
+ /// [-1,1] → clip(x·0.5 + 0.5, 0, 1).
+ fn denormImage(decoded: A, s: S) !A {
+     const half = try mulScalar(decoded, 0.5, s);
+@@ -2620,6 +3445,21 @@ test "QwenImage sigmas match the reference schedule" {
+ 
+ const TURBO_SIGMAS = [_]f32{ 1.0, 0.978453, 0.95418, 0.926626, 0.89508, 0.845148, 0.704534, 0.414568 };
+ 
++test "QwenImage request sigmas are local, bounded, and agree with the requested step count" {
++    var buf: [100]f32 = undefined;
++    try testing.expect((try requestSigmas(null, 4, &buf)) == null);
++    var parsed = try std.json.parseFromSlice(std.json.Value, testing.allocator, "[1,0.75,0.5,0.25]", .{});
++    defer parsed.deinit();
++    const points = (try requestSigmas(parsed.value, 4, &buf)).?;
++    try testing.expectEqualSlices(f32, &.{ 1, 0.75, 0.5, 0.25 }, points);
++    try testing.expectError(error.BadSampleSigmas, requestSigmas(parsed.value, 8, &buf));
++    for ([_][]const u8{ "null", "[]", "[1,0]", "[1,0.5,0.6]", "[1,0.5,0.5]", "[1.2]", "[true]" }) |invalid| {
++        var bad_grid = try std.json.parseFromSlice(std.json.Value, testing.allocator, invalid, .{});
++        defer bad_grid.deinit();
++        try testing.expectError(error.BadSampleSigmas, requestSigmas(bad_grid.value, 0, &buf));
++    }
++}
++
+ test "QwenImage a checkpoint's sample_sigmas grid sets the steps and the schedule" {
+     try testing.expectEqual(@as(u32, 8), resolveSteps(&TURBO_SIGMAS, 0));
+     try testing.expectEqual(@as(u32, 8), resolveSteps(&TURBO_SIGMAS, 40));
+@@ -2714,7 +3554,7 @@ test "QwenImage VAE convs load the same from OIHW and OHWI packs" {
+             var bias = mlx.mlx_array_new();
+             try mlx.check(mlx.mlx_zeros(&bias, &[_]c_int{ohwi[0]}, 1, .float32, s));
+             try w.map.put(try a.dupe(u8, "c.bias"), bias);
+-            var conv = try Conv.load(&w, a, s, "c", .{});
++            var conv = try Conv.load(&.{ .weights = &w, .dtype = vae_dt }, a, s, "c", .{});
+             defer conv.deinit();
+             try testing.expectEqualSlices(c_int, &ohwi, mlx.getShape(conv.w));
+             const want_vae = try astype(want, vae_dt, s); // the VAE stores its weights in f16
+@@ -3844,3 +4684,18 @@ test "QwenImage flattened DiT keys load (env-gated)" {
+     defer engine.deinit();
+     try testing.expect(engine.supportsEdit());
+ }
++
++test "reference cache respects reference order, content, boundaries and resolution" {
++    const a = referenceKey(&.{ "ab", "c" }, 1024);
++    try std.testing.expectEqual(a, referenceKey(&.{ "ab", "c" }, 1024));
++    try std.testing.expect(!std.meta.eql(a, referenceKey(&.{ "a", "bc" }, 1024)));
++    try std.testing.expect(!std.meta.eql(a, referenceKey(&.{ "c", "ab" }, 1024)));
++    try std.testing.expect(!std.meta.eql(a, referenceKey(&.{ "ab", "d" }, 1024)));
++    try std.testing.expect(!std.meta.eql(a, referenceKey(&.{ "ab", "c" }, 512)));
++}
++test "conditioning cache respects prompt and effective CFG branch, including empty negative" {
++    try std.testing.expectEqual(conditionKey("a", null), conditionKey("a", null));
++    try std.testing.expect(!std.meta.eql(conditionKey("a", null), conditionKey("b", null)));
++    try std.testing.expect(!std.meta.eql(conditionKey("a", null), conditionKey("a", "")));
++    try std.testing.expect(!std.meta.eql(conditionKey("ab", "c"), conditionKey("a", "bc")));
++}
+diff --git a/src/qwen_stream_probe.zig b/src/qwen_stream_probe.zig
+new file mode 100644
+index 0000000..fb30596
+--- /dev/null
++++ b/src/qwen_stream_probe.zig
+@@ -0,0 +1,231 @@
++//! Standalone staged Qwen Turbo inference; never connects to the installed app.
++const std = @import("std");
++const mlx = @import("mlx/ffi.zig");
++const q = @import("plugins/qwen_image/qwen_image.zig");
++const mage = @import("plugins/mage_flow/mage_flow.zig");
++const weights = @import("sdk/weights/load.zig");
++const tokenizer = @import("sdk/tokenizer/load.zig");
++const w8 = @import("sdk/blocks/dit/w8a8.zig");
++const A = mlx.mlx_array;
++const a = std.heap.c_allocator;
++extern "c" fn proc_pid_rusage(pid: c_int, flavor: c_int, buffer: *anyopaque) c_int;
++extern "c" fn getpid() c_int;
++fn free(x: A) void {
++    _ = mlx.mlx_array_free(x);
++}
++fn save(path: [:0]const u8, x: A) !void {
++    try mlx.check(mlx.mlx_array_eval(x));
++    const map = mlx.mlx_map_string_to_array_new();
++    defer _ = mlx.mlx_map_string_to_array_free(map);
++    const meta = mlx.mlx_map_string_to_string_new();
++    defer _ = mlx.mlx_map_string_to_string_free(meta);
++    try mlx.check(mlx.mlx_map_string_to_array_insert(map, "value", x));
++    try mlx.check(mlx.mlx_save_safetensors(path, map, meta));
++}
++pub fn main(init: std.process.Init) !void {
++    var it = try std.process.Args.Iterator.initAllocator(init.minimal.args, a);
++    defer it.deinit();
++    _ = it.next();
++    const stage = it.next() orelse return error.StageRequired;
++    const model = it.next() orelse return error.ModelRequired;
++    const input = it.next() orelse return error.InputRequired;
++    const output = it.next() orelse return error.OutputRequired;
++    var dimensions = std.mem.splitScalar(u8, it.next() orelse "512", 'x');
++    const width = try std.fmt.parseInt(u32, dimensions.next().?, 10);
++    const height = if (dimensions.next()) |v| try std.fmt.parseInt(u32, v, 10) else width;
++    if (dimensions.next() != null) return error.InvalidSize;
++    const mode = it.next() orelse "resident";
++    const w8mode = it.next() orelse "packed";
++    const cache_arg = it.next();
++    const cache_dir = if (cache_arg) |v| (if (std.mem.eql(u8, v, "-")) null else v) else null;
++    const seed = try std.fmt.parseInt(u64, it.next() orelse "42", 10);
++    const band_mb = try std.fmt.parseInt(u64, it.next() orelse "32", 10);
++    if (band_mb < 1 or band_mb > 256) return error.InvalidBandBudget;
++    q.micro_ffn_rows = try std.fmt.parseInt(c_int, it.next() orelse "256", 10);
++    q.micro_vae_rows = try std.fmt.parseInt(c_int, it.next() orelse "8", 10);
++    if (q.micro_ffn_rows < 64 or q.micro_ffn_rows > 4096 or q.micro_vae_rows < 8 or q.micro_vae_rows > 128) return error.InvalidMicroTile;
++    const micro_band_mb = try std.fmt.parseInt(u64, it.next() orelse "4", 10);
++    const micro_conv_mb = try std.fmt.parseInt(u64, it.next() orelse "64", 10);
++    if (micro_band_mb < 1 or micro_band_mb > 64 or micro_conv_mb < 16 or micro_conv_mb > 256) return error.InvalidMicroBudget;
++    q.micro_prefetch = (try std.fmt.parseInt(u8, it.next() orelse "0", 10)) != 0;
++    q.micro_mmap = (try std.fmt.parseInt(u8, it.next() orelse "0", 10)) != 0;
++    const micro_cache_mb = try std.fmt.parseInt(usize, it.next() orelse "8", 10);
++    if (micro_cache_mb > 128) return error.InvalidMicroCache;
++    q.micro_reuse_cache = micro_cache_mb > 8;
++    q.micro_ffn_async = (try std.fmt.parseInt(u8, it.next() orelse "0", 10)) != 0;
++    q.micro_mapped_copy = (try std.fmt.parseInt(u8, it.next() orelse "0", 10)) != 0;
++    q.micro_native_blocks = (try std.fmt.parseInt(u8, it.next() orelse "0", 10)) != 0;
++    const micro_memory_mb = try std.fmt.parseInt(usize, it.next() orelse "0", 10);
++    if (micro_memory_mb > 1024) return error.InvalidMemoryLimit;
++    const lowmem = !std.mem.eql(u8, mode, "resident");
++    const stream = lowmem and !std.mem.eql(u8, mode, "resident-cache");
++    const micro = std.mem.eql(u8, mode, "micro");
++    const prefetch = std.mem.eql(u8, mode, "prefetch");
++    for ([_]u32{ width, height }) |dimension| if (dimension < 32 or dimension % 32 != 0 or dimension > 4096) return error.InvalidSize;
++    const s = mlx.mlx_default_gpu_stream_new();
++    defer _ = mlx.mlx_stream_free(s);
++    if (std.mem.eql(u8, w8mode, "w8a8")) {
++        if (!w8.nax()) return error.W8a8RequiresNax;
++        w8.w8a8State().enabled = true;
++    }
++    var prev: usize = 0;
++    if (lowmem) q.band_budget_bytes = band_mb << 20;
++    q.micro_memory = micro;
++    if (micro) {
++        q.band_budget_bytes = micro_band_mb << 20;
++        q.conv_unfold_budget_bytes = micro_conv_mb << 20;
++    }
++    if (lowmem) try mlx.check(mlx.mlx_set_cache_limit(&prev, if (micro) micro_cache_mb << 20 else 64 << 20));
++    if (micro and micro_memory_mb > 0) try mlx.check(mlx.mlx_set_memory_limit(&prev, micro_memory_mb << 20));
++    const started = std.Io.Timestamp.now(init.io, .awake);
++    if (std.mem.eql(u8, stage, "request")) {
++        try @import("qwen_stream_request.zig").run(init.io, s, model, cache_dir, stream, prefetch or q.micro_prefetch);
++    } else if (std.mem.eql(u8, stage, "prepare")) {
++        try q.Dit.prepareCache(init.io, a, s, model, output);
++    } else if (std.mem.eql(u8, stage, "text")) {
++        const prompt = try std.Io.Dir.cwd().readFileAlloc(init.io, input, a, .limited(1 << 20));
++        defer a.free(prompt);
++        const dir = try std.fmt.allocPrint(a, "{s}/processor", .{model});
++        defer a.free(dir);
++        var tok = try tokenizer.loadTokenizerAny(init.io, a, dir);
++        defer tok.deinit();
++        const text = try std.fmt.allocPrint(a, q.SYSTEM_PREFIX ++ q.USER_PREFIX ++ "{s}" ++ q.PROMPT_SUFFIX, .{prompt});
++        defer a.free(text);
++        const tokens = try tok.encode(a, text);
++        defer a.free(tokens);
++        const prefix = try tok.encode(a, q.SYSTEM_PREFIX);
++        defer a.free(prefix);
++        const n = @min(tokens.len, q.MAX_PROMPT_TOKENS);
++        const ids = try a.alloc(i32, n);
++        defer a.free(ids);
++        const mask = try a.alloc(i32, n);
++        defer a.free(mask);
++        for (tokens[0..n], ids, mask) |t, *id, *m| {
++            id.* = @intCast(t);
++            m.* = 1;
++        }
++        const hidden = if (stream) try mage.TextEncoder.encodeStream(init.io, a, s, model, ids, mask, prefetch) else blk: {
++            var te = try mage.TextEncoder.load(init.io, a, s, model, .bfloat16);
++            defer te.deinit();
++            const x = try te.encode(ids, mask);
++            try mlx.check(mlx.mlx_array_eval(x));
++            break :blk x;
++        };
++        defer free(hidden);
++        const cond = try q.sliceAxis(hidden, 1, @intCast(@min(prefix.len, n)), @intCast(n), s);
++        defer free(cond);
++        try save(output, cond);
++    } else if (std.mem.eql(u8, stage, "dit")) {
++        var in = try weights.loadWeightsSingleFile(a, input);
++        defer in.deinit();
++        const text = in.get("value") orelse return error.MissingInput;
++        const cfg = try q.DitConfig.parse(init.io, a, model);
++        var dit = try q.Dit.loadMode(init.io, a, s, model, cfg, .bfloat16, stream or cache_dir != null, prefetch);
++        defer dit.deinit();
++        q.traceMicro("dit-loaded");
++        if (cache_dir) |dir| try dit.useCache(init.io, dir);
++        if (!stream and cache_dir != null) try dit.makeResident();
++        // Materialize resident weights to separate load/compile from sampling.
++        if (!stream) try mlx.evalFields(dit);
++        var geo = try q.Geometry.init(a, cfg, @intCast(mlx.getShape(text)[1]), height / 16, width / 16);
++        defer geo.deinit();
++        var cache = try q.PrefixCache.init(a, cfg.layers, &geo, s);
++        defer cache.deinit();
++        var key = mlx.mlx_array_new();
++        defer free(key);
++        try mlx.check(mlx.mlx_random_key(&key, seed));
++        var noise = mlx.mlx_array_new();
++        defer free(noise);
++        const shape = [_]c_int{ 1, @intCast((height / 16) * (width / 16)), @intCast(cfg.in_ch) };
++        try mlx.check(mlx.mlx_random_normal(&noise, &shape, 3, .float32, 0, 1, key, s));
++        var x = mlx.mlx_array_new();
++        defer free(x);
++        try mlx.check(mlx.mlx_astype(&x, noise, .bfloat16, s));
++        const grid = try q.parseSampleSigmas(init.io, a, model);
++        defer if (grid) |v| a.free(v);
++        if (grid == null or grid.?.len != 8) return error.NotTurboEightStepPack;
++        const sigmas = try q.scheduleSigmas(a, grid, 8, @intCast(shape[1]));
++        defer a.free(sigmas);
++        if (lowmem) try dit.prepareSteps(sigmas[0..8]);
++        if (micro) try dit.prepareText(text);
++        q.traceMicro("steps-prepared");
++        for (0..8) |i| {
++            const tick = std.Io.Timestamp.now(init.io, .awake);
++            const v = try dit.forwardCached(x, text, sigmas[i], &geo, &cache);
++            defer free(v);
++            const next = try q.eulerStep(x, v, sigmas[i + 1] - sigmas[i], s);
++            free(x);
++            x = next;
++            try mlx.check(mlx.mlx_array_eval(x));
++            std.debug.print("step {d}/8 {d} ms\n", .{ i + 1, tick.durationTo(std.Io.Timestamp.now(init.io, .awake)).toMilliseconds() });
++        }
++        var lat = mlx.mlx_array_new();
++        defer free(lat);
++        const dims = [_]c_int{ 1, @intCast(height / 16), @intCast(width / 16), @intCast(cfg.in_ch) };
++        try mlx.check(mlx.mlx_reshape(&lat, x, &dims, 4, s));
++        var nchw = mlx.mlx_array_new();
++        defer free(nchw);
++        const axes = [_]c_int{ 0, 3, 1, 2 };
++        try mlx.check(mlx.mlx_transpose_axes(&nchw, lat, &axes, 4, s));
++        try save(output, nchw);
++    } else if (std.mem.eql(u8, stage, "vae")) {
++        var in = try weights.loadWeightsSingleFile(a, input);
++        defer in.deinit();
++        var cfg = try q.VaeConfig.parse(init.io, a, model);
++        defer cfg.deinit(a);
++        var decoded = if (micro) try q.VaeDecoder.decodeStream(init.io, a, s, model, cfg, in.get("value").?, .float16) else blk: {
++            var vae = try q.VaeDecoder.load(init.io, a, s, model, cfg);
++            defer vae.deinit();
++            const value = try vae.decodeRgba(in.get("value").?);
++            try mlx.check(mlx.mlx_array_eval(value));
++            break :blk value;
++        };
++        if (!try q.allPixelsFinite(decoded, s)) {
++            free(decoded);
++            decoded = if (micro) try q.VaeDecoder.decodeStream(init.io, a, s, model, cfg, in.get("value").?, .float32) else blk: {
++                var wide = try q.VaeDecoder.loadWithDtype(init.io, a, s, model, cfg, .float32);
++                defer wide.deinit();
++                const value = try wide.decodeRgba(in.get("value").?);
++                try mlx.check(mlx.mlx_array_eval(value));
++                break :blk value;
++            };
++            if (!try q.allPixelsFinite(decoded, s)) return error.NonFiniteVae;
++        }
++        defer free(decoded);
++        try mlx.check(mlx.mlx_array_eval(decoded));
++        // Save raw pixels as the numerical oracle; PNG conversion is outside inference.
++        try save(output, decoded);
++    } else if (std.mem.eql(u8, stage, "copy")) {
++        const reader = @import("sdk/weights/block_reader.zig");
++        var src = try reader.Source.open(init.io, model);
++        src.mapped = q.micro_mmap;
++        src.mapped_copy = q.micro_mapped_copy;
++        defer src.deinit();
++        const batch = try src.batch(input, false, prefetch);
++        defer batch.deinit();
++        var w = try batch.weights();
++        defer w.deinit();
++        if (w.count() == 0) return error.MissingStreamGroup;
++        const map = mlx.mlx_map_string_to_array_new();
++        defer _ = mlx.mlx_map_string_to_array_free(map);
++        const meta = mlx.mlx_map_string_to_string_new();
++        defer _ = mlx.mlx_map_string_to_string_free(meta);
++        var wi = w.map.iterator();
++        while (wi.next()) |e| {
++            const key = try a.dupeSentinel(u8, e.key_ptr.*, 0);
++            defer a.free(key);
++            try mlx.check(mlx.mlx_map_string_to_array_insert(map, key, e.value_ptr.*));
++        }
++        try mlx.check(mlx.mlx_save_safetensors(output, map, meta));
++    } else return error.UnknownStage;
++    var peak: usize = 0;
++    try mlx.check(mlx.mlx_get_peak_memory(&peak));
++    var usage: [16 + 35 * 8]u8 align(8) = @splat(0);
++    const sampled = proc_pid_rusage(getpid(), 4, &usage) == 0;
++    const physical_peak = if (sampled) std.mem.readInt(u64, usage[16 + 28 * 8 ..][0..8], .little) else 0;
++    const disk_read = if (sampled) std.mem.readInt(u64, usage[16 + 16 * 8 ..][0..8], .little) else 0;
++    const rs = @import("sdk/weights/block_reader.zig").stats;
++    std.debug.print("STREAM {{\"read_ms\":{d},\"wait_ms\":{d},\"bytes\":{d}}}\n", .{ rs.read_ms, rs.wait_ms, rs.bytes });
++    std.debug.print("FOOTPRINT {d} DISK_READ {d}\n", .{ physical_peak, disk_read });
++    std.debug.print("METRICS {{\"stage\":\"{s}\",\"elapsed_ms\":{d},\"mlx_peak_bytes\":{d}}}\n", .{ stage, started.durationTo(std.Io.Timestamp.now(init.io, .awake)).toMilliseconds(), peak });
++}
+diff --git a/src/qwen_stream_request.zig b/src/qwen_stream_request.zig
+new file mode 100644
+index 0000000..1c7ebb9
+--- /dev/null
++++ b/src/qwen_stream_request.zig
+@@ -0,0 +1,122 @@
++//! Full-feature single-request pipe entry point for the desktop streaming runner.
++const std = @import("std");
++const mlx = @import("mlx/ffi.zig");
++const q = @import("plugins/qwen_image/qwen_image.zig");
++const abi = @import("abi/media.zig");
++const request = @import("sdk/media/image_request.zig");
++const pixels = @import("sdk/media/image_pixels.zig");
++const LoraSet = @import("sdk/media/lora_set.zig").LoraSet;
++const Progress = @import("sdk/media/progress.zig").Progress;
++const a = std.heap.c_allocator;
++extern "c" fn read(fd: c_int, buf: [*]u8, size: usize) isize;
++extern "c" fn write(fd: c_int, buf: [*]const u8, size: usize) isize;
++fn emit(_: *anyopaque, stage: []const u8, step: u32, total: u32) void {
++    std.debug.print("PROGRESS {{\"stage\":\"{s}\",\"step\":{d},\"total\":{d}}}\n", .{ stage, step, total });
++}
++fn decoded(value: std.json.Value) ![]u8 {
++    if (value != .string) return error.InvalidReference;
++    const decoder = std.base64.standard.Decoder;
++    const buf = try a.alloc(u8, try decoder.calcSizeForSlice(value.string));
++    errdefer a.free(buf);
++    try decoder.decode(buf, value.string);
++    return buf;
++}
++pub fn run(io: std.Io, s: mlx.mlx_stream, model: []const u8, cache: ?[]const u8, streaming: bool, prefetch: bool) !void {
++    var bytes: std.ArrayList(u8) = .empty;
++    defer bytes.deinit(a);
++    var chunk: [65536]u8 = undefined;
++    while (true) {
++        const n = read(0, &chunk, chunk.len);
++        if (n < 0) return error.ReadInput;
++        if (n == 0) break;
++        if (bytes.items.len + @as(usize, @intCast(n)) > 160 * 1024 * 1024) return error.InputTooLarge;
++        try bytes.appendSlice(a, chunk[0..@intCast(n)]);
++    }
++    var body = try std.json.parseFromSlice(std.json.Value, a, bytes.items, .{});
++    defer body.deinit();
++    if (body.value != .object) return error.InvalidRequest;
++    const fields: request.Fields = .{ .obj = body.value.object };
++    var refs: std.ArrayList([]const u8) = .empty;
++    defer {
++        for (refs.items) |v| a.free(v);
++        refs.deinit(a);
++    }
++    if (fields.get("image")) |v| try refs.append(a, try decoded(v));
++    if (fields.get("ref_images")) |v| {
++        if (v != .array) return error.InvalidReferences;
++        for (v.array.items) |ref| try refs.append(a, try decoded(ref));
++    }
++    const j = switch (request.parse(fields, refs.items, .{ .img2img = true, .edit = true, .guidance = true, .edit_ref_cap = 10, .transparent = true, .ref_resolution = true })) {
++        .ok => |v| v,
++        .bad => |v| {
++            std.debug.print("request: {s}\n", .{v.why.slice()});
++            return error.InvalidRequest;
++        },
++    };
++    q.request_streaming = streaming or cache != null;
++    q.request_prefetch = prefetch;
++    var engine = try q.Engine.loadOn(io, a, model, true, s);
++    defer engine.deinit();
++    if (cache) |dir| try engine.dit.useCache(io, dir);
++    if (!streaming and cache != null) try engine.dit.makeResident();
++    var loras: LoraSet = .{};
++    defer loras.clear(&engine.dit);
++    var adapters: [8]abi.Lora = undefined;
++    var count: usize = 0;
++    if (fields.get("lora_paths")) |paths| {
++        const scales = fields.get("lora_scales") orelse return error.MissingLoraScales;
++        if (paths != .array or scales != .array or paths.array.items.len != scales.array.items.len or paths.array.items.len > adapters.len) return error.InvalidLoras;
++        for (paths.array.items, scales.array.items) |path, scale| {
++            if (path != .string) return error.InvalidLoraPath;
++            const gain: f32 = switch (scale) {
++                .float => |v| @floatCast(v),
++                .integer => |v| @floatFromInt(v),
++                else => return error.InvalidLoraScale,
++            };
++            adapters[count] = .{ .path = .of(path.string), .scale = gain };
++            count += 1;
++        }
++    }
++    const verdict = loras.set(a, adapters[0..count], .qwen_image21, &engine.dit);
++    if (!verdict.isOk()) {
++        std.debug.print("lora: {s}\n", .{verdict.why.slice()});
++        return error.LoraAttachFailed;
++    }
++    var sigma_buf: [100]f32 = undefined;
++    const sigmas = try q.requestSigmas(fields.get("sample_sigmas"), j.steps, &sigma_buf);
++    const steps: u32 = if (sigmas) |v| @intCast(v.len) else engine.stepsFor(j.steps);
++    var context: u8 = 0;
++    const progress: Progress = .{ .ctx = &context, .cb = emit, .yields = false };
++    const cfg = @import("plugins/qwen_image/config.zig");
++    const prefix_cache = if (j.mode == .edit) cfg.editPlan(steps, cfg.editTransientBytes(@intCast(refs.items.len), j.ref_resolution, j.req_w, j.req_h), cfg.editPrefixBytes(@intCast(refs.items.len), j.ref_resolution, engine.dit_cfg.layers, engine.dit_cfg.hidden(), if (j.guidance_scale != 1) 2 else 1), @import("sdk/media/job.zig").gpuHeadroom()) orelse return error.EditWorkingSetTooLarge else false;
++    const img = if (j.mode == .edit)
++        try engine.editImage(a, j.prompt, refs.items, j.req_w, j.req_h, j.seed, steps, .{
++            .guidance_scale = j.guidance_scale,
++            .negative_prompt = j.negative_prompt,
++            .ref_resolution = j.ref_resolution,
++            .transparent = j.transparent,
++            .prefix_cache = prefix_cache,
++            .sample_sigmas = sigmas,
++        }, progress)
++    else blk: {
++        var opts: q.GenOpts = .{ .guidance_scale = j.guidance_scale, .negative_prompt = j.negative_prompt, .transparent = j.transparent, .sample_sigmas = sigmas };
++        const source = if (j.mode == .variation) pixels.decodeVariation(a, j.image.?, j.req_h, j.req_w, j.strength) orelse return error.InvalidImage else null;
++        defer if (source) |v| {
++            _ = mlx.mlx_array_free(v);
++        };
++        if (source) |v| {
++            opts.init_image = v;
++            opts.start_step = request.img2imgStartStep(steps, j.strength);
++        }
++        break :blk try engine.generateImage(a, j.prompt, j.req_w, j.req_h, j.seed, steps, opts, progress);
++    };
++    defer _ = mlx.mlx_array_free(img);
++    const png = try pixels.toPng(a, img, s);
++    defer a.free(png);
++    var offset: usize = 0;
++    while (offset < png.len) {
++        const n = write(1, png[offset..].ptr, png.len - offset);
++        if (n <= 0) return error.WriteImage;
++        offset += @intCast(n);
++    }
++}
+diff --git a/src/sdk/vision/qwen_vision.zig b/src/sdk/vision/qwen_vision.zig
+index 73ef6e8..5092a41 100644
+--- a/src/sdk/vision/qwen_vision.zig
++++ b/src/sdk/vision/qwen_vision.zig
+@@ -567,8 +567,7 @@ pub fn buildPixelValues(
+ // ─────────────────────────────────────────────────────────────────────────────
+ // Qwen3-VL ViT encoder. Mirrors mlx-vlm qwen3_vl/vision.py for a SINGLE still
+ // image (grid_thw = [[1, grid_h, grid_w]]): full bidirectional attention over all
+-// patches (cu_seqlens trivial), no windowing, no DeepStack. Dense bf16 — even on
+-// 4-bit checkpoints the vision tower ships bf16, so no quantized-linear path.
++// patches (cu_seqlens trivial), no windowing, no DeepStack. Dense BF16 math; packed MXFP4 tower matrices are decoded on load.
+ //
+ // forward(patches [N, C*tps*ps*ps], grid_h, grid_w) → [1, N/merge², out_hidden].
+ // `patches` is the processor's `pixel_values`, already in merge-block token order
+@@ -608,6 +607,7 @@ pub const QwenVision = struct {
+     patch_b: mlx.mlx_array, // [hidden]
+     pos_embed: mlx.mlx_array, // [num_position_embeddings, hidden]
+     blocks: []QBlock,
++    decoded_weights: std.ArrayList(mlx.mlx_array) = .empty,
+     merger_norm_w: mlx.mlx_array,
+     merger_norm_b: mlx.mlx_array,
+     merger_fc1_w: mlx.mlx_array,
+@@ -643,20 +643,14 @@ pub const QwenVision = struct {
+         };
+         log.info("[vision] qwen tower prefix: {s}\n", .{prefix});
+ 
+-        const must = struct {
+-            fn f(w: *const Weights, b: *[256]u8, name: []const u8) !mlx.mlx_array {
+-                return getWeightLocal(w, b, name) orelse {
+-                    log.warn("MISSING QWEN VISION WEIGHT: {s}\n", .{name});
+-                    return error.MissingVisionWeights;
+-                };
+-            }
+-        }.f;
++        var loader = VisionWeightLoader{ .weights = weights, .allocator = allocator, .stream = s };
++        errdefer loader.releaseDecoded();
+ 
+         // patch_embed.proj.weight is a Conv3d whose STORED axis order is the
+         // converter's choice. Either way it ends flattened to
+         // [out, Cin*kT*ps*ps], matching the processor's [C, tps, py, px]
+         // pixel_values feature order — a full-window Conv3d as a plain Linear.
+-        const conv_w = try must(weights, &buf, fmtKey(&kbuf, prefix, "patch_embed.proj.weight"));
++        const conv_w = try loader.get(fmtKey(&kbuf, prefix, "patch_embed.proj.weight"));
+         const cw_shape = mlx.getShape(conv_w);
+         std.debug.assert(cw_shape.len == 5);
+         const out_c = cw_shape[0];
+@@ -681,30 +675,31 @@ pub const QwenVision = struct {
+                 .channels_first => try mlx.check(mlx.mlx_reshape(&patch_w, conv_w, &flat_shape, 2, s)),
+             }
+         }
+-        const patch_b = try must(weights, &buf, fmtKey(&kbuf, prefix, "patch_embed.proj.bias"));
+-        const pos_embed = try must(weights, &buf, fmtKey(&kbuf, prefix, "pos_embed.weight"));
++        errdefer _ = mlx.mlx_array_free(patch_w);
++        const patch_b = try loader.get(fmtKey(&kbuf, prefix, "patch_embed.proj.bias"));
++        const pos_embed = try loader.get(fmtKey(&kbuf, prefix, "pos_embed.weight"));
+ 
+         const depth = config.depth;
+         var blocks = try allocator.alloc(QBlock, depth);
+         errdefer allocator.free(blocks);
+         for (0..depth) |i| {
+             blocks[i] = .{
+-                .norm1_w = try must(weights, &buf, fmtLayer(&buf, prefix, i, "norm1.weight")),
+-                .norm1_b = try must(weights, &buf, fmtLayer(&buf, prefix, i, "norm1.bias")),
+-                .norm2_w = try must(weights, &buf, fmtLayer(&buf, prefix, i, "norm2.weight")),
+-                .norm2_b = try must(weights, &buf, fmtLayer(&buf, prefix, i, "norm2.bias")),
+-                .qkv_w = try must(weights, &buf, fmtLayer(&buf, prefix, i, "attn.qkv.weight")),
+-                .qkv_b = try must(weights, &buf, fmtLayer(&buf, prefix, i, "attn.qkv.bias")),
+-                .proj_w = try must(weights, &buf, fmtLayer(&buf, prefix, i, "attn.proj.weight")),
+-                .proj_b = try must(weights, &buf, fmtLayer(&buf, prefix, i, "attn.proj.bias")),
+-                .fc1_w = try must(weights, &buf, fmtLayer(&buf, prefix, i, "mlp.linear_fc1.weight")),
+-                .fc1_b = try must(weights, &buf, fmtLayer(&buf, prefix, i, "mlp.linear_fc1.bias")),
+-                .fc2_w = try must(weights, &buf, fmtLayer(&buf, prefix, i, "mlp.linear_fc2.weight")),
+-                .fc2_b = try must(weights, &buf, fmtLayer(&buf, prefix, i, "mlp.linear_fc2.bias")),
++                .norm1_w = try loader.get(fmtLayer(&buf, prefix, i, "norm1.weight")),
++                .norm1_b = try loader.get(fmtLayer(&buf, prefix, i, "norm1.bias")),
++                .norm2_w = try loader.get(fmtLayer(&buf, prefix, i, "norm2.weight")),
++                .norm2_b = try loader.get(fmtLayer(&buf, prefix, i, "norm2.bias")),
++                .qkv_w = try loader.get(fmtLayer(&buf, prefix, i, "attn.qkv.weight")),
++                .qkv_b = try loader.get(fmtLayer(&buf, prefix, i, "attn.qkv.bias")),
++                .proj_w = try loader.get(fmtLayer(&buf, prefix, i, "attn.proj.weight")),
++                .proj_b = try loader.get(fmtLayer(&buf, prefix, i, "attn.proj.bias")),
++                .fc1_w = try loader.get(fmtLayer(&buf, prefix, i, "mlp.linear_fc1.weight")),
++                .fc1_b = try loader.get(fmtLayer(&buf, prefix, i, "mlp.linear_fc1.bias")),
++                .fc2_w = try loader.get(fmtLayer(&buf, prefix, i, "mlp.linear_fc2.weight")),
++                .fc2_b = try loader.get(fmtLayer(&buf, prefix, i, "mlp.linear_fc2.bias")),
+             };
+         }
+ 
+-        return QwenVision{
++        var tower = QwenVision{
+             .s = s,
+             .allocator = allocator,
+             .depth = depth,
+@@ -718,18 +713,23 @@ pub const QwenVision = struct {
+             .patch_b = patch_b,
+             .pos_embed = pos_embed,
+             .blocks = blocks,
+-            .merger_norm_w = try must(weights, &buf, fmtKey(&kbuf, prefix, "merger.norm.weight")),
+-            .merger_norm_b = try must(weights, &buf, fmtKey(&kbuf, prefix, "merger.norm.bias")),
+-            .merger_fc1_w = try must(weights, &buf, fmtKey(&kbuf, prefix, "merger.linear_fc1.weight")),
+-            .merger_fc1_b = try must(weights, &buf, fmtKey(&kbuf, prefix, "merger.linear_fc1.bias")),
+-            .merger_fc2_w = try must(weights, &buf, fmtKey(&kbuf, prefix, "merger.linear_fc2.weight")),
+-            .merger_fc2_b = try must(weights, &buf, fmtKey(&kbuf, prefix, "merger.linear_fc2.bias")),
++            .merger_norm_w = try loader.get(fmtKey(&kbuf, prefix, "merger.norm.weight")),
++            .merger_norm_b = try loader.get(fmtKey(&kbuf, prefix, "merger.norm.bias")),
++            .merger_fc1_w = try loader.get(fmtKey(&kbuf, prefix, "merger.linear_fc1.weight")),
++            .merger_fc1_b = try loader.get(fmtKey(&kbuf, prefix, "merger.linear_fc1.bias")),
++            .merger_fc2_w = try loader.get(fmtKey(&kbuf, prefix, "merger.linear_fc2.weight")),
++            .merger_fc2_b = try loader.get(fmtKey(&kbuf, prefix, "merger.linear_fc2.bias")),
+         };
++        tower.decoded_weights = loader.decoded;
++        if (loader.decoded.items.len != 0) log.info("[vision] decoded {d} MXFP4 tower matrices to BF16\n", .{loader.decoded.items.len});
++        return tower;
+     }
+ 
+     pub fn deinit(self: *QwenVision) void {
+         _ = mlx.mlx_array_free(self.patch_w);
+         self.allocator.free(self.blocks);
++        for (self.decoded_weights.items) |w| _ = mlx.mlx_array_free(w);
++        self.decoded_weights.deinit(self.allocator);
+     }
+ 
+     fn bf16Scalar(self: *QwenVision, v: f32) mlx.mlx_array {
+@@ -1186,7 +1186,9 @@ pub const QwenVision = struct {
+         var parts = try self.allocator.alloc(mlx.mlx_array, grid_t);
+         defer self.allocator.free(parts);
+         var built: usize = 0;
+-        errdefer for (parts[0..built]) |p| { _ = mlx.mlx_array_free(p); };
++        errdefer for (parts[0..built]) |p| {
++            _ = mlx.mlx_array_free(p);
++        };
+ 
+         var t: u32 = 0;
+         while (t < grid_t) : (t += 1) {
+@@ -1200,7 +1202,9 @@ pub const QwenVision = struct {
+             parts[t] = try self.forward(group, grid_h, grid_w);
+             built += 1;
+         }
+-        defer for (parts) |p| { _ = mlx.mlx_array_free(p); };
++        defer for (parts) |p| {
++            _ = mlx.mlx_array_free(p);
++        };
+ 
+         const cat_vec = mlx.mlx_vector_array_new_data(parts.ptr, parts.len);
+         defer _ = mlx.mlx_vector_array_free(cat_vec);
+@@ -1255,10 +1259,41 @@ pub fn visionRopeTables(allocator: std.mem.Allocator, grid_h: u32, grid_w: u32,
+     };
+ }
+ 
+-fn getWeightLocal(weights: *const Weights, buf: *[256]u8, name: []const u8) ?mlx.mlx_array {
+-    _ = buf;
+-    return weights.get(name);
+-}
++const VisionWeightLoader = struct {
++    weights: *const Weights,
++    allocator: std.mem.Allocator,
++    stream: mlx.mlx_stream,
++    decoded: std.ArrayList(mlx.mlx_array) = .empty,
++
++    fn releaseDecoded(self: *VisionWeightLoader) void {
++        for (self.decoded.items) |w| _ = mlx.mlx_array_free(w);
++        self.decoded.deinit(self.allocator);
++    }
++
++    fn get(self: *VisionWeightLoader, name: []const u8) !mlx.mlx_array {
++        const w = self.weights.get(name) orelse {
++            log.warn("MISSING QWEN VISION WEIGHT: {s}\n", .{name});
++            return error.MissingVisionWeights;
++        };
++        if (mlx.mlx_array_dtype(w) != .uint32) return w;
++        const base = std.mem.cutSuffix(u8, name, ".weight") orelse return error.UnsupportedVisionQuantization;
++        var key: [256]u8 = undefined;
++        const scales = self.weights.get(try std.fmt.bufPrint(&key, "{s}.scales", .{base})) orelse return error.MissingVisionScales;
++        const shape = mlx.getShape(w);
++        const groups = mlx.getShape(scales);
++        // MXFP4 packs eight E2M1 values per uint32, four words per E8M0 scale.
++        if (shape.len != 2 or groups.len != 2 or shape[0] != groups[0] or shape[1] != groups[1] * 4 or
++            mlx.mlx_array_dtype(scales) != .uint8 or self.weights.get(try std.fmt.bufPrint(&key, "{s}.biases", .{base})) != null)
++            return error.UnsupportedVisionQuantization;
++        try self.decoded.ensureUnusedCapacity(self.allocator, 1);
++        var dense = mlx.mlx_array_new();
++        errdefer _ = mlx.mlx_array_free(dense);
++        try mlx.check(mlx.mlx_dequantize(&dense, w, scales, .{}, mlx.mlx_optional_int.some(32), mlx.mlx_optional_int.some(4), "mxfp4", .{}, .{ .value = .bfloat16, .has_value = true }, self.stream));
++        try mlx.check(mlx.mlx_array_eval(dense));
++        self.decoded.appendAssumeCapacity(dense);
++        return dense;
++    }
++};
+ 
+ fn fmtLayer(buf: *[256]u8, prefix: []const u8, layer: usize, suffix: []const u8) []const u8 {
+     return std.fmt.bufPrint(buf, "{s}blocks.{d}.{s}", .{ prefix, layer, suffix }) catch unreachable;
+diff --git a/src/sdk/weights/block_reader.zig b/src/sdk/weights/block_reader.zig
+new file mode 100644
+index 0000000..02df9f1
+--- /dev/null
++++ b/src/sdk/weights/block_reader.zig
+@@ -0,0 +1,250 @@
++//! Bounded raw-byte prefetch. Only the inference thread creates MLX arrays.
++const std = @import("std");
++const mlx = @import("../../mlx/ffi.zig");
++const Weights = @import("resident.zig").Weights;
++const a = std.heap.c_allocator;
++const clock = @import("../util/crt.zig").monotonicMs;
++const RawPool = struct {
++    mutex: @import("../util/os_mutex.zig").Mutex = .{},
++    refs: std.atomic.Value(usize) = .init(1),
++    free: std.ArrayList([]u8) = .empty,
++    bytes: usize = 0,
++    fn release(self: *RawPool) void {
++        if (self.refs.fetchSub(1, .acq_rel) != 1) return;
++        for (self.free.items) |v| std.heap.page_allocator.free(v);
++        self.free.deinit(a);
++        a.destroy(self);
++    }
++    fn take(self: *RawPool, length: usize) ![]u8 {
++        self.mutex.lock();
++        for (self.free.items, 0..) |v, i| if (v.len == length) {
++            _ = self.free.swapRemove(i);
++            self.bytes -= length;
++            _ = self.refs.fetchAdd(1, .monotonic);
++            self.mutex.unlock();
++            return v;
++        };
++        self.mutex.unlock();
++        const v = try std.heap.page_allocator.alloc(u8, length);
++        _ = self.refs.fetchAdd(1, .monotonic);
++        return v;
++    }
++    fn put(self: *RawPool, v: []u8) void {
++        self.mutex.lock();
++        const keep = self.bytes + v.len <= 224 << 20;
++        if (keep) {
++            self.free.append(a, v) catch {
++                self.mutex.unlock();
++                std.heap.page_allocator.free(v);
++                self.release();
++                return;
++            };
++            self.bytes += v.len;
++        }
++        self.mutex.unlock();
++        if (!keep) std.heap.page_allocator.free(v);
++        self.release();
++    }
++};
++pub var stats: struct { read_ms: i64 = 0, wait_ms: i64 = 0, bytes: u64 = 0 } = .{};
++
++const Tensor = struct { name: []const u8, fd: c_int, offset: u64, bytes: usize, shape: []c_int, dtype: mlx.mlx_dtype };
++fn readAt(fd: c_int, bytes: []u8, offset: u64) !void {
++    var done: usize = 0;
++    while (done < bytes.len) {
++        const n = std.c.pread(fd, bytes[done..].ptr, bytes.len - done, @intCast(offset + done));
++        if (n < 0) {
++            if (std.c._errno().* == @backingInt(std.posix.E.INTR)) continue;
++            return error.WeightReadFailed;
++        }
++        if (n == 0) return error.TruncatedWeight;
++        done += @intCast(n);
++    }
++}
++fn dtypeOf(name: []const u8) !mlx.mlx_dtype {
++    const names = .{ "BF16", "F16", "F32", "U32", "I8", "U8", "I32" };
++    const types = .{ mlx.mlx_dtype.bfloat16, mlx.mlx_dtype.float16, mlx.mlx_dtype.float32, mlx.mlx_dtype.uint32, mlx.mlx_dtype.int8, mlx.mlx_dtype.uint8, mlx.mlx_dtype.int32 };
++    inline for (names, types) |n, t| if (std.mem.eql(u8, name, n)) return t;
++    return error.UnsupportedStreamDtype;
++}
++pub const Source = struct {
++    pool: ?*RawPool = null,
++    mapped: bool = false,
++    mapped_copy: bool = false,
++    arena: std.heap.ArenaAllocator,
++    tensors: std.ArrayList(Tensor) = .empty,
++    fds: std.ArrayList(c_int) = .empty,
++    pub fn enableReuse(self: *Source) !void {
++        if (self.pool != null) return;
++        const pool = try a.create(RawPool);
++        pool.* = .{};
++        self.pool = pool;
++    }
++    pub fn open(io: std.Io, dirpath: []const u8) !Source {
++        var self: Source = .{ .arena = .init(a) };
++        errdefer self.deinit();
++        const alloc = self.arena.allocator();
++        var dir = try std.Io.Dir.openDirAbsolute(io, dirpath, .{ .iterate = true });
++        defer dir.close(io);
++        var it = dir.iterate();
++        while (try it.next(io)) |entry| {
++            if (!std.mem.endsWith(u8, entry.name, ".safetensors")) continue;
++            const path = try std.fmt.allocPrintSentinel(alloc, "{s}/{s}", .{ dirpath, entry.name }, 0);
++            const fd = std.c.open(path, .{ .ACCMODE = .RDONLY, .CLOEXEC = true }, @as(std.c.mode_t, 0));
++            if (fd < 0) return error.WeightOpenFailed;
++            try self.fds.append(alloc, fd);
++            var lenbuf: [8]u8 = undefined;
++            try readAt(fd, &lenbuf, 0);
++            const len = std.mem.readInt(u64, &lenbuf, .little);
++            if (len > 64 << 20) return error.InvalidWeightHeader;
++            const raw = try alloc.alloc(u8, @intCast(len));
++            try readAt(fd, raw, 8);
++            const header = try std.json.parseFromSliceLeaky(std.json.Value, alloc, raw, .{ .allocate = .alloc_always });
++            var h = header.object.iterator();
++            while (h.next()) |e| {
++                if (std.mem.eql(u8, e.key_ptr.*, "__metadata__")) continue;
++                const v = e.value_ptr.object;
++                const sh = v.get("shape").?.array.items;
++                const shape = try alloc.alloc(c_int, sh.len);
++                for (sh, shape) |x, *d| d.* = @intCast(x.integer);
++                const off = v.get("data_offsets").?.array.items;
++                try self.tensors.append(alloc, .{ .name = e.key_ptr.*, .fd = fd, .offset = 8 + len + @as(u64, @intCast(off[0].integer)), .bytes = @intCast(off[1].integer - off[0].integer), .shape = shape, .dtype = try dtypeOf(v.get("dtype").?.string) });
++            }
++        }
++        if (self.tensors.items.len == 0) return error.NoWeightFiles;
++        return self;
++    }
++    pub fn rows(self: *const Source, name: []const u8, ids: []const i32) !mlx.mlx_array {
++        for (self.tensors.items) |t| if (std.mem.eql(u8, t.name, name)) {
++            if (t.shape.len != 2 or (t.dtype != .bfloat16 and t.dtype != .float16 and t.dtype != .float32)) return error.StreamEmbeddingLayout;
++            const stride = t.bytes / @as(usize, @intCast(t.shape[0]));
++            const raw = try a.alloc(u8, ids.len * stride);
++            defer a.free(raw);
++            for (ids, 0..) |id, i| {
++                if (id < 0 or id >= t.shape[0]) return error.InvalidToken;
++                try readAt(t.fd, raw[i * stride ..][0..stride], t.offset + @as(u64, @intCast(id)) * stride);
++            }
++            const shape = [_]c_int{ 1, @intCast(ids.len), t.shape[1] };
++            return mlx.mlx_array_new_data(raw.ptr, &shape, 3, t.dtype);
++        };
++        return error.MissingEmbedding;
++    }
++    pub fn deinit(self: *Source) void {
++        if (self.pool) |pool| pool.release();
++        for (self.fds.items) |fd| _ = std.c.close(fd);
++        self.arena.deinit();
++    }
++    pub fn batch(self: *const Source, prefix: []const u8, exclude: bool, async_read: bool) !*Batch {
++        const out = try a.create(Batch);
++        out.* = .{ .mapped_copy = self.mapped_copy, .pool = self.pool };
++        errdefer out.deinit();
++        for (self.tensors.items) |t| {
++            if (std.mem.startsWith(u8, t.name, prefix) == exclude) continue;
++            if (self.mapped and t.bytes > 0) {
++                var st: std.c.Stat = undefined;
++                if (std.c.fstat(t.fd, &st) != 0) return error.StatFailed;
++                if (t.offset + t.bytes > @as(u64, @intCast(st.size))) return error.TruncatedWeight;
++                const page = std.heap.pageSize();
++                const offset = t.offset & ~@as(u64, page - 1);
++                const skip: usize = @intCast(t.offset - offset);
++                const length = std.mem.alignForward(usize, skip + t.bytes, page);
++                const raw = try std.posix.mmap(null, length, .{ .READ = true }, .{ .TYPE = .PRIVATE }, t.fd, offset);
++                errdefer std.posix.munmap(raw);
++                try out.items.append(a, .{ .tensor = t, .raw = raw, .mapped = true, .skip = skip });
++            } else {
++                const raw = if (self.pool) |pool| try pool.take(t.bytes) else try std.heap.page_allocator.alloc(u8, t.bytes);
++                errdefer if (self.pool) |pool| pool.put(raw) else std.heap.page_allocator.free(raw);
++                try out.items.append(a, .{ .tensor = t, .raw = raw });
++            }
++        }
++        if (async_read) out.thread = try std.Thread.spawn(.{}, Batch.run, .{out}) else out.run();
++        return out;
++    }
++};
++pub const Batch = struct {
++    const Item = struct { tensor: Tensor, raw: []u8, mapped: bool = false, skip: usize = 0 };
++    pool: ?*RawPool = null,
++    mapped_copy: bool = false,
++    items: std.ArrayList(Item) = .empty,
++    thread: ?std.Thread = null,
++    failure: ?anyerror = null,
++    consumed: bool = false,
++    read_ms: i64 = 0,
++    const Buffer = struct { bytes: []u8, mapped: bool, pool: ?*RawPool };
++    fn releaseBuffer(payload: ?*anyopaque) callconv(.c) void {
++        const buffer: *Buffer = @ptrCast(@alignCast(payload.?));
++        if (buffer.mapped) std.posix.munmap(@alignCast(buffer.bytes)) else if (buffer.pool) |pool| pool.put(buffer.bytes) else std.heap.page_allocator.free(buffer.bytes);
++        a.destroy(buffer);
++    }
++    fn run(self: *Batch) void {
++        const start = clock();
++        defer self.read_ms = clock() - start;
++        for (self.items.items) |v| if (!v.mapped) readAt(v.tensor.fd, v.raw, v.tensor.offset) catch |err| {
++            self.failure = err;
++            return;
++        };
++    }
++    fn join(self: *Batch) void {
++        if (self.thread) |t| {
++            t.join();
++            self.thread = null;
++        }
++    }
++    pub fn weights(self: *Batch) !Weights {
++        const start = clock();
++        self.join();
++        stats.wait_ms += clock() - start;
++        stats.read_ms += self.read_ms;
++        for (self.items.items) |v| stats.bytes += v.tensor.bytes;
++        if (self.consumed) return error.BatchAlreadyConsumed;
++        self.consumed = true;
++        if (self.failure) |err| return err;
++        var w = Weights.init(a);
++        errdefer w.deinit();
++        for (self.items.items) |*item| {
++            const t = item.tensor;
++            const buffer = try a.create(Buffer);
++            buffer.* = .{ .bytes = item.raw, .mapped = item.mapped, .pool = self.pool };
++            const ptr = item.raw.ptr;
++            item.raw = &.{};
++            const arr = if (item.mapped) blk: {
++                const length = [_]c_int{@intCast(buffer.bytes.len)};
++                const raw = mlx.mlx_array_new_data_managed_payload(ptr, &length, 1, .uint8, buffer, releaseBuffer);
++                defer _ = mlx.mlx_array_free(raw);
++                const stream = mlx.mlx_default_gpu_stream_new();
++                defer _ = mlx.mlx_stream_free(stream);
++                var bytes = mlx.mlx_array_new();
++                defer _ = mlx.mlx_array_free(bytes);
++                const slice_start = [_]c_int{@intCast(item.skip)};
++                const stop = [_]c_int{@intCast(item.skip + t.bytes)};
++                const stride = [_]c_int{1};
++                try mlx.check(mlx.mlx_slice(&bytes, raw, &slice_start, 1, &stop, 1, &stride, 1, stream));
++                var typed = mlx.mlx_array_new();
++                defer _ = mlx.mlx_array_free(typed);
++                try mlx.check(mlx.mlx_view(&typed, bytes, t.dtype, stream));
++                var shaped = mlx.mlx_array_new();
++                errdefer _ = mlx.mlx_array_free(shaped);
++                try mlx.check(mlx.mlx_reshape(&shaped, typed, t.shape.ptr, t.shape.len, stream));
++                if (self.mapped_copy) {
++                    var aligned = mlx.mlx_array_new();
++                    errdefer _ = mlx.mlx_array_free(aligned);
++                    try mlx.check(mlx.mlx_copy(&aligned, shaped, stream));
++                    try mlx.check(mlx.mlx_array_eval(aligned));
++                    _ = mlx.mlx_array_free(shaped);
++                    break :blk aligned;
++                }
++                break :blk shaped;
++            } else mlx.mlx_array_new_data_managed_payload(ptr, t.shape.ptr, @intCast(t.shape.len), t.dtype, buffer, releaseBuffer);
++            try w.put(t.name, arr);
++        }
++        return w;
++    }
++    pub fn deinit(self: *Batch) void {
++        self.join();
++        for (self.items.items) |v| if (v.raw.len > 0) {
++            if (v.mapped) std.posix.munmap(@alignCast(v.raw)) else if (self.pool) |pool| pool.put(v.raw) else std.heap.page_allocator.free(v.raw);
++        };
++        self.items.deinit(a);
++        a.destroy(self);
++    }
++};
+diff --git a/src/sdk/weights/lora.zig b/src/sdk/weights/lora.zig
+index 3906ee0..7902cba 100644
+--- a/src/sdk/weights/lora.zig
++++ b/src/sdk/weights/lora.zig
+@@ -438,6 +438,11 @@ pub fn anyActive(refs: []const Ref) bool {
+ /// sum in the GEMM's accumulator and y rounds once. An adapter at scale 0 is skipped: MLX's
+ /// `addmm` does not return `beta*c` at `alpha == 0`. Caller must ensure `refs.len >= 1`.
+ pub fn addTo(y: mlx.mlx_array, x: mlx.mlx_array, refs: []const Ref, s: mlx.mlx_stream) !mlx.mlx_array {
++    return addToWithGain(y, x, refs, s, null, 1.0);
++}
++
++/// Optional row scaling acts on the small rank dimension before the projection back to model width.
++pub fn addToWithGain(y: mlx.mlx_array, x: mlx.mlx_array, refs: []const Ref, s: mlx.mlx_stream, rows: ?mlx.mlx_array, scalar: f32) !mlx.mlx_array {
+     var live: [MAX_LORAS]Ref = undefined;
+     var n: usize = 0;
+     for (refs) |r| if (r.scale != 0) {
+@@ -458,7 +463,14 @@ pub fn addTo(y: mlx.mlx_array, x: mlx.mlx_array, refs: []const Ref, s: mlx.mlx_s
+     var xa = mlx.mlx_array_new();
+     defer _ = mlx.mlx_array_free(xa);
+     try mlx.check(mlx.mlx_matmul(&xa, x, one.at, s));
+-    try mlx.check(mlx.mlx_addmm(&out, y, xa, one.bt, one.scale, 1.0, s));
++    if (rows) |gains| {
++        var scaled = mlx.mlx_array_new();
++        defer _ = mlx.mlx_array_free(scaled);
++        try mlx.check(mlx.mlx_multiply(&scaled, xa, gains, s));
++        try mlx.check(mlx.mlx_addmm(&out, y, scaled, one.bt, one.scale * scalar, 1.0, s));
++    } else {
++        try mlx.check(mlx.mlx_addmm(&out, y, xa, one.bt, one.scale * scalar, 1.0, s));
++    }
+     return out;
+ }
+ 

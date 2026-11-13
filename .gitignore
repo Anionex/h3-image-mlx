@@ -7,3 +7,5 @@ dist/
 models/
 *.part
 *.safetensors
+
+packages/qwen-runtime/src/h3_image_mlx_native/payload/

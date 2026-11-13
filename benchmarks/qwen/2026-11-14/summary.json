@@ -1,0 +1,26 @@
+[
+  {
+    "size": 512,
+    "mode": "micro-fast",
+    "trials": 3,
+    "median_seconds": 16.93615920798038,
+    "min_seconds": 16.37474500000826,
+    "max_seconds": 21.173194167000474,
+    "max_process_GB": 0.845546576,
+    "median_disk_read_GB": 64.108965888,
+    "max_weight_cache_bytes": 0,
+    "deterministic": true
+  },
+  {
+    "size": 1024,
+    "mode": "micro-fast",
+    "trials": 3,
+    "median_seconds": 47.67236974998377,
+    "min_seconds": 47.18152862499119,
+    "max_seconds": 48.62044283299474,
+    "max_process_GB": 1.407960168,
+    "median_disk_read_GB": 64.108965888,
+    "max_weight_cache_bytes": 0,
+    "deterministic": true
+  }
+]

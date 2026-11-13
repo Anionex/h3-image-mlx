@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=77", "wheel>=0.45"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "h3-image-mlx-qwen-runtime"
+version = "0.1.0a1"
+description = "Standalone native MLX worker for Qwen Image 2.1"
+requires-python = ">=3.11"
+license = "Apache-2.0 AND MIT AND BSD-3-Clause"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+h3_image_mlx_native = ["payload/*", "payload/lib/*", "payload/licenses/*"]

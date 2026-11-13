@@ -1,0 +1,7 @@
+{
+  "upstream": "https://github.com/ddalcu/mlx-serve",
+  "base_commit": "4e231ceebe63308cc038117d40b9f9b64bd0372e",
+  "patch_sha256": "87f43c5cddd7068fb22322d9b2ace34d287721deb1a9a112b4ea76f517c52aea",
+  "build_command": ".zig-toolchain/zig build -Dqwen-probe=true -Doptimize=ReleaseFast -Dstrip=true",
+  "source_note": "Standalone patch includes the desktop compatibility changes. Apply to the pinned upstream base, not on top of the other desktop patches."
+}

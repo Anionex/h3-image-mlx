@@ -1,0 +1,2670 @@
+{
+  "note": "Functional validation; cached timings are not uncached benchmarks",
+  "cases": {
+    "smoke": {
+      "model": "qwen-image-2.1-turbo",
+      "backend": "w8a8",
+      "memory_mode": "micro-fast",
+      "profile": "complete",
+      "steps": 8,
+      "seed": 42,
+      "stages": [
+        {
+          "peak_bytes": 644056216,
+          "disk_read_bytes": 7423655936,
+          "stage": "text",
+          "elapsed_ms": 1513,
+          "mlx_peak_bytes": 229565424,
+          "wall_seconds": 4.803803749993676,
+          "progress": []
+        },
+        {
+          "peak_bytes": 816677968,
+          "disk_read_bytes": 7258750976,
+          "stage": "dit",
+          "elapsed_ms": 10988,
+          "mlx_peak_bytes": 475724992,
+          "wall_seconds": 11.08533475000877,
+          "progress": [
+            {
+              "stage": "Denoising",
+              "step": 1,
+              "total": 8
+            },
+            {
+              "stage": "Denoising",
+              "step": 2,
+              "total": 8
+            },
+            {
+              "stage": "Denoising",
+              "step": 3,
+              "total": 8
+            },
+            {
+              "stage": "Denoising",
+              "step": 4,
+              "total": 8
+            },
+            {
+              "stage": "Denoising",
+              "step": 5,
+              "total": 8
+            },
+            {
+              "stage": "Denoising",
+              "step": 6,
+              "total": 8
+            },
+            {
+              "stage": "Denoising",
+              "step": 7,
+              "total": 8
+            },
+            {
+              "stage": "Denoising",
+              "step": 8,
+              "total": 8
+            }
+          ]
+        },
+        {
+          "peak_bytes": 723370632,
+          "disk_read_bytes": 508932096,
+          "stage": "vae",
+          "elapsed_ms": 3097,
+          "mlx_peak_bytes": 561755654,
+          "wall_seconds": 3.1949920410115737,
+          "progress": []
+        }
+      ],
+      "preparation": [],
+      "worker_peak_bytes": 816677968,
+      "disk_read_bytes": 15191339008,
+      "generation_seconds": 19.090496082993923,
+      "execution": "staged",
+      "cache_policy": "system-default"
+    },
+    "request-base": {
+      "case": "request-base",
+      "status": "passed",
+      "image_mode": "RGB",
+      "size": [
+        512,
+        512
+      ],
+      "rgb_sha256": "4a836b4d691f3f629ae2c41ee7788bae92b6e39620f29e83d9916ff84536907c",
+      "seconds": 16.145314249995863,
+      "metrics": {
+        "model": "qwen-image-2.1-turbo",
+        "backend": "w8a8",
+        "memory_mode": "micro-fast",
+        "profile": "complete",
+        "steps": 8,
+        "seed": 42,
+        "stages": [
+          {
+            "peak_bytes": 1900021248,
+            "disk_read_bytes": 14925099008,
+            "stage": "request",
+            "elapsed_ms": 15995,
+            "mlx_peak_bytes": 820495624,
+            "wall_seconds": 16.087991291977232,
+            "progress": [
+              {
+                "stage": "Encoding prompt",
+                "step": 0,
+                "total": 8
+              },
+              {
+                "stage": "Generating",
+                "step": 1,
+                "total": 8
+              },
+              {
+                "stage": "Generating",
+                "step": 2,
+                "total": 8
+              },
+              {
+                "stage": "Generating",
+                "step": 3,
+                "total": 8
+              },
+              {
+                "stage": "Generating",
+                "step": 4,
+                "total": 8
+              },
+              {
+                "stage": "Generating",
+                "step": 5,
+                "total": 8
+              },
+              {
+                "stage": "Generating",
+                "step": 6,
+                "total": 8
+              },
+              {
+                "stage": "Generating",
+                "step": 7,
+                "total": 8
+              },
+              {
+                "stage": "Generating",
+                "step": 8,
+                "total": 8
+              },
+              {
+                "stage": "Decoding image",
+                "step": 8,
+                "total": 8
+              }
+            ]
+          }
+        ],
+        "preparation": [],
+        "worker_peak_bytes": 1900021248,
+        "disk_read_bytes": 14925099008,
+        "generation_seconds": 16.104469791986048,
+        "execution": "request",
+        "weight_read_policy": "system"
+      },
+      "progress": [
+        {
+          "stage": "request",
+          "step": 0,
+          "total": 8
+        },
+        {
+          "stage": "Encoding prompt",
+          "step": 0,
+          "total": 8
+        },
+        {
+          "stage": "Generating",
+          "step": 1,
+          "total": 8
+        },
+        {
+          "stage": "Generating",
+          "step": 2,
+          "total": 8
+        },
+        {
+          "stage": "Generating",
+          "step": 3,
+          "total": 8
+        },
+        {
+          "stage": "Generating",
+          "step": 4,
+          "total": 8
+        },
+        {
+          "stage": "Generating",
+          "step": 5,
+          "total": 8
+        },
+        {
+          "stage": "Generating",
+          "step": 6,
+          "total": 8
+        },
+        {
+          "stage": "Generating",
+          "step": 7,
+          "total": 8
+        },
+        {
+          "stage": "Generating",
+          "step": 8,
+          "total": 8
+        },
+        {
+          "stage": "Decoding image",
+          "step": 8,
+          "total": 8
+        }
+      ]
+    },
+    "lora-zero": {
+      "case": "lora-zero",
+      "status": "passed",
+      "image_mode": "RGB",
+      "size": [
+        512,
+        512
+      ],
+      "rgb_sha256": "4a836b4d691f3f629ae2c41ee7788bae92b6e39620f29e83d9916ff84536907c",
+      "seconds": 15.429792875016574,
+      "metrics": {
+        "model": "qwen-image-2.1-turbo",
+        "backend": "w8a8",
+        "memory_mode": "micro-fast",
+        "profile": "complete",
+        "steps": 8,
+        "seed": 42,
+        "stages": [
+          {
+            "peak_bytes": 2073069056,
+            "disk_read_bytes": 12897103872,
+            "stage": "request",
+            "elapsed_ms": 15308,
+            "mlx_peak_bytes": 988267784,
+            "wall_seconds": 15.40430920801009,
+            "progress": [
+              {
+                "stage": "Encoding prompt",
+                "step": 0,
+                "total": 8
+              },
+              {
+                "stage": "Generating",
+                "step": 1,
+                "total": 8
+              },
+              {
+                "stage": "Generating",
+                "step": 2,
+                "total": 8
+              },
+              {
+                "stage": "Generating",
+                "step": 3,
+                "total": 8
+              },
+              {
+                "stage": "Generating",
+                "step": 4,
+                "total": 8
+              },
+              {
+                "stage": "Generating",
+                "step": 5,
+                "total": 8
+              },
+              {
+                "stage": "Generating",
+                "step": 6,
+                "total": 8
+              },
+              {
+                "stage": "Generating",
+                "step": 7,
+                "total": 8
+              },
+              {
+                "stage": "Generating",
+                "step": 8,
+                "total": 8
+              },
+              {
+                "stage": "Decoding image",
+                "step": 8,
+                "total": 8
+              }
+            ]
+          }
+        ],
+        "preparation": [],
+        "worker_peak_bytes": 2073069056,
+        "disk_read_bytes": 12897103872,
+        "generation_seconds": 15.407833667006344,
+        "execution": "request",
+        "weight_read_policy": "system"
+      },
+      "progress": [
+        {
+          "stage": "request",
+          "step": 0,
+          "total": 8
+        },
+        {
+          "stage": "Encoding prompt",
+          "step": 0,
+          "total": 8
+        },
+        {
+          "stage": "Generating",
+          "step": 1,
+          "total": 8
+        },
+        {
+          "stage": "Generating",
+          "step": 2,
+          "total": 8
+        },
+        {
+          "stage": "Generating",
+          "step": 3,
+          "total": 8
+        },
+        {
+          "stage": "Generating",
+          "step": 4,
+          "total": 8
+        },
+        {
+          "stage": "Generating",
+          "step": 5,
+          "total": 8
+        },
+        {
+          "stage": "Generating",
+          "step": 6,
+          "total": 8
+        },
+        {
+          "stage": "Generating",
+          "step": 7,
+          "total": 8
+        },
+        {
+          "stage": "Generating",
+          "step": 8,
+          "total": 8
+        },
+        {
+          "stage": "Decoding image",
+          "step": 8,
+          "total": 8
+        }
+      ]
+    },
+    "lora-pose": {
+      "case": "lora-pose",
+      "status": "passed",
+      "image_mode": "RGB",
+      "size": [
+        512,
+        512
+      ],
+      "rgb_sha256": "fbd7e0fe69f613a9d6c401f617721c074ef87ae2e46fdb9f519bd679abaca024",
+      "seconds": 20.26547691700398,
+      "metrics": {
+        "model": "qwen-image-2.1-turbo",
+        "backend": "w8a8",
+        "memory_mode": "micro-fast",
+        "profile": "complete",
+        "steps": 8,
+        "seed": 42,
+        "stages": [
+          {
+            "peak_bytes": 2096285376,
+            "disk_read_bytes": 6315483136,
+            "stage": "request",
+            "elapsed_ms": 20148,
+            "mlx_peak_bytes": 988267784,
+            "wall_seconds": 20.24239645799389,
+            "progress": [
+              {
+                "stage": "Encoding prompt",
+                "step": 0,
+                "total": 8
+              },
+              {
+                "stage": "Generating",
+                "step": 1,
+                "total": 8
+              },
+              {
+                "stage": "Generating",
+                "step": 2,
+                "total": 8
+              },
+              {
+                "stage": "Generating",
+                "step": 3,
+                "total": 8
+              },
+              {
+                "stage": "Generating",
+                "step": 4,
+                "total": 8
+              },
+              {
+                "stage": "Generating",
+                "step": 5,
+                "total": 8
+              },
+              {
+                "stage": "Generating",
+                "step": 6,
+                "total": 8
+              },
+              {
+                "stage": "Generating",
+                "step": 7,
+                "total": 8
+              },
+              {
+                "stage": "Generating",
+                "step": 8,
+                "total": 8
+              },
+              {
+                "stage": "Decoding image",
+                "step": 8,
+                "total": 8
+              }
+            ]
+          }
+        ],
+        "preparation": [],
+        "worker_peak_bytes": 2096285376,
+        "disk_read_bytes": 6315483136,
+        "generation_seconds": 20.245647832984105,
+        "execution": "request",
+        "weight_read_policy": "system"
+      },
+      "progress": [
+        {
+          "stage": "request",
+          "step": 0,
+          "total": 8
+        },
+        {
+          "stage": "Encoding prompt",
+          "step": 0,
+          "total": 8
+        },
+        {
+          "stage": "Generating",
+          "step": 1,
+          "total": 8
+        },
+        {
+          "stage": "Generating",
+          "step": 2,
+          "total": 8
+        },
+        {
+          "stage": "Generating",
+          "step": 3,
+          "total": 8
+        },
+        {
+          "stage": "Generating",
+          "step": 4,
+          "total": 8
+        },
+        {
+          "stage": "Generating",
+          "step": 5,
+          "total": 8
+        },
+        {
+          "stage": "Generating",
+          "step": 6,
+          "total": 8
+        },
+        {
+          "stage": "Generating",
+          "step": 7,
+          "total": 8
+        },
+        {
+          "stage": "Generating",
+          "step": 8,
+          "total": 8
+        },
+        {
+          "stage": "Decoding image",
+          "step": 8,
+          "total": 8
+        }
+      ]
+    },
+    "turbo4": {
+      "case": "turbo4",
+      "status": "passed",
+      "image_mode": "RGB",
+      "size": [
+        512,
+        512
+      ],
+      "rgb_sha256": "763018260ea24191737b1977c3bb0f03e4a3fa2fe5853cd6b1d9895b3adc38c1",
+      "seconds": 10.642809082986787,
+      "metrics": {
+        "model": "qwen-image-2.1-turbo",
+        "backend": "w8a8",
+        "memory_mode": "micro-fast",
+        "profile": "turbo4",
+        "steps": 4,
+        "seed": 42,
+        "stages": [
+          {
+            "peak_bytes": 1904297256,
+            "disk_read_bytes": 384294912,
+            "stage": "request",
+            "elapsed_ms": 10522,
+            "mlx_peak_bytes": 820495624,
+            "wall_seconds": 10.619144625001354,
+            "progress": [
+              {
+                "stage": "Encoding prompt",
+                "step": 0,
+                "total": 4
+              },
+              {
+                "stage": "Generating",
+                "step": 1,
+                "total": 4
+              },
+              {
+                "stage": "Generating",
+                "step": 2,
+                "total": 4
+              },
+              {
+                "stage": "Generating",
+                "step": 3,
+                "total": 4
+              },
+              {
+                "stage": "Generating",
+                "step": 4,
+                "total": 4
+              },
+              {
+                "stage": "Decoding image",
+                "step": 4,
+                "total": 4
+              }
+            ]
+          }
+        ],
+        "preparation": [],
+        "worker_peak_bytes": 1904297256,
+        "disk_read_bytes": 384294912,
+        "generation_seconds": 10.621976459020516,
+        "execution": "request",
+        "weight_read_policy": "system"
+      },
+      "progress": [
+        {
+          "stage": "request",
+          "step": 0,
+          "total": 4
+        },
+        {
+          "stage": "Encoding prompt",
+          "step": 0,
+          "total": 4
+        },
+        {
+          "stage": "Generating",
+          "step": 1,
+          "total": 4
+        },
+        {
+          "stage": "Generating",
+          "step": 2,
+          "total": 4
+        },
+        {
+          "stage": "Generating",
+          "step": 3,
+          "total": 4
+        },
+        {
+          "stage": "Generating",
+          "step": 4,
+          "total": 4
+        },
+        {
+          "stage": "Decoding image",
+          "step": 4,
+          "total": 4
+        }
+      ]
+    },
+    "turbo3": {
+      "case": "turbo3",
+      "status": "passed",
+      "image_mode": "RGB",
+      "size": [
+        512,
+        512
+      ],
+      "rgb_sha256": "f7bbf12d756e74c37929cc60c77e3445e950c533b16987eb3274c8bfe176afb9",
+      "seconds": 8.90681533300085,
+      "metrics": {
+        "model": "qwen-image-2.1-turbo",
+        "backend": "w8a8",
+        "memory_mode": "micro-fast",
+        "profile": "turbo3",
+        "steps": 3,
+        "seed": 42,
+        "stages": [
+          {
+            "peak_bytes": 1932428728,
+            "disk_read_bytes": 7159808,
+            "stage": "request",
+            "elapsed_ms": 8787,
+            "mlx_peak_bytes": 820495624,
+            "wall_seconds": 8.881170125008794,
+            "progress": [
+              {
+                "stage": "Encoding prompt",
+                "step": 0,
+                "total": 3
+              },
+              {
+                "stage": "Generating",
+                "step": 1,
+                "total": 3
+              },
+              {
+                "stage": "Generating",
+                "step": 2,
+                "total": 3
+              },
+              {
+                "stage": "Generating",
+                "step": 3,
+                "total": 3
+              },
+              {
+                "stage": "Decoding image",
+                "step": 3,
+                "total": 3
+              }
+            ]
+          }
+        ],
+        "preparation": [],
+        "worker_peak_bytes": 1932428728,
+        "disk_read_bytes": 7159808,
+        "generation_seconds": 8.883948749979027,
+        "execution": "request",
+        "weight_read_policy": "system"
+      },
+      "progress": [
+        {
+          "stage": "request",
+          "step": 0,
+          "total": 3
+        },
+        {
+          "stage": "Encoding prompt",
+          "step": 0,
+          "total": 3
+        },
+        {
+          "stage": "Generating",
+          "step": 1,
+          "total": 3
+        },
+        {
+          "stage": "Generating",
+          "step": 2,
+          "total": 3
+        },
+        {
+          "stage": "Generating",
+          "step": 3,
+          "total": 3
+        },
+        {
+          "stage": "Decoding image",
+          "step": 3,
+          "total": 3
+        }
+      ]
+    },
+    "lightning-auto": {
+      "case": "lightning-auto",
+      "status": "passed",
+      "image_mode": "RGB",
+      "size": [
+        512,
+        512
+      ],
+      "rgb_sha256": "3b1000090a2b2a61e5c353f346eb6e32235e75ad143c8a90f43ab11c11fff7ed",
+      "seconds": 49.81813995799166,
+      "metrics": {
+        "model": "qwen-image-2.1-turbo",
+        "backend": "w8a8",
+        "memory_mode": "micro-fast",
+        "profile": "lightning",
+        "steps": 4,
+        "seed": 42,
+        "stages": [
+          {
+            "peak_bytes": 2841462152,
+            "disk_read_bytes": 8679354368,
+            "stage": "request",
+            "elapsed_ms": 49675,
+            "mlx_peak_bytes": 854109960,
+            "wall_seconds": 49.76594037501491,
+            "progress": [
+              {
+                "stage": "Encoding prompt",
+                "step": 0,
+                "total": 4
+              },
+              {
+                "stage": "Generating",
+                "step": 1,
+                "total": 4
+              },
+              {
+                "stage": "Generating",
+                "step": 2,
+                "total": 4
+              },
+              {
+                "stage": "Generating",
+                "step": 3,
+                "total": 4
+              },
+              {
+                "stage": "Generating",
+                "step": 4,
+                "total": 4
+              },
+              {
+                "stage": "Decoding image",
+                "step": 4,
+                "total": 4
+              }
+            ]
+          }
+        ],
+        "preparation": [],
+        "worker_peak_bytes": 2841462152,
+        "disk_read_bytes": 8679354368,
+        "generation_seconds": 49.76949562499067,
+        "execution": "request",
+        "weight_read_policy": "system"
+      },
+      "progress": [
+        {
+          "stage": "request",
+          "step": 0,
+          "total": 4
+        },
+        {
+          "stage": "Encoding prompt",
+          "step": 0,
+          "total": 4
+        },
+        {
+          "stage": "Generating",
+          "step": 1,
+          "total": 4
+        },
+        {
+          "stage": "Generating",
+          "step": 2,
+          "total": 4
+        },
+        {
+          "stage": "Generating",
+          "step": 3,
+          "total": 4
+        },
+        {
+          "stage": "Generating",
+          "step": 4,
+          "total": 4
+        },
+        {
+          "stage": "Decoding image",
+          "step": 4,
+          "total": 4
+        }
+      ]
+    },
+    "dmd2": {
+      "case": "dmd2",
+      "status": "passed",
+      "image_mode": "RGB",
+      "size": [
+        512,
+        512
+      ],
+      "rgb_sha256": "60847bb7544c061d37582eba48d9735df76092e5e762abec9e94ce421cfed3ea",
+      "seconds": 28.174628665990895,
+      "metrics": {
+        "model": "qwen-image-2.1-turbo",
+        "backend": "w8a8",
+        "memory_mode": "micro-fast",
+        "profile": "dmd2",
+        "steps": 2,
+        "seed": 42,
+        "stages": [
+          {
+            "peak_bytes": 2872821104,
+            "disk_read_bytes": 5788958720,
+            "stage": "request",
+            "elapsed_ms": 28058,
+            "mlx_peak_bytes": 887664392,
+            "wall_seconds": 28.150598084001103,
+            "progress": [
+              {
+                "stage": "Encoding prompt",
+                "step": 0,
+                "total": 2
+              },
+              {
+                "stage": "Generating",
+                "step": 1,
+                "total": 2
+              },
+              {
+                "stage": "Generating",
+                "step": 2,
+                "total": 2
+              },
+              {
+                "stage": "Decoding image",
+                "step": 2,
+                "total": 2
+              }
+            ]
+          }
+        ],
+        "preparation": [],
+        "worker_peak_bytes": 2872821104,
+        "disk_read_bytes": 5788958720,
+        "generation_seconds": 28.153846458997577,
+        "execution": "request",
+        "weight_read_policy": "system"
+      },
+      "progress": [
+        {
+          "stage": "request",
+          "step": 0,
+          "total": 2
+        },
+        {
+          "stage": "Encoding prompt",
+          "step": 0,
+          "total": 2
+        },
+        {
+          "stage": "Generating",
+          "step": 1,
+          "total": 2
+        },
+        {
+          "stage": "Generating",
+          "step": 2,
+          "total": 2
+        },
+        {
+          "stage": "Decoding image",
+          "step": 2,
+          "total": 2
+        }
+      ]
+    },
+    "standard-cfg": {
+      "case": "standard-cfg",
+      "status": "passed",
+      "image_mode": "RGB",
+      "size": [
+        512,
+        512
+      ],
+      "rgb_sha256": "8237a359ad3b14991b8a6b7ee9bcd286dc735d238930a59e531e861ddd7d52dc",
+      "seconds": 73.51314850000199,
+      "metrics": {
+        "model": "qwen-image-2.1-turbo",
+        "backend": "w8a8",
+        "memory_mode": "micro-fast",
+        "profile": "standard",
+        "steps": 3,
+        "seed": 42,
+        "stages": [
+          {
+            "peak_bytes": 2818704488,
+            "disk_read_bytes": 6097448960,
+            "stage": "request",
+            "elapsed_ms": 73396,
+            "mlx_peak_bytes": 821299776,
+            "wall_seconds": 73.49090183299268,
+            "progress": [
+              {
+                "stage": "Encoding prompt",
+                "step": 0,
+                "total": 3
+              },
+              {
+                "stage": "Generating",
+                "step": 1,
+                "total": 3
+              },
+              {
+                "stage": "Generating",
+                "step": 2,
+                "total": 3
+              },
+              {
+                "stage": "Generating",
+                "step": 3,
+                "total": 3
+              },
+              {
+                "stage": "Decoding image",
+                "step": 3,
+                "total": 3
+              }
+            ]
+          }
+        ],
+        "preparation": [],
+        "worker_peak_bytes": 2818704488,
+        "disk_read_bytes": 6097448960,
+        "generation_seconds": 73.49392300000181,
+        "execution": "request",
+        "weight_read_policy": "system"
+      },
+      "progress": [
+        {
+          "stage": "request",
+          "step": 0,
+          "total": 3
+        },
+        {
+          "stage": "Encoding prompt",
+          "step": 0,
+          "total": 3
+        },
+        {
+          "stage": "Generating",
+          "step": 1,
+          "total": 3
+        },
+        {
+          "stage": "Generating",
+          "step": 2,
+          "total": 3
+        },
+        {
+          "stage": "Generating",
+          "step": 3,
+          "total": 3
+        },
+        {
+          "stage": "Decoding image",
+          "step": 3,
+          "total": 3
+        }
+      ]
+    },
+    "turbo8-adapter": {
+      "case": "turbo8-adapter",
+      "status": "passed",
+      "image_mode": "RGB",
+      "size": [
+        512,
+        512
+      ],
+      "rgb_sha256": "3bc9ae08050cf0346868bd9dca8e6de218479190a66c79de06f3fea328d2e5bb",
+      "seconds": 104.23495920799905,
+      "metrics": {
+        "model": "qwen-image-2.1-turbo",
+        "backend": "w8a8",
+        "memory_mode": "micro-fast",
+        "profile": "turbo8",
+        "steps": 8,
+        "seed": 42,
+        "stages": [
+          {
+            "peak_bytes": 3762866792,
+            "disk_read_bytes": 16493883392,
+            "stage": "request",
+            "elapsed_ms": 100556,
+            "mlx_peak_bytes": 1774399240,
+            "wall_seconds": 100.64884520799387,
+            "progress": [
+              {
+                "stage": "Encoding prompt",
+                "step": 0,
+                "total": 8
+              },
+              {
+                "stage": "Generating",
+                "step": 1,
+                "total": 8
+              },
+              {
+                "stage": "Generating",
+                "step": 2,
+                "total": 8
+              },
+              {
+                "stage": "Generating",
+                "step": 3,
+                "total": 8
+              },
+              {
+                "stage": "Generating",
+                "step": 4,
+                "total": 8
+              },
+              {
+                "stage": "Generating",
+                "step": 5,
+                "total": 8
+              },
+              {
+                "stage": "Generating",
+                "step": 6,
+                "total": 8
+              },
+              {
+                "stage": "Generating",
+                "step": 7,
+                "total": 8
+              },
+              {
+                "stage": "Generating",
+                "step": 8,
+                "total": 8
+              },
+              {
+                "stage": "Decoding image",
+                "step": 8,
+                "total": 8
+              }
+            ]
+          }
+        ],
+        "preparation": [],
+        "worker_peak_bytes": 3762866792,
+        "disk_read_bytes": 16493883392,
+        "generation_seconds": 100.65186375001213,
+        "execution": "request",
+        "weight_read_policy": "system"
+      },
+      "progress": [
+        {
+          "stage": "request",
+          "step": 0,
+          "total": 8
+        },
+        {
+          "stage": "Encoding prompt",
+          "step": 0,
+          "total": 8
+        },
+        {
+          "stage": "Generating",
+          "step": 1,
+          "total": 8
+        },
+        {
+          "stage": "Generating",
+          "step": 2,
+          "total": 8
+        },
+        {
+          "stage": "Generating",
+          "step": 3,
+          "total": 8
+        },
+        {
+          "stage": "Generating",
+          "step": 4,
+          "total": 8
+        },
+        {
+          "stage": "Generating",
+          "step": 5,
+          "total": 8
+        },
+        {
+          "stage": "Generating",
+          "step": 6,
+          "total": 8
+        },
+        {
+          "stage": "Generating",
+          "step": 7,
+          "total": 8
+        },
+        {
+          "stage": "Generating",
+          "step": 8,
+          "total": 8
+        },
+        {
+          "stage": "Decoding image",
+          "step": 8,
+          "total": 8
+        }
+      ]
+    },
+    "resident": {
+      "case": "resident",
+      "status": "passed",
+      "image_mode": "RGB",
+      "size": [
+        512,
+        512
+      ],
+      "rgb_sha256": "9894a0f03a3971c4417fc44a591a1ae42bd34295c06745687d3cec5da240628b",
+      "seconds": 15.77447420801036,
+      "metrics": {
+        "model": "qwen-image-2.1-turbo",
+        "backend": "w8a8",
+        "memory_mode": "resident",
+        "profile": "complete",
+        "steps": 8,
+        "seed": 42,
+        "stages": [
+          {
+            "peak_bytes": 8995167120,
+            "disk_read_bytes": 8648056832,
+            "stage": "text",
+            "elapsed_ms": 1833,
+            "mlx_peak_bytes": 8777666648,
+            "wall_seconds": 1.9797448750177864,
+            "progress": []
+          },
+          {
+            "peak_bytes": 7960762032,
+            "disk_read_bytes": 7258468352,
+            "stage": "dit",
+            "elapsed_ms": 10383,
+            "mlx_peak_bytes": 8140151544,
+            "wall_seconds": 10.47689854199416,
+            "progress": [
+              {
+                "stage": "Denoising",
+                "step": 1,
+                "total": 8
+              },
+              {
+                "stage": "Denoising",
+                "step": 2,
+                "total": 8
+              },
+              {
+                "stage": "Denoising",
+                "step": 3,
+                "total": 8
+              },
+              {
+                "stage": "Denoising",
+                "step": 4,
+                "total": 8
+              },
+              {
+                "stage": "Denoising",
+                "step": 5,
+                "total": 8
+              },
+              {
+                "stage": "Denoising",
+                "step": 6,
+                "total": 8
+              },
+              {
+                "stage": "Denoising",
+                "step": 7,
+                "total": 8
+              },
+              {
+                "stage": "Denoising",
+                "step": 8,
+                "total": 8
+              }
+            ]
+          },
+          {
+            "peak_bytes": 1100006312,
+            "disk_read_bytes": 507920384,
+            "stage": "vae",
+            "elapsed_ms": 3184,
+            "mlx_peak_bytes": 964774274,
+            "wall_seconds": 3.2881727080093697,
+            "progress": []
+          }
+        ],
+        "preparation": [],
+        "worker_peak_bytes": 8995167120,
+        "disk_read_bytes": 16414445568,
+        "generation_seconds": 15.751376291998895,
+        "execution": "staged",
+        "weight_read_policy": "system"
+      },
+      "progress": [
+        {
+          "stage": "text",
+          "step": 0,
+          "total": 8
+        },
+        {
+          "stage": "dit",
+          "step": 0,
+          "total": 8
+        },
+        {
+          "stage": "Denoising",
+          "step": 1,
+          "total": 8
+        },
+        {
+          "stage": "Denoising",
+          "step": 2,
+          "total": 8
+        },
+        {
+          "stage": "Denoising",
+          "step": 3,
+          "total": 8
+        },
+        {
+          "stage": "Denoising",
+          "step": 4,
+          "total": 8
+        },
+        {
+          "stage": "Denoising",
+          "step": 5,
+          "total": 8
+        },
+        {
+          "stage": "Denoising",
+          "step": 6,
+          "total": 8
+        },
+        {
+          "stage": "Denoising",
+          "step": 7,
+          "total": 8
+        },
+        {
+          "stage": "Denoising",
+          "step": 8,
+          "total": 8
+        },
+        {
+          "stage": "vae",
+          "step": 0,
+          "total": 8
+        }
+      ]
+    },
+    "prefetch": {
+      "case": "prefetch",
+      "status": "passed",
+      "image_mode": "RGB",
+      "size": [
+        512,
+        512
+      ],
+      "rgb_sha256": "9894a0f03a3971c4417fc44a591a1ae42bd34295c06745687d3cec5da240628b",
+      "seconds": 12.946933166997042,
+      "metrics": {
+        "model": "qwen-image-2.1-turbo",
+        "backend": "w8a8",
+        "memory_mode": "prefetch",
+        "profile": "complete",
+        "steps": 8,
+        "seed": 42,
+        "stages": [
+          {
+            "peak_bytes": 494896208,
+            "disk_read_bytes": 5093036032,
+            "stage": "text",
+            "elapsed_ms": 1179,
+            "mlx_peak_bytes": 229565424,
+            "wall_seconds": 1.2704096660017967,
+            "progress": []
+          },
+          {
+            "peak_bytes": 851838056,
+            "disk_read_bytes": 38248448,
+            "stage": "dit",
+            "elapsed_ms": 8583,
+            "mlx_peak_bytes": 600254588,
+            "wall_seconds": 8.67274316700059,
+            "progress": [
+              {
+                "stage": "Denoising",
+                "step": 1,
+                "total": 8
+              },
+              {
+                "stage": "Denoising",
+                "step": 2,
+                "total": 8
+              },
+              {
+                "stage": "Denoising",
+                "step": 3,
+                "total": 8
+              },
+              {
+                "stage": "Denoising",
+                "step": 4,
+                "total": 8
+              },
+              {
+                "stage": "Denoising",
+                "step": 5,
+                "total": 8
+              },
+              {
+                "stage": "Denoising",
+                "step": 6,
+                "total": 8
+              },
+              {
+                "stage": "Denoising",
+                "step": 7,
+                "total": 8
+              },
+              {
+                "stage": "Denoising",
+                "step": 8,
+                "total": 8
+              }
+            ]
+          },
+          {
+            "peak_bytes": 1099039680,
+            "disk_read_bytes": 0,
+            "stage": "vae",
+            "elapsed_ms": 2850,
+            "mlx_peak_bytes": 964774274,
+            "wall_seconds": 2.9774162090034224,
+            "progress": []
+          }
+        ],
+        "preparation": [],
+        "worker_peak_bytes": 1099039680,
+        "disk_read_bytes": 5131284480,
+        "generation_seconds": 12.925713957985863,
+        "execution": "staged",
+        "weight_read_policy": "system"
+      },
+      "progress": [
+        {
+          "stage": "text",
+          "step": 0,
+          "total": 8
+        },
+        {
+          "stage": "dit",
+          "step": 0,
+          "total": 8
+        },
+        {
+          "stage": "Denoising",
+          "step": 1,
+          "total": 8
+        },
+        {
+          "stage": "Denoising",
+          "step": 2,
+          "total": 8
+        },
+        {
+          "stage": "Denoising",
+          "step": 3,
+          "total": 8
+        },
+        {
+          "stage": "Denoising",
+          "step": 4,
+          "total": 8
+        },
+        {
+          "stage": "Denoising",
+          "step": 5,
+          "total": 8
+        },
+        {
+          "stage": "Denoising",
+          "step": 6,
+          "total": 8
+        },
+        {
+          "stage": "Denoising",
+          "step": 7,
+          "total": 8
+        },
+        {
+          "stage": "Denoising",
+          "step": 8,
+          "total": 8
+        },
+        {
+          "stage": "vae",
+          "step": 0,
+          "total": 8
+        }
+      ]
+    },
+    "micro": {
+      "case": "micro",
+      "status": "passed",
+      "image_mode": "RGB",
+      "size": [
+        512,
+        512
+      ],
+      "rgb_sha256": "3beac238b3d9763ac200fc958d9e873823a1123a92712065e8a309d85ea3bf8e",
+      "seconds": 29.68893224999192,
+      "metrics": {
+        "model": "qwen-image-2.1-turbo",
+        "backend": "w8a8",
+        "memory_mode": "micro",
+        "profile": "complete",
+        "steps": 8,
+        "seed": 42,
+        "stages": [
+          {
+            "peak_bytes": 643187840,
+            "disk_read_bytes": 0,
+            "stage": "text",
+            "elapsed_ms": 1249,
+            "mlx_peak_bytes": 229565424,
+            "wall_seconds": 1.3421185000042897,
+            "progress": []
+          },
+          {
+            "peak_bytes": 547423072,
+            "disk_read_bytes": 0,
+            "stage": "dit",
+            "elapsed_ms": 19378,
+            "mlx_peak_bytes": 475724992,
+            "wall_seconds": 19.468085457978304,
+            "progress": [
+              {
+                "stage": "Denoising",
+                "step": 1,
+                "total": 8
+              },
+              {
+                "stage": "Denoising",
+                "step": 2,
+                "total": 8
+              },
+              {
+                "stage": "Denoising",
+                "step": 3,
+                "total": 8
+              },
+              {
+                "stage": "Denoising",
+                "step": 4,
+                "total": 8
+              },
+              {
+                "stage": "Denoising",
+                "step": 5,
+                "total": 8
+              },
+              {
+                "stage": "Denoising",
+                "step": 6,
+                "total": 8
+              },
+              {
+                "stage": "Denoising",
+                "step": 7,
+                "total": 8
+              },
+              {
+                "stage": "Denoising",
+                "step": 8,
+                "total": 8
+              }
+            ]
+          },
+          {
+            "peak_bytes": 379519624,
+            "disk_read_bytes": 0,
+            "stage": "vae",
+            "elapsed_ms": 8756,
+            "mlx_peak_bytes": 298579456,
+            "wall_seconds": 8.847845292009879,
+            "progress": []
+          }
+        ],
+        "preparation": [],
+        "worker_peak_bytes": 643187840,
+        "disk_read_bytes": 0,
+        "generation_seconds": 29.664993917016545,
+        "execution": "staged",
+        "weight_read_policy": "system"
+      },
+      "progress": [
+        {
+          "stage": "text",
+          "step": 0,
+          "total": 8
+        },
+        {
+          "stage": "dit",
+          "step": 0,
+          "total": 8
+        },
+        {
+          "stage": "Denoising",
+          "step": 1,
+          "total": 8
+        },
+        {
+          "stage": "Denoising",
+          "step": 2,
+          "total": 8
+        },
+        {
+          "stage": "Denoising",
+          "step": 3,
+          "total": 8
+        },
+        {
+          "stage": "Denoising",
+          "step": 4,
+          "total": 8
+        },
+        {
+          "stage": "Denoising",
+          "step": 5,
+          "total": 8
+        },
+        {
+          "stage": "Denoising",
+          "step": 6,
+          "total": 8
+        },
+        {
+          "stage": "Denoising",
+          "step": 7,
+          "total": 8
+        },
+        {
+          "stage": "Denoising",
+          "step": 8,
+          "total": 8
+        },
+        {
+          "stage": "vae",
+          "step": 0,
+          "total": 8
+        }
+      ]
+    },
+    "rgba": {
+      "case": "rgba",
+      "status": "passed",
+      "image_mode": "RGBA",
+      "size": [
+        512,
+        512
+      ],
+      "rgb_sha256": "4a836b4d691f3f629ae2c41ee7788bae92b6e39620f29e83d9916ff84536907c",
+      "seconds": 14.193819333973806,
+      "metrics": {
+        "model": "qwen-image-2.1-turbo",
+        "backend": "w8a8",
+        "memory_mode": "micro-fast",
+        "profile": "complete",
+        "steps": 8,
+        "seed": 42,
+        "stages": [
+          {
+            "peak_bytes": 1880999496,
+            "disk_read_bytes": 16384,
+            "stage": "request",
+            "elapsed_ms": 14047,
+            "mlx_peak_bytes": 824127032,
+            "wall_seconds": 14.159357041004114,
+            "progress": [
+              {
+                "stage": "Encoding prompt",
+                "step": 0,
+                "total": 8
+              },
+              {
+                "stage": "Generating",
+                "step": 1,
+                "total": 8
+              },
+              {
+                "stage": "Generating",
+                "step": 2,
+                "total": 8
+              },
+              {
+                "stage": "Generating",
+                "step": 3,
+                "total": 8
+              },
+              {
+                "stage": "Generating",
+                "step": 4,
+                "total": 8
+              },
+              {
+                "stage": "Generating",
+                "step": 5,
+                "total": 8
+              },
+              {
+                "stage": "Generating",
+                "step": 6,
+                "total": 8
+              },
+              {
+                "stage": "Generating",
+                "step": 7,
+                "total": 8
+              },
+              {
+                "stage": "Generating",
+                "step": 8,
+                "total": 8
+              },
+              {
+                "stage": "Decoding image",
+                "step": 8,
+                "total": 8
+              }
+            ]
+          }
+        ],
+        "preparation": [],
+        "worker_peak_bytes": 1880999496,
+        "disk_read_bytes": 16384,
+        "generation_seconds": 14.163235208019614,
+        "execution": "request",
+        "weight_read_policy": "system"
+      },
+      "progress": [
+        {
+          "stage": "request",
+          "step": 0,
+          "total": 8
+        },
+        {
+          "stage": "Encoding prompt",
+          "step": 0,
+          "total": 8
+        },
+        {
+          "stage": "Generating",
+          "step": 1,
+          "total": 8
+        },
+        {
+          "stage": "Generating",
+          "step": 2,
+          "total": 8
+        },
+        {
+          "stage": "Generating",
+          "step": 3,
+          "total": 8
+        },
+        {
+          "stage": "Generating",
+          "step": 4,
+          "total": 8
+        },
+        {
+          "stage": "Generating",
+          "step": 5,
+          "total": 8
+        },
+        {
+          "stage": "Generating",
+          "step": 6,
+          "total": 8
+        },
+        {
+          "stage": "Generating",
+          "step": 7,
+          "total": 8
+        },
+        {
+          "stage": "Generating",
+          "step": 8,
+          "total": 8
+        },
+        {
+          "stage": "Decoding image",
+          "step": 8,
+          "total": 8
+        }
+      ]
+    },
+    "edit-one": {
+      "case": "edit-one",
+      "status": "passed",
+      "image_mode": "RGB",
+      "size": [
+        512,
+        512
+      ],
+      "rgb_sha256": "32be839ee9a21fda924ccc3f39e1e3756267ddadbe9c4be24e6c4d4be22e79bb",
+      "seconds": 22.110463624994736,
+      "metrics": {
+        "model": "qwen-image-2.1-turbo",
+        "backend": "w8a8",
+        "memory_mode": "micro-fast",
+        "profile": "complete",
+        "steps": 8,
+        "seed": 42,
+        "stages": [
+          {
+            "peak_bytes": 2239530592,
+            "disk_read_bytes": 889671680,
+            "stage": "request",
+            "elapsed_ms": 21979,
+            "mlx_peak_bytes": 983060747,
+            "wall_seconds": 22.069731875002617,
+            "progress": [
+              {
+                "stage": "Encoding prompt",
+                "step": 0,
+                "total": 8
+              },
+              {
+                "stage": "Generating",
+                "step": 1,
+                "total": 8
+              },
+              {
+                "stage": "Generating",
+                "step": 2,
+                "total": 8
+              },
+              {
+                "stage": "Generating",
+                "step": 3,
+                "total": 8
+              },
+              {
+                "stage": "Generating",
+                "step": 4,
+                "total": 8
+              },
+              {
+                "stage": "Generating",
+                "step": 5,
+                "total": 8
+              },
+              {
+                "stage": "Generating",
+                "step": 6,
+                "total": 8
+              },
+              {
+                "stage": "Generating",
+                "step": 7,
+                "total": 8
+              },
+              {
+                "stage": "Generating",
+                "step": 8,
+                "total": 8
+              },
+              {
+                "stage": "Decoding image",
+                "step": 8,
+                "total": 8
+              }
+            ]
+          }
+        ],
+        "preparation": [],
+        "worker_peak_bytes": 2239530592,
+        "disk_read_bytes": 889671680,
+        "generation_seconds": 22.073326082987478,
+        "execution": "request",
+        "weight_read_policy": "system"
+      },
+      "progress": [
+        {
+          "stage": "request",
+          "step": 0,
+          "total": 8
+        },
+        {
+          "stage": "Encoding prompt",
+          "step": 0,
+          "total": 8
+        },
+        {
+          "stage": "Generating",
+          "step": 1,
+          "total": 8
+        },
+        {
+          "stage": "Generating",
+          "step": 2,
+          "total": 8
+        },
+        {
+          "stage": "Generating",
+          "step": 3,
+          "total": 8
+        },
+        {
+          "stage": "Generating",
+          "step": 4,
+          "total": 8
+        },
+        {
+          "stage": "Generating",
+          "step": 5,
+          "total": 8
+        },
+        {
+          "stage": "Generating",
+          "step": 6,
+          "total": 8
+        },
+        {
+          "stage": "Generating",
+          "step": 7,
+          "total": 8
+        },
+        {
+          "stage": "Generating",
+          "step": 8,
+          "total": 8
+        },
+        {
+          "stage": "Decoding image",
+          "step": 8,
+          "total": 8
+        }
+      ]
+    },
+    "edit-two": {
+      "case": "edit-two",
+      "status": "passed",
+      "image_mode": "RGB",
+      "size": [
+        512,
+        512
+      ],
+      "rgb_sha256": "bfa816868c05dc8368a89a69cbbeebd26896cf1a6b3399fc4d3a4ce73f3f96c6",
+      "seconds": 22.358790915983263,
+      "metrics": {
+        "model": "qwen-image-2.1-turbo",
+        "backend": "w8a8",
+        "memory_mode": "micro-fast",
+        "profile": "complete",
+        "steps": 8,
+        "seed": 42,
+        "stages": [
+          {
+            "peak_bytes": 2463287000,
+            "disk_read_bytes": 181460992,
+            "stage": "request",
+            "elapsed_ms": 22222,
+            "mlx_peak_bytes": 985949959,
+            "wall_seconds": 22.31556245899992,
+            "progress": [
+              {
+                "stage": "Encoding prompt",
+                "step": 0,
+                "total": 8
+              },
+              {
+                "stage": "Generating",
+                "step": 1,
+                "total": 8
+              },
+              {
+                "stage": "Generating",
+                "step": 2,
+                "total": 8
+              },
+              {
+                "stage": "Generating",
+                "step": 3,
+                "total": 8
+              },
+              {
+                "stage": "Generating",
+                "step": 4,
+                "total": 8
+              },
+              {
+                "stage": "Generating",
+                "step": 5,
+                "total": 8
+              },
+              {
+                "stage": "Generating",
+                "step": 6,
+                "total": 8
+              },
+              {
+                "stage": "Generating",
+                "step": 7,
+                "total": 8
+              },
+              {
+                "stage": "Generating",
+                "step": 8,
+                "total": 8
+              },
+              {
+                "stage": "Decoding image",
+                "step": 8,
+                "total": 8
+              }
+            ]
+          }
+        ],
+        "preparation": [],
+        "worker_peak_bytes": 2463287000,
+        "disk_read_bytes": 181460992,
+        "generation_seconds": 22.319010874984087,
+        "execution": "request",
+        "weight_read_policy": "system"
+      },
+      "progress": [
+        {
+          "stage": "request",
+          "step": 0,
+          "total": 8
+        },
+        {
+          "stage": "Encoding prompt",
+          "step": 0,
+          "total": 8
+        },
+        {
+          "stage": "Generating",
+          "step": 1,
+          "total": 8
+        },
+        {
+          "stage": "Generating",
+          "step": 2,
+          "total": 8
+        },
+        {
+          "stage": "Generating",
+          "step": 3,
+          "total": 8
+        },
+        {
+          "stage": "Generating",
+          "step": 4,
+          "total": 8
+        },
+        {
+          "stage": "Generating",
+          "step": 5,
+          "total": 8
+        },
+        {
+          "stage": "Generating",
+          "step": 6,
+          "total": 8
+        },
+        {
+          "stage": "Generating",
+          "step": 7,
+          "total": 8
+        },
+        {
+          "stage": "Generating",
+          "step": 8,
+          "total": 8
+        },
+        {
+          "stage": "Decoding image",
+          "step": 8,
+          "total": 8
+        }
+      ]
+    },
+    "edit-two-reversed": {
+      "case": "edit-two-reversed",
+      "status": "passed",
+      "image_mode": "RGB",
+      "size": [
+        512,
+        512
+      ],
+      "rgb_sha256": "032e8ee1d4dca36e4c402dce2a9f78a3cbd1851939e56a84144bc919f10eee13",
+      "seconds": 21.93055445799837,
+      "metrics": {
+        "model": "qwen-image-2.1-turbo",
+        "backend": "w8a8",
+        "memory_mode": "micro-fast",
+        "profile": "complete",
+        "steps": 8,
+        "seed": 42,
+        "stages": [
+          {
+            "peak_bytes": 2461517648,
+            "disk_read_bytes": 6354374656,
+            "stage": "request",
+            "elapsed_ms": 21788,
+            "mlx_peak_bytes": 985949959,
+            "wall_seconds": 21.88735049997922,
+            "progress": [
+              {
+                "stage": "Encoding prompt",
+                "step": 0,
+                "total": 8
+              },
+              {
+                "stage": "Generating",
+                "step": 1,
+                "total": 8
+              },
+              {
+                "stage": "Generating",
+                "step": 2,
+                "total": 8
+              },
+              {
+                "stage": "Generating",
+                "step": 3,
+                "total": 8
+              },
+              {
+                "stage": "Generating",
+                "step": 4,
+                "total": 8
+              },
+              {
+                "stage": "Generating",
+                "step": 5,
+                "total": 8
+              },
+              {
+                "stage": "Generating",
+                "step": 6,
+                "total": 8
+              },
+              {
+                "stage": "Generating",
+                "step": 7,
+                "total": 8
+              },
+              {
+                "stage": "Generating",
+                "step": 8,
+                "total": 8
+              },
+              {
+                "stage": "Decoding image",
+                "step": 8,
+                "total": 8
+              }
+            ]
+          }
+        ],
+        "preparation": [],
+        "worker_peak_bytes": 2461517648,
+        "disk_read_bytes": 6354374656,
+        "generation_seconds": 21.891141250001965,
+        "execution": "request",
+        "weight_read_policy": "system"
+      },
+      "progress": [
+        {
+          "stage": "request",
+          "step": 0,
+          "total": 8
+        },
+        {
+          "stage": "Encoding prompt",
+          "step": 0,
+          "total": 8
+        },
+        {
+          "stage": "Generating",
+          "step": 1,
+          "total": 8
+        },
+        {
+          "stage": "Generating",
+          "step": 2,
+          "total": 8
+        },
+        {
+          "stage": "Generating",
+          "step": 3,
+          "total": 8
+        },
+        {
+          "stage": "Generating",
+          "step": 4,
+          "total": 8
+        },
+        {
+          "stage": "Generating",
+          "step": 5,
+          "total": 8
+        },
+        {
+          "stage": "Generating",
+          "step": 6,
+          "total": 8
+        },
+        {
+          "stage": "Generating",
+          "step": 7,
+          "total": 8
+        },
+        {
+          "stage": "Generating",
+          "step": 8,
+          "total": 8
+        },
+        {
+          "stage": "Decoding image",
+          "step": 8,
+          "total": 8
+        }
+      ]
+    },
+    "variation": {
+      "case": "variation",
+      "status": "passed",
+      "image_mode": "RGB",
+      "size": [
+        512,
+        512
+      ],
+      "rgb_sha256": "10f8d8114e5e84bc17c81d4e5accb4b5cb42b7818a00a59696f96f6a7dc9c641",
+      "seconds": 10.163594541983912,
+      "metrics": {
+        "model": "qwen-image-2.1-turbo",
+        "backend": "w8a8",
+        "memory_mode": "micro-fast",
+        "profile": "complete",
+        "steps": 8,
+        "seed": 42,
+        "stages": [
+          {
+            "peak_bytes": 2082375120,
+            "disk_read_bytes": 199712768,
+            "stage": "request",
+            "elapsed_ms": 10028,
+            "mlx_peak_bytes": 979173760,
+            "wall_seconds": 10.122740332997637,
+            "progress": [
+              {
+                "stage": "Encoding prompt",
+                "step": 0,
+                "total": 8
+              },
+              {
+                "stage": "Generating",
+                "step": 1,
+                "total": 4
+              },
+              {
+                "stage": "Generating",
+                "step": 2,
+                "total": 4
+              },
+              {
+                "stage": "Generating",
+                "step": 3,
+                "total": 4
+              },
+              {
+                "stage": "Generating",
+                "step": 4,
+                "total": 4
+              },
+              {
+                "stage": "Decoding image",
+                "step": 4,
+                "total": 4
+              }
+            ]
+          }
+        ],
+        "preparation": [],
+        "worker_peak_bytes": 2082375120,
+        "disk_read_bytes": 199712768,
+        "generation_seconds": 10.126217208977323,
+        "execution": "request",
+        "weight_read_policy": "system"
+      },
+      "progress": [
+        {
+          "stage": "request",
+          "step": 0,
+          "total": 8
+        },
+        {
+          "stage": "Encoding prompt",
+          "step": 0,
+          "total": 8
+        },
+        {
+          "stage": "Generating",
+          "step": 1,
+          "total": 4
+        },
+        {
+          "stage": "Generating",
+          "step": 2,
+          "total": 4
+        },
+        {
+          "stage": "Generating",
+          "step": 3,
+          "total": 4
+        },
+        {
+          "stage": "Generating",
+          "step": 4,
+          "total": 4
+        },
+        {
+          "stage": "Decoding image",
+          "step": 4,
+          "total": 4
+        }
+      ]
+    },
+    "portable": {
+      "model": "qwen-image-2.1-turbo",
+      "backend": "portable",
+      "memory_mode": "micro-fast",
+      "profile": "complete",
+      "steps": 8,
+      "seed": 42,
+      "stages": [
+        {
+          "peak_bytes": 643974272,
+          "disk_read_bytes": 442368,
+          "stage": "text",
+          "elapsed_ms": 1221,
+          "mlx_peak_bytes": 229565424,
+          "wall_seconds": 1.3145768340036739,
+          "progress": []
+        },
+        {
+          "peak_bytes": 946078848,
+          "disk_read_bytes": 7416418304,
+          "stage": "dit",
+          "elapsed_ms": 19332,
+          "mlx_peak_bytes": 688133808,
+          "wall_seconds": 19.425852459011367,
+          "progress": [
+            {
+              "stage": "Denoising",
+              "step": 1,
+              "total": 8
+            },
+            {
+              "stage": "Denoising",
+              "step": 2,
+              "total": 8
+            },
+            {
+              "stage": "Denoising",
+              "step": 3,
+              "total": 8
+            },
+            {
+              "stage": "Denoising",
+              "step": 4,
+              "total": 8
+            },
+            {
+              "stage": "Denoising",
+              "step": 5,
+              "total": 8
+            },
+            {
+              "stage": "Denoising",
+              "step": 6,
+              "total": 8
+            },
+            {
+              "stage": "Denoising",
+              "step": 7,
+              "total": 8
+            },
+            {
+              "stage": "Denoising",
+              "step": 8,
+              "total": 8
+            }
+          ]
+        },
+        {
+          "peak_bytes": 717259424,
+          "disk_read_bytes": 60432384,
+          "stage": "vae",
+          "elapsed_ms": 3254,
+          "mlx_peak_bytes": 561755654,
+          "wall_seconds": 3.3588946670060977,
+          "progress": []
+        }
+      ],
+      "preparation": [],
+      "worker_peak_bytes": 946078848,
+      "disk_read_bytes": 7477293056,
+      "generation_seconds": 24.105210624984466,
+      "execution": "staged",
+      "weight_read_policy": "system"
+    },
+    "cancel": {
+      "status": "passed",
+      "after_first_step": true
+    },
+    "lightning-edit-static": {
+      "case": "lightning-edit-static",
+      "status": "passed",
+      "rgb_sha256": "8ead2aaa328329866716914a2f5dd239cc307a24983c6ed5440bc55500c0b0c8",
+      "metrics": {
+        "model": "qwen-image-2.1-turbo",
+        "backend": "w8a8",
+        "memory_mode": "micro-fast",
+        "profile": "lightning",
+        "steps": 4,
+        "seed": 42,
+        "stages": [
+          {
+            "peak_bytes": 3170600520,
+            "disk_read_bytes": 17452109824,
+            "stage": "request",
+            "elapsed_ms": 49752,
+            "mlx_peak_bytes": 1016680703,
+            "wall_seconds": 49.851222166005755,
+            "progress": [
+              {
+                "stage": "Encoding prompt",
+                "step": 0,
+                "total": 4
+              },
+              {
+                "stage": "Generating",
+                "step": 1,
+                "total": 4
+              },
+              {
+                "stage": "Generating",
+                "step": 2,
+                "total": 4
+              },
+              {
+                "stage": "Generating",
+                "step": 3,
+                "total": 4
+              },
+              {
+                "stage": "Generating",
+                "step": 4,
+                "total": 4
+              },
+              {
+                "stage": "Decoding image",
+                "step": 4,
+                "total": 4
+              }
+            ]
+          }
+        ],
+        "preparation": [],
+        "worker_peak_bytes": 3170600520,
+        "disk_read_bytes": 17452109824,
+        "generation_seconds": 49.85552700000699,
+        "execution": "request",
+        "weight_read_policy": "system"
+      },
+      "progress": [
+        {
+          "stage": "request",
+          "step": 0,
+          "total": 4
+        },
+        {
+          "stage": "Encoding prompt",
+          "step": 0,
+          "total": 4
+        },
+        {
+          "stage": "Generating",
+          "step": 1,
+          "total": 4
+        },
+        {
+          "stage": "Generating",
+          "step": 2,
+          "total": 4
+        },
+        {
+          "stage": "Generating",
+          "step": 3,
+          "total": 4
+        },
+        {
+          "stage": "Generating",
+          "step": 4,
+          "total": 4
+        },
+        {
+          "stage": "Decoding image",
+          "step": 4,
+          "total": 4
+        }
+      ]
+    },
+    "lightning-edit-auto": {
+      "case": "lightning-edit-auto",
+      "status": "passed",
+      "rgb_sha256": "bd00dbe49b32c0c434118f6ab457c6fa34626701320b362d1ddd6b14ef89ae06",
+      "metrics": {
+        "model": "qwen-image-2.1-turbo",
+        "backend": "w8a8",
+        "memory_mode": "micro-fast",
+        "profile": "lightning",
+        "steps": 4,
+        "seed": 42,
+        "stages": [
+          {
+            "peak_bytes": 3176400312,
+            "disk_read_bytes": 7162830848,
+            "stage": "request",
+            "elapsed_ms": 49571,
+            "mlx_peak_bytes": 1016680715,
+            "wall_seconds": 49.662850082997466,
+            "progress": [
+              {
+                "stage": "Encoding prompt",
+                "step": 0,
+                "total": 4
+              },
+              {
+                "stage": "Generating",
+                "step": 1,
+                "total": 4
+              },
+              {
+                "stage": "Generating",
+                "step": 2,
+                "total": 4
+              },
+              {
+                "stage": "Generating",
+                "step": 3,
+                "total": 4
+              },
+              {
+                "stage": "Generating",
+                "step": 4,
+                "total": 4
+              },
+              {
+                "stage": "Decoding image",
+                "step": 4,
+                "total": 4
+              }
+            ]
+          }
+        ],
+        "preparation": [],
+        "worker_peak_bytes": 3176400312,
+        "disk_read_bytes": 7162830848,
+        "generation_seconds": 49.66688979198807,
+        "execution": "request",
+        "weight_read_policy": "system"
+      },
+      "progress": [
+        {
+          "stage": "request",
+          "step": 0,
+          "total": 4
+        },
+        {
+          "stage": "Encoding prompt",
+          "step": 0,
+          "total": 4
+        },
+        {
+          "stage": "Generating",
+          "step": 1,
+          "total": 4
+        },
+        {
+          "stage": "Generating",
+          "step": 2,
+          "total": 4
+        },
+        {
+          "stage": "Generating",
+          "step": 3,
+          "total": 4
+        },
+        {
+          "stage": "Generating",
+          "step": 4,
+          "total": 4
+        },
+        {
+          "stage": "Decoding image",
+          "step": 4,
+          "total": 4
+        }
+      ]
+    },
+    "lightning-edit-stacked": {
+      "case": "lightning-edit-stacked",
+      "status": "passed",
+      "rgb_sha256": "e96c089f6e75771acdbdfd6ef717e4bf62f290f00e21e6dff9b6260150790de4",
+      "metrics": {
+        "model": "qwen-image-2.1-turbo",
+        "backend": "w8a8",
+        "memory_mode": "micro-fast",
+        "profile": "lightning",
+        "steps": 4,
+        "seed": 42,
+        "stages": [
+          {
+            "peak_bytes": 3339110056,
+            "disk_read_bytes": 6203068416,
+            "stage": "request",
+            "elapsed_ms": 51883,
+            "mlx_peak_bytes": 1184452875,
+            "wall_seconds": 51.97434179199627,
+            "progress": [
+              {
+                "stage": "Encoding prompt",
+                "step": 0,
+                "total": 4
+              },
+              {
+                "stage": "Generating",
+                "step": 1,
+                "total": 4
+              },
+              {
+                "stage": "Generating",
+                "step": 2,
+                "total": 4
+              },
+              {
+                "stage": "Generating",
+                "step": 3,
+                "total": 4
+              },
+              {
+                "stage": "Generating",
+                "step": 4,
+                "total": 4
+              },
+              {
+                "stage": "Decoding image",
+                "step": 4,
+                "total": 4
+              }
+            ]
+          }
+        ],
+        "preparation": [],
+        "worker_peak_bytes": 3339110056,
+        "disk_read_bytes": 6203068416,
+        "generation_seconds": 51.977685124991694,
+        "execution": "request",
+        "weight_read_policy": "system"
+      },
+      "progress": [
+        {
+          "stage": "request",
+          "step": 0,
+          "total": 4
+        },
+        {
+          "stage": "Encoding prompt",
+          "step": 0,
+          "total": 4
+        },
+        {
+          "stage": "Generating",
+          "step": 1,
+          "total": 4
+        },
+        {
+          "stage": "Generating",
+          "step": 2,
+          "total": 4
+        },
+        {
+          "stage": "Generating",
+          "step": 3,
+          "total": 4
+        },
+        {
+          "stage": "Generating",
+          "step": 4,
+          "total": 4
+        },
+        {
+          "stage": "Decoding image",
+          "step": 4,
+          "total": 4
+        }
+      ]
+    },
+    "extra-verification": {
+      "installed_package": "<LOCAL_HOME>/Projects/generate-image/outputs/qwen-library-integration/venv/lib/python3.13/site-packages/h3_image_mlx/__init__.py",
+      "status": "passed",
+      "h3_rgb_sha256": "e36333e6319536ba10bcdd459fd91e0f9b3d6a9485bac911cc48610e2d72e906",
+      "auto_strength_changes_output": true,
+      "stack_changes_output": true
+    }
+  }
+}

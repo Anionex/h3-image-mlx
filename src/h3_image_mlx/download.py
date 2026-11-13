@@ -38,7 +38,11 @@ def _download_file(client, url, dest, entry):
 
 
 def fetch(directory: Path, source="modelscope", *, precision="int8"):
-    manifest = manifest_for(precision)
+    return fetch_manifest(directory, manifest_for(precision), source)
+
+
+def fetch_manifest(directory: Path, manifest, source="modelscope"):
+    """Shared pinned-asset transport for model and adapter manifests."""
     if source not in ("modelscope", "huggingface"):
         raise ValueError(f"Unknown model source: {source}")
     directory = Path(directory).expanduser().resolve()

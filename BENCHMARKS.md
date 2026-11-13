@@ -1,5 +1,34 @@
 # Benchmarks
 
+## Qwen Image 2.1 Turbo uncached
+
+November 14, 2026; M5 Pro MacBook, 48 GB; Python 3.13, main package `0.1.0a5.dev0` and standalone native runtime `0.1.0a1`, both installed from wheels. Q8 model files and prepared W8A8 DiT were reused. No App or HTTP server is involved. Eight Turbo steps, seed 42, `micro-fast`; text encoding, DiT and VAE run in fresh isolated processes for every image.
+
+| Resolution | Trials | Median generation (s) | Full range (s) | Highest process peak (GB) | Median physical reads (GB) | Weight cache peak (bytes) |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| 512×512 | 3 | **16.94** | 16.37–21.17 | **0.846** | 64.11 | **0** |
+| 1024×1024 | 3 | **47.67** | 47.18–48.62 | **1.408** | 64.11 | **0** |
+
+- All six trials are retained, including the first after cache clearing. Runs are serial: three at 512², then three at 1024². RGB pixels match across all three repeats at each size.
+- Timing includes worker startup, weight loading, text encoding, denoising, VAE decoding and conversion to a PIL image. Saving the final PNG and one-time weight preparation are excluded.
+- Memory is the maximum lifetime physical footprint of any worker, in decimal GB. Whole-system VM/pressure/swap samples are retained separately; this column is not a minimum Mac RAM requirement.
+- The bounded reader aligns offset, length and destination, uses `F_NOCACHE` and disables read-ahead. Cache clearing happens once before the series; subsequent runs still physically read the weights. A cache purge alone is not the acceptance criterion.
+- The runner samples residency of original and prepared weight files and checks each stage's physical disk reads against aligned requested bytes. Acceptance permits at most 16 MiB file residency, requires physical reads ≥95% of aligned reads and zero reader errors. **Observed residency was zero for every sample and all stages passed.** Explicit prefetch/read buffers are included in worker footprint.
+- These numbers cover plain Turbo text-to-image. LoRA, editing, custom sampling and private pipe requests use the complete-request path and have different memory behavior.
+
+[Configuration and exact prompt](benchmarks/qwen/2026-11-14/configuration.json) · [All run metrics and verification](benchmarks/qwen/2026-11-14/runs.json) · [Summary](benchmarks/qwen/2026-11-14/summary.json) · [Reproduction runner](benchmarks/qwen/run.py)
+
+```bash
+sudo -v
+python benchmarks/qwen/run.py --models /path/to/qwen-models \
+  --prepared /path/to/prepared --output ./qwen-uncached-results \
+  --sizes 512 1024 --modes micro-fast --trials 3
+```
+
+## Historical H3 measurements: system caching allowed
+
+The H3 measurements below allowed macOS file caching. Their low process footprint and latency describe that cache policy; they remain as supplemental comparisons.
+
 The November 12 test compares resident inference with streaming, prefetch and asynchronous evaluation. The November 11 **same-machine ComfyUI comparison on an M5 Pro MacBook (48 GB)** follows: **11 groups, 33 measured generations and 11 warmups**. Earlier M5 Pro runs and independent community results remain below as supplementary data.
 
 ## Streaming prefetch and async
