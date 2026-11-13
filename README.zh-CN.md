@@ -12,35 +12,24 @@
 [![需要 Python 3.11 或更高版本](https://img.shields.io/static/v1?label=Python&message=3.11%2B&color=3776AB&style=flat-square&logo=python&logoColor=white)](pyproject.toml)
 [![软件包许可：Apache-2.0 AND MIT](https://img.shields.io/static/v1?label=License&message=Apache-2.0%20AND%20MIT&color=326790&style=flat-square)](pyproject.toml)
 
-[H3 快速开始](#生成第一张-h3-图片) · [Qwen](#qwen-image-21-turbo) · [参考图编辑](#用参考图编辑) · [推理原理](#推理原理) · [实测数据](#实测数据) · [使用指南](docs/USAGE.zh-CN.md) · [性能调优](docs/PERFORMANCE.zh-CN.md)
+[快速开始](#生成第一张图) · [参考图编辑](#用参考图编辑) · [推理原理](#推理原理) · [实测数据](#实测数据) · [使用指南](docs/USAGE.zh-CN.md) · [性能调优](docs/PERFORMANCE.zh-CN.md)
 
-在 Apple Silicon Mac 本地运行 **MiniMax H3 Image 与 Qwen Image 2.1 Turbo**。统一命令行和 Python API，分别管理模型采样、LoRA 与内存策略。H3 使用独立的 Python/MLX 阶段，Qwen 提供可选的独立原生运行时。[Qwen 安装与示例](docs/QWEN.zh-CN.md) · [架构](docs/ARCHITECTURE.md)
+在 Apple Silicon Mac 上用 MiniMax H3 Image 生图、编辑图片。优化本地推理速度，以约 7 GB 的推理进程峰值内存生成 4K 图像；提供命令行和 Python API，开箱即用。
 
 ## 亮点
 
-- **Apple Silicon 原生推理。** 基于 MLX，充分利用 Mac 算力，在 Mac 本地运行 H3 Image 与 Qwen Image 2.1 Turbo，支持文生图和有序多图编辑。
+- **Apple Silicon 原生推理。** 基于 MLX，充分利用 Mac 算力，在 Mac 本地运行 H3 Image，支持文生图和多图编辑。
 - **W8A8 量化与 Metal 加速。** 降低权重内存占用，提供通用 MLX 推理路径，并在支持的芯片上使用 W8A8 Metal TensorOps 加速。M1–M4 兼容。
 - **分阶段推理，按需分块加载。** 各阶段通过独立进程释放内存，去噪权重可逐块读取，大大减少峰值内存占用，为其他应用留出更多内存。
 - **分块预读，读取与计算重叠。** GPU 计算当前块时提前读取下一块权重，在保持低内存占用的同时减少等待。[开启预读与异步计算](#推荐开启分块推理加速)
 
-Qwen 还通过明确的配置接口开放 App 引擎的 LoRA 叠加、采样预设、CFG、图生图、进度和取消。[Qwen 能力与用法](docs/QWEN.zh-CN.md)
+作为参考，在 1024×1024 同机实测中，开启两个开关的分块推理**与常驻速度基本持平**：**23.61 秒 vs 23.63 秒**，实测最高进程峰值从 **21.18 GB 降至 3.23 GB，减少约 85%**，输出逐像素一致。[测试条件与完整数据](#分块推理达到常驻速度)
 
 ### 实测数据
 
-#### Qwen Image 2.1 Turbo：已验证绕过权重文件缓存
+#### 分块推理达到常驻速度
 
-M5 Pro 48 GB，八步，`micro-fast`，每种尺寸完整生成三次。文本编码、去噪和解码全程绕过 macOS 权重文件缓存。
-
-| 分辨率 | 整图耗时中位数 | 实测最高进程峰值 | 权重文件缓存 |
-| --- | ---: | ---: | ---: |
-| 512×512 | **16.94 秒** | **0.85 GB** | 0 字节 |
-| 1024×1024 | **47.67 秒** | **1.41 GB** | 0 字节 |
-
-<sub>包含清缓存后的首轮，保留全部轮次。峰值取各推理子进程的最高 physical footprint，不是整机内存。每张图实际读取 64.11 GB，预处理权重已提前生成。[条件与全部轮次](BENCHMARKS.md#qwen-image-21-turbo-uncached) · [原始 JSON](benchmarks/qwen/2026-11-14/summary.json)</sub>
-
-#### 历史 H3 数据：允许系统文件缓存
-
-M5 Pro 48 GB，`0.1.0a3`，1024×1024，相同权重、提示词和 seed，原版六步采样，不使用编码缓存。**这些历史 H3 测试允许 macOS 文件缓存。**
+M5 Pro 48 GB，`0.1.0a3`，1024×1024，相同权重、提示词和 seed，原版六步采样，不使用编码缓存。
 
 | 模式 | 整图耗时中位数 | 实测最高进程峰值 |
 | --- | ---: | ---: |
@@ -52,7 +41,7 @@ M5 Pro 48 GB，`0.1.0a3`，1024×1024，相同权重、提示词和 seed，原�
 
 #### 同机受控对比
 
-以下历史 H3 对比允许系统文件缓存。同一台 M5 Pro MacBook（48 GB），使用同一份权重、茶壶提示词、初始噪声和六步时间表；每组预热一次，正式测量三次。
+同一台 M5 Pro MacBook（48 GB），使用同一份权重、茶壶提示词、初始噪声和六步时间表；每组预热一次，正式测量三次。
 
 | 分辨率 | MLX DiT 模式 | ComfyUI 耗时（秒） | MLX 耗时（秒） | 速度倍数 | ComfyUI 峰值（GB） | MLX 峰值（GB） |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
@@ -84,28 +73,7 @@ M5 Pro 48 GB，`0.1.0a3`，1024×1024，相同权重、提示词和 seed，原�
 
 使用 H3 Image MLX 本地生成，展示美食、野生动物、产品摄影、建筑、插画和 4K 修表师人像。点击拼图可查看完整尺寸。
 
-## Qwen Image 2.1 Turbo
-
-`0.1.0a5` 已提供 Qwen 支持。一次安装主包与独立运行时（Apple Silicon，macOS 26.2+）：
-
-```bash
-python -m pip install 'h3-image-mlx[qwen]==0.1.0a5'
-```
-
-```python
-from h3_image_mlx import generate, QwenOptions, Lora
-
-image = generate(
-    "白色桌面上的红色陶瓷茶壶。",
-    model="qwen-image-2.1-turbo", models="./qwen-models",
-    qwen=QwenOptions(memory_mode="micro-fast", loras=(Lora("style.safetensors", 0.7),)),
-)
-image.save("teapot.png")
-```
-
-支持十张有序参考图、独立强度的 LoRA、Turbo 3/4/8 步及 Lightning/DMD2 预设、CFG/负向提示词、图生图和 RGBA 输出；此次不包含提示词增强。[安装、下载、CLI 与 Python 示例](docs/QWEN.zh-CN.md)。
-
-## 生成第一张 H3 图片
+## 生成第一张图
 
 `0.1.0a4` 还支持 **未量化的 BF16 DiT 和文本编码器权重**，保留 AdaLN 裁剪和分阶段分块推理。使用 `--precision bf16` 选择，默认仍为 INT8。[BF16 下载与使用](docs/USAGE.zh-CN.md#bf16-权重)
 
@@ -114,7 +82,7 @@ image.save("teapot.png")
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install 'h3-image-mlx==0.1.0a5'
+python -m pip install 'h3-image-mlx==0.1.0a4'
 
 h3-image-mlx fetch --models ./models
 h3-image-mlx generate --models ./models --output teapot.png \
@@ -125,12 +93,12 @@ h3-image-mlx generate --models ./models --output teapot.png \
 
 ## 推荐开启分块推理加速
 
-**使用 `--dit-mode stream` 时，推荐同时开启权重预读和异步计算，减少加载权重时的等待。两个开关默认关闭。** 原版六步采样保持不变；早期允许系统文件缓存的 H3 1024×1024 测试与常驻速度基本持平，进程峰值减少约 85%。[同机实测](#历史-h3-数据允许系统文件缓存) · [贡献者实测](docs/PERFORMANCE.zh-CN.md#贡献者实测)
+**使用 `--dit-mode stream` 时，推荐同时开启权重预读和异步计算，减少加载权重时的等待。两个开关默认关闭。** 原版六步采样保持不变；本次 1024×1024 实测与常驻速度基本持平，进程峰值减少约 85%。[同机实测](#分块推理达到常驻速度) · [贡献者实测](docs/PERFORMANCE.zh-CN.md#贡献者实测)
 
 这些开关从 `0.1.0a2` 开始提供；升级后在单次命令中开启：
 
 ```bash
-python -m pip install --upgrade 'h3-image-mlx==0.1.0a5'
+python -m pip install --upgrade 'h3-image-mlx==0.1.0a4'
 H3_ASYNC=1 H3_PREFETCH=1 h3-image-mlx generate \
   --models ./models --dit-mode stream --output teapot.png \
   --prompt 'A yellow enamel teapot and a white cup on a blue wooden table.'
@@ -154,7 +122,7 @@ h3-image-mlx generate --models ./models --output edit.png \
 
 ## 推理原理
 
-H3 管线从三个层面降低内存占用：模型阶段之间分开加载，去噪过程中按需读取权重，图像解码时分块处理。
+管线从三个层面降低内存占用：模型阶段之间分开加载，去噪过程中按需读取权重，图像解码时分块处理。
 
 ![H3 Image MLX 推理流程：编码提示词、按块读取去噪权重、重叠分块解码图像。每个阶段完成后释放模型内存，再进入下一阶段。](assets/how-it-works.jpg)
 
@@ -173,8 +141,6 @@ M5/M6 默认选择 W8A8 Metal TensorOps，M1–M4 使用通用 MLX 后端。需�
 
 | 文档 | 内容 |
 | --- | --- |
-| [Qwen 指南](docs/QWEN.zh-CN.md) | 安装、LoRA、预设、编辑、内存模式与运行时构建 |
-| [架构](docs/ARCHITECTURE.md) | 公共请求、模型适配器与独立推理进程 |
 | [使用指南](docs/USAGE.zh-CN.md) | 命令行参数、参考图编辑、Python API 与已有权重 |
 | [性能调优](docs/PERFORMANCE.zh-CN.md) | 推荐的分块加速开关、硬件模式、编码缓存与性能分析 |
 | [实测数据](BENCHMARKS.md) | 耗时、内存、测试环境与原始 JSON |

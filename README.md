@@ -17,35 +17,24 @@
 
 
 
-[H3 quick start](#generate-your-first-h3-image) · [Qwen](#qwen-image-21-turbo) · [Image editing](#edit-with-reference-images) · [How it works](#how-it-works) · [Benchmarks](#benchmark-results) · [Usage](docs/USAGE.md) · [Performance](docs/PERFORMANCE.md)
+[Quick start](#generate-your-first-image) · [Image editing](#edit-with-reference-images) · [How it works](#how-it-works) · [Benchmarks](#benchmark-results) · [Usage](docs/USAGE.md) · [Performance](docs/PERFORMANCE.md)
 
-Generate and edit images locally on Apple Silicon with **MiniMax H3 Image and Qwen Image 2.1 Turbo**. One CLI and Python API, with model-specific sampling, LoRA, and memory policies. H3 uses isolated Python/MLX stages; Qwen adds an optional standalone native runtime. [Qwen setup and examples](docs/QWEN.md) · [Architecture](docs/ARCHITECTURE.md)
+Generate and edit images on an Apple Silicon Mac with MiniMax H3 Image. Optimized for fast inference, with 4K generation using around 7 GB of peak inference-process memory. Available through a CLI and Python API, ready to use out of the box.
 
 ## Highlights
 
-- **Native Apple Silicon inference.** Built on MLX to take advantage of your Mac's compute capabilities, H3 Image and Qwen Image 2.1 Turbo run locally with text-to-image generation and ordered multi-image editing.
+- **Native Apple Silicon inference.** Built on MLX to take advantage of your Mac's compute capabilities, H3 Image runs locally with text-to-image generation and multi-image editing.
 - **W8A8 quantization and Metal acceleration.** Reduce weight memory usage with a portable MLX inference path, plus W8A8 Metal TensorOps acceleration on supported chips. Compatible with M1–M4.
 - **Staged inference with on-demand block loading.** Each stage runs in a separate process to release its memory on completion. Denoiser weights can be read one block at a time, greatly reducing peak memory usage and leaving more room for other apps.
 - **Overlap weight reads with GPU computation.** Prefetch the next block while evaluating the current one, keeping streaming memory low and reducing time spent waiting for weights. [Enable prefetch and async](#recommended-streaming-acceleration)
 
-Qwen also exposes the desktop engine’s LoRA stacks, sampling presets, CFG, image-to-image, progress and cancellation through typed options. [Qwen capabilities and usage](docs/QWEN.md)
+In our 1024×1024 same-machine test, streaming with both switches **matched resident-mode speed**: **23.61 s vs 23.63 s**, with the highest measured process peak falling from **21.18 GB to 3.23 GB — about 85% lower**. Outputs matched pixel for pixel. [Test conditions and results](#streaming-at-resident-speed)
 
 ### Benchmark results
 
-#### Qwen Image 2.1 Turbo: verified uncached weight reads
+#### Streaming at resident speed
 
-M5 Pro 48 GB, eight steps, `micro-fast`, three complete generations per size. The benchmark bypasses the macOS weight-file cache throughout text encoding, denoising and decoding.
-
-| Resolution | Median generation time | Highest process peak | Weight-file cache |
-| --- | ---: | ---: | ---: |
-| 512×512 | **16.94 s** | **0.85 GB** | 0 bytes |
-| 1024×1024 | **47.67 s** | **1.41 GB** | 0 bytes |
-
-<sub>All trials included, including the first after cache clearing. Peak is the largest worker physical footprint, not total system RAM. Each generation physically read 64.11 GB; prepared weights already existed. [Conditions and all trials](BENCHMARKS.md#qwen-image-21-turbo-uncached) · [Source JSON](benchmarks/qwen/2026-11-14/summary.json)</sub>
-
-#### Earlier H3 results with system file caching
-
-M5 Pro 48 GB, version `0.1.0a3`, 1024×1024, identical weights, prompt and seed, original six-step sampler, no embedding cache. **These historical H3 runs allowed macOS file caching.**
+M5 Pro 48 GB, version `0.1.0a3`, 1024×1024, identical weights, prompt and seed, original six-step sampler, no embedding cache.
 
 | Mode | Median generation time | Highest process peak |
 | --- | ---: | ---: |
@@ -57,7 +46,7 @@ M5 Pro 48 GB, version `0.1.0a3`, 1024×1024, identical weights, prompt and seed,
 
 #### Same-machine controlled comparison
 
-This historical H3 comparison allowed system file caching. The same M5 Pro MacBook (48 GB), weight files, teapot prompt, initial noise and six-step sigma grid. Each group has one warmup and three measured generations.
+The same M5 Pro MacBook (48 GB), weight files, teapot prompt, initial noise and six-step sigma grid. Each group has one warmup and three measured generations.
 
 | Resolution | MLX DiT mode | ComfyUI time (s) | MLX time (s) | Speed ratio | ComfyUI peak (GB) | MLX peak (GB) |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
@@ -89,28 +78,7 @@ This compares complete pipelines: ComfyUI's default text encoder runs on CPU; ML
 
 Generated locally with H3 Image MLX: food, wildlife, product photography, architecture, illustration and a 4K watchmaker portrait. Click the collage to view it at full size.
 
-## Qwen Image 2.1 Turbo
-
-Available in `0.1.0a5`. Install Qwen and its standalone runtime together (Apple Silicon, macOS 26.2+):
-
-```bash
-python -m pip install 'h3-image-mlx[qwen]==0.1.0a5'
-```
-
-```python
-from h3_image_mlx import generate, QwenOptions, Lora
-
-image = generate(
-    "A red ceramic teapot on a white tabletop.",
-    model="qwen-image-2.1-turbo", models="./qwen-models",
-    qwen=QwenOptions(memory_mode="micro-fast", loras=(Lora("style.safetensors", 0.7),)),
-)
-image.save("teapot.png")
-```
-
-Use up to ten ordered references, independently scaled LoRAs, Turbo 3/4/8-step or Lightning/DMD2 presets, CFG and negative prompts, variation and RGBA output. Prompt enhancement is outside this interface. [Installation, downloads, CLI and Python examples](docs/QWEN.md).
-
-## Generate your first H3 image
+## Generate your first image
 
 Version `0.1.0a4` also supports **unquantized BF16 DiT and text-encoder weights**, retaining AdaLN pruning and staged streaming. Select `--precision bf16`; INT8 remains the default. [BF16 download and usage](docs/USAGE.md#bf16-weights)
 
@@ -119,7 +87,7 @@ Use Python 3.11 or later on a Mac with Metal. Allow 49.30 GB of disk space for a
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install 'h3-image-mlx==0.1.0a5'
+python -m pip install 'h3-image-mlx==0.1.0a4'
 
 h3-image-mlx fetch --models ./models
 h3-image-mlx generate --models ./models --output teapot.png \
@@ -130,12 +98,12 @@ This writes a 1024×1024 RGB PNG. Set `--width` and `--height` to change the siz
 
 ## Recommended streaming acceleration
 
-**Use weight prefetch and asynchronous evaluation together with `--dit-mode stream` to reduce weight-loading waits. Both switches are off by default.** The six-step sampler stays unchanged. Our earlier cache-enabled 1024×1024 H3 test matched resident-mode speed with about 85% less peak process memory. [Same-machine results](#earlier-h3-results-with-system-file-caching) · [Contributor measurements](docs/PERFORMANCE.md#reported-results)
+**Use weight prefetch and asynchronous evaluation together with `--dit-mode stream` to reduce weight-loading waits. Both switches are off by default.** The six-step sampler stays unchanged. Our 1024×1024 test matched resident-mode speed with about 85% less peak process memory. [Same-machine results](#streaming-at-resident-speed) · [Contributor measurements](docs/PERFORMANCE.md#reported-results)
 
 Available from `0.1.0a2`; upgrade and enable both switches for this command:
 
 ```bash
-python -m pip install --upgrade 'h3-image-mlx==0.1.0a5'
+python -m pip install --upgrade 'h3-image-mlx==0.1.0a4'
 H3_ASYNC=1 H3_PREFETCH=1 h3-image-mlx generate \
   --models ./models --dit-mode stream --output teapot.png \
   --prompt 'A yellow enamel teapot and a white cup on a blue wooden table.'
@@ -159,7 +127,7 @@ You can pass up to 16 references. On an M5 Pro, we completed one- and two-refere
 
 ## How it works
 
-The H3 pipeline reduces memory use at three levels: between model stages, within the denoiser, and during image decoding.
+The pipeline reduces memory use at three levels: between model stages, within the denoiser, and during image decoding.
 
 ![H3 Image MLX pipeline: encode the prompt, stream denoiser weights, then decode overlapping image tiles. Each stage releases its model memory before the next starts.](assets/how-it-works.jpg)
 
@@ -178,8 +146,6 @@ M5/M6 select W8A8 Metal TensorOps by default; M1–M4 use the portable MLX backe
 
 | Document | Contents |
 | --- | --- |
-| [Qwen guide](docs/QWEN.md) | Qwen setup, LoRA, presets, editing, memory modes and runtime build |
-| [Architecture](docs/ARCHITECTURE.md) | Public requests, model adapters and isolated workers |
 | [Usage guide](docs/USAGE.md) | CLI parameters, reference editing, Python API and existing weights |
 | [Performance guide](docs/PERFORMANCE.md) | Recommended streaming switches, hardware modes, embedding cache and profiling |
 | [Benchmarks](BENCHMARKS.md) | Measurements, environments and source JSON |
