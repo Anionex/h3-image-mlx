@@ -10,7 +10,7 @@ int main(int argc,char** argv){@autoreleasepool{
  auto data=[&](int r,int c,MPSDataType type,int bytes,bool transpose){
    auto desc=[MPSNDArrayDescriptor descriptorWithDataType:type shape:@[@(r),@(c)]];
    if(transpose)[desc transposeDimension:0 withDimension:1];
-   auto buf=[dev newBufferWithLength:size_t(r)*c*bytes options:MTLResourceStorageModeShared];
+   auto buf=[dev newBufferWithLength:((size_t(r)*c*bytes+255)&~size_t(255)) options:MTLResourceStorageModeShared];
    void *p=buf.contents;
    for(size_t i=0;i<size_t(r)*c;i++){
       int v=i%7-3;
