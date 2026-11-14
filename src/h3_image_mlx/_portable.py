@@ -4,6 +4,7 @@ from functools import cache
 from pathlib import Path
 
 import mlx.core as mx
+import numpy as np
 
 # An int8 dot product of length 1024 has an absolute sum <= 2**24, so its
 # integer partial sums are exactly representable in float32. H3's longest
@@ -43,6 +44,9 @@ def portable_matmul(xq, weight, xs, scale, output_dtype):
             output_dtypes=[output_dtype],
         )[0]
 
+    if 512 < rows <= 1536 and aligned and mx.default_device() == mx.Device(mx.gpu):
+        return wide_matmul(xq, weight, row_scale, channel_scale, output_dtype)
+
     row_tiles = []
     for r in range(0, rows, _TILE):
         columns = []
@@ -77,3 +81,41 @@ def portable_matmul(xq, weight, xs, scale, output_dtype):
         mx.eval(row)
         row_tiles.append(row)
     return mx.concatenate(row_tiles, axis=0) if len(row_tiles) > 1 else row_tiles[0]
+
+
+def wide_matmul(xq, weight, row_scale, channel_scale, output_dtype):
+    rows, width = xq.shape
+    channels = weight.shape[0]
+    # Group by the actual activation magnitudes. Every sub-dot has an
+    # absolute sum <= 2**24 for every possible signed 8-bit weight.
+    x = xq.astype(mx.int32)
+    group = 1024
+    pad = (-width) % group
+    abs_x = mx.abs(x)
+    if pad:
+        abs_x = mx.pad(abs_x, [(0, 0), (0, pad)])
+    norms = np.array(abs_x.reshape(rows, -1, group).sum(2).max(0))
+    spans = []
+    start = total = 0
+    for i, norm in enumerate(norms):
+        if total + int(norm) > (1 << 17):
+            spans.append((start, i * group))
+            start, total = i * group, 0
+        total += int(norm)
+    spans.append((start, width))
+    a = xq.astype(mx.float32)
+    columns = []
+    for c in range(0, channels, 2048):
+        b = weight[c:c+2048]
+        accum = None
+        for begin, end in spans:
+            dot = a[:,begin:end] @ b[:,begin:end].astype(mx.float32).T
+            if len(spans) == 1:
+                accum = dot
+            else:
+                partial = dot.astype(mx.int32)
+                accum = partial if accum is None else accum + partial
+        y = (accum.astype(mx.float32) * row_scale * channel_scale[c:c+2048]).astype(output_dtype)
+        mx.eval(y)
+        columns.append(y)
+    return mx.concatenate(columns,1)
