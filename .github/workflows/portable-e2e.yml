@@ -1,0 +1,56 @@
+name: Portable Metal end-to-end verification
+on:
+  push:
+    branches: [perf/portable-metal4]
+    paths: [.github/workflows/portable-e2e.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  render:
+    runs-on: macos-26
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: python -m pip install .
+      - name: Verify integer Metal support and disk budget
+        run: |
+          python - <<'PY'
+          from h3_image_mlx._portable import _has_integer_tensor_ops
+          import shutil,os
+          import mlx.core as mx
+          print(mx.device_info(),flush=True)
+          assert shutil.disk_usage(os.environ['RUNNER_TEMP']).free > 55_000_000_000
+          assert _has_integer_tensor_ops()
+          PY
+      - name: Fetch pinned weights
+        run: |
+          h3-image-mlx fetch --source modelscope --models "$RUNNER_TEMP/h3-models" || h3-image-mlx fetch --source huggingface --models "$RUNNER_TEMP/h3-models"
+      - name: Prepare strict I/O counters and baseline
+        run: |
+          D=benchmarks/experiments/direct-tensor
+          sed '/__attribute__((destructor))/,$d' native/aligned_nocache.c > "$RUNNER_TEMP/io.c"
+          cat "$D/io-report.c" >> "$RUNNER_TEMP/io.c"
+          clang -O2 -include limits.h -dynamiclib "$RUNNER_TEMP/io.c" -o "$D/libstrict.dylib"
+          mkdir baseline
+          git archive d8fab94 src | tar -x -C baseline
+          sudo purge
+      - name: Generate before and after on the same runner
+        run: |
+          D=benchmarks/experiments/direct-tensor
+          for trial in 'baseline base512 512' '. direct512 512' '. direct1024 1024' 'baseline base1024 1024'; do
+            python "$D/render.py" $trial
+          done
+          cmp results/base512/image.png results/direct512/image.png
+          cmp results/base1024/image.png results/direct1024/image.png
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: h3-direct-tensor-verification
+          path: results
+          retention-days: 3
