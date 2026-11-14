@@ -18,7 +18,7 @@ int main(int argc,char** argv) { @autoreleasepool {
     return [[MPSMatrix alloc] initWithBuffer:buf descriptor:desc];
   };
   MPSMatrix *x=input(m,k,src,bytes), *w=input(n,k,src,bytes), *y=input(m,n,dst,4);
-  for(auto mat:@[x,w]){
+  for(MPSMatrix *mat in @[x,w]){
     void* p=mat.data.contents;
     for(size_t i=0;i<mat.rows*mat.columns;++i) {
       int a=int(i%7)-3;
