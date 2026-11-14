@@ -3,12 +3,14 @@ on:
   pull_request:
     paths:
       - src/h3_image_mlx/**
+      - scripts/bench_portable.py
       - tests/test_portable.py
       - .github/workflows/portable.yml
   push:
     branches: [main]
     paths:
       - src/h3_image_mlx/**
+      - scripts/bench_portable.py
       - tests/test_portable.py
       - .github/workflows/portable.yml
   workflow_dispatch:
@@ -22,6 +24,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
@@ -39,3 +43,12 @@ jobs:
           result = unittest.TextTestRunner(verbosity=2).run(suite)
           raise SystemExit(not result.wasSuccessful())
           PY
+      - name: Compare projection latency with the PR base on Metal
+        if: github.event_name == 'pull_request'
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          if python -c 'import mlx.core as mx; raise SystemExit(not mx.metal.is_available())'; then
+            git show "$BASE:src/h3_image_mlx/_portable.py" > "$RUNNER_TEMP/baseline.py"
+            python scripts/bench_portable.py "$RUNNER_TEMP/baseline.py"
+          fi
