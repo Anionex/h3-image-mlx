@@ -82,7 +82,7 @@ M5 Pro 48 GB，`0.1.0a3`，1024×1024，相同权重、提示词和 seed，原�
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install 'h3-image-mlx==0.1.0a6'
+python -m pip install 'h3-image-mlx==0.1.0a7'
 
 h3-image-mlx fetch --models ./models
 h3-image-mlx generate --models ./models --output teapot.png \
@@ -98,7 +98,7 @@ h3-image-mlx generate --models ./models --output teapot.png \
 这些开关从 `0.1.0a2` 开始提供；升级后在单次命令中开启：
 
 ```bash
-python -m pip install --upgrade 'h3-image-mlx==0.1.0a6'
+python -m pip install --upgrade 'h3-image-mlx==0.1.0a7'
 H3_ASYNC=1 H3_PREFETCH=1 h3-image-mlx generate \
   --models ./models --dit-mode stream --output teapot.png \
   --prompt 'A yellow enamel teapot and a white cup on a blue wooden table.'
@@ -127,7 +127,7 @@ h3-image-mlx generate --models ./models --output edit.png \
 ![H3 Image MLX 推理流程：编码提示词、按块读取去噪权重、重叠分块解码图像。每个阶段完成后释放模型内存，再进入下一阶段。](assets/how-it-works.jpg)
 
 - **一次运行一个阶段。** 文本编码、去噪和 VAE 解码分别在独立进程中执行，保存中间结果后退出，再由下一阶段加载权重，三个模型无需同时驻留内存。图片编辑会在去噪前增加参考图的 VAE 编码阶段。
-- **量化线性层，减少计算与存储开销。** 直接读取 Comfy-Org 的 INT8 ConvRot 权重，激活值经过旋转变换和动态 INT8 量化后参与计算。支持的芯片使用 W8A8 Metal TensorOps；通用后端通过标准 MLX 分块运算计算同样的量化投影。其他运算保留适合各自用途的浮点精度。
+- **量化线性层，减少计算与存储开销。** 直接读取 Comfy-Org 的 INT8 ConvRot 权重，激活值经过旋转变换和动态 INT8 量化后参与计算。通用后端对较小的对齐投影使用 Metal SIMD 内核，在 macOS 26.4 及以上系统上检测 GPU 是否支持较长序列的直接 INT8 TensorOps。其余形状和设备使用 MLX 分块运算。其他运算保留适合各自用途的浮点精度。
 - **去噪权重按需读取。** `stream` 模式随着 Transformer 各层执行，从 safetensors 读取所需权重，不把全部权重缓存到六步结束。去噪仍处理整张图的潜空间序列；`resident` 模式则缓存权重，减少重复读取。管线还会根据 Comfy-Org 裁剪权重中的压缩曲线，预计算各步的 AdaLN 调制值，随后释放准备阶段的权重。
 - **重叠分块解码。** VAE 每次解码一小组潜空间图块，将重叠边缘融合成完整图片，控制高分辨率下解码阶段的工作内存。
 
