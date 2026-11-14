@@ -87,7 +87,7 @@ Use Python 3.11 or later on a Mac with Metal. Allow 49.30 GB of disk space for a
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install 'h3-image-mlx==0.1.0a6'
+python -m pip install 'h3-image-mlx==0.1.0a7'
 
 h3-image-mlx fetch --models ./models
 h3-image-mlx generate --models ./models --output teapot.png \
@@ -103,7 +103,7 @@ This writes a 1024×1024 RGB PNG. Set `--width` and `--height` to change the siz
 Available from `0.1.0a2`; upgrade and enable both switches for this command:
 
 ```bash
-python -m pip install --upgrade 'h3-image-mlx==0.1.0a6'
+python -m pip install --upgrade 'h3-image-mlx==0.1.0a7'
 H3_ASYNC=1 H3_PREFETCH=1 h3-image-mlx generate \
   --models ./models --dit-mode stream --output teapot.png \
   --prompt 'A yellow enamel teapot and a white cup on a blue wooden table.'
@@ -132,7 +132,7 @@ The pipeline reduces memory use at three levels: between model stages, within th
 ![H3 Image MLX pipeline: encode the prompt, stream denoiser weights, then decode overlapping image tiles. Each stage releases its model memory before the next starts.](assets/how-it-works.jpg)
 
 - **Run one stage at a time.** Text encoding, denoising and VAE decoding run in separate processes. Each saves its intermediate output and exits before the next loads its weights, so the three models do not need to stay in memory together. Editing adds a reference-image VAE encoding stage before denoising.
-- **Keep quantized projections compact.** The runtime reads Comfy-Org's INT8 ConvRot weights directly. Activations are rotated and dynamically quantized to INT8 before quantized linear projections. Supported chips use W8A8 Metal TensorOps; the portable backend evaluates the same quantized projections with tiled standard MLX operations. Other operations retain their appropriate floating-point precision.
+- **Keep quantized projections compact.** The runtime reads Comfy-Org's INT8 ConvRot weights directly. Activations are rotated and dynamically quantized to INT8 before quantized linear projections. The portable backend uses a Metal SIMD kernel for small aligned projections and probes for direct INT8 TensorOps on macOS 26.4 or later for longer sequences. Other shapes and devices use tiled MLX operations. Other operations retain their appropriate floating-point precision.
 - **Load denoiser weights as needed.** In `stream` mode, tensors are read from safetensors as each transformer block runs, rather than cached for all six steps. Denoising still operates on the full image's latent sequence. `resident` mode caches weights to reduce repeated reads. The runtime also precomputes the steps' AdaLN modulation values from the compressed curves in Comfy-Org's pruned checkpoint, then releases the setup weights.
 - **Decode in overlapping tiles.** The VAE decodes small groups of latent tiles and blends their overlapping edges into the output image, limiting decoder working memory at high resolutions.
 

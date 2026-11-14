@@ -11,6 +11,19 @@ M5 Pro (48 GB), MLX 0.32.4, six steps, seed 42, streamed DiT. Each timing includ
 
 Both resolutions report medians with the full range. The M5 Pro was explicitly set to the portable backend used on earlier chips. Physical M4 latency remains unmeasured. [Trial order, per-stage timings, disk reads, cache residency and PNG hashes](benchmarks/controlled/2026-11-15-portable/runs.json).
 
+### 1024×1024 on AC power
+
+Apple M5 Pro (48 GB), portable backend, six steps. The machine stayed on AC power with the same power settings. All timings include text encoding, denoising, VAE decoding and PNG output. All thirteen PNGs matched byte for byte. Each run bypassed the weight file cache and passed disk-read and file-residency checks.
+
+| Revision / projection path | Median (three runs) | Range | Highest stage process footprint |
+| --- | ---: | ---: | ---: |
+| Original portable baseline (`d8fab94`) | 156.25 s | 152.73–179.51 s | 2.51 GB |
+| v0.1.0a6 | 141.84 s | 135.15–147.90 s | 2.51 GB |
+| Full-row MLX fallback | 113.38 s | 107.96–134.73 s | 2.51 GB |
+| v0.1.0a7 with direct INT8 TensorOps | 41.13 s | 31.29–41.14 s | 2.65 GB |
+
+The first nine runs interleaved the original, a6 and MLX fallback paths. Three subsequent direct TensorOps trials included an additional original-baseline check (176.55 s) between trials two and three. Direct TensorOps reduced median latency by 73.7% versus the original and 71.0% versus a6. The fallback reduced it by 27.4% versus the original. These are M5 Pro portable-backend measurements. Physical M1–M4 generation times remain unmeasured. [Trial order, per-stage disk reads, memory, power settings and PNG hashes](benchmarks/controlled/2026-11-15-portable/ac-1024.json).
+
 ## H3 Image
 
 The H3 measurements below allowed macOS file caching. Their process footprint and latency describe that cache policy.

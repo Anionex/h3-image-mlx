@@ -81,6 +81,36 @@ class PortableProjectionTests(unittest.TestCase):
                 for dtype in (mx.float32, mx.bfloat16):
                     self.check_outputs(x, w, xs, np.array([.013], np.float32), dtype)
 
+    def test_direct_tensor_cancellation_and_row_boundary(self):
+        if not mx.metal.is_available() or not _portable._has_integer_tensor_ops():
+            self.skipTest("requires direct integer TensorOps")
+        width = 25600
+        x = np.full((513, width), -128, np.int8)
+        w = np.full((64, width), 127, np.int8)
+        w[0, width // 2:] = -127
+        w[0, 0] = 126
+        self.check_outputs(x, w, np.ones(len(x), np.float32), np.ones(64, np.float32), mx.float32)
+
+    def test_direct_tensor_pads_partial_output_tiles(self):
+        if not mx.metal.is_available() or not _portable._has_integer_tensor_ops():
+            self.skipTest("requires direct integer TensorOps")
+        # A partially filled tile on the last channel group must be writable
+        # even on devices that issue a full-tile store.
+        x = mx.ones((1093, 5376), dtype=mx.int8)
+        w = mx.ones((5376, 5376), dtype=mx.int8)
+        dots = _portable._tensor_dot(x, w)
+        self.assertEqual(dots.shape, (1093, 5376))
+        self.assertTrue(mx.all(dots == 5376).item())
+
+    def test_full_row_batch_handles_a_partial_dot_and_odd_row_count(self):
+        rng = np.random.default_rng(32)
+        width = 5376
+        x = rng.integers(-128, 128, (1025, width), dtype=np.int8)
+        w = rng.integers(-128, 128, (64, width), dtype=np.int8)
+        x[0] = -128
+        w[0] = -128
+        self.check_outputs(x, w, np.ones(len(x), np.float32), np.ones(64, np.float32), mx.float32)
+
     def test_convrot_projection_without_custom_metal_kernel(self):
         # Integer activations make the normalized Hadamard rotation exact.
         rng = np.random.default_rng(13)
