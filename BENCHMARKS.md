@@ -1,5 +1,16 @@
 # Benchmarks
 
+## H3 portable INT8 generation
+
+M5 Pro (48 GB), MLX 0.32.4, six steps, seed 42, streamed DiT. Each timing includes text encoding, denoising, VAE decoding and PNG output. Baseline is the previous main revision (`d8fab94`). Both versions bypassed the filesystem cache on weight reads in all stages. All PNGs matched byte for byte at each resolution.
+
+| Resolution | Runs per version | Previous wall time | Updated wall time | Latency reduction |
+| --- | ---: | ---: | ---: | ---: |
+| 512×512 | 3 | 124.28 s (90.09–133.60) | 56.40 s (52.94–60.92) | 54.6% |
+| 1024×1024 | 1 | 257.35 s | 219.36 s | 14.8% |
+
+The 512×512 figures are medians with the full range. The M5 Pro was explicitly set to the portable backend used on earlier chips. Physical M4 latency remains unmeasured. [Trial order, per-stage timings, disk reads, cache residency and PNG hashes](benchmarks/controlled/2026-11-15-portable/runs.json).
+
 ## H3 Image
 
 The H3 measurements below allowed macOS file caching. Their process footprint and latency describe that cache policy.

@@ -82,7 +82,7 @@ M5 Pro 48 GB，`0.1.0a3`，1024×1024，相同权重、提示词和 seed，原�
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install 'h3-image-mlx==0.1.0a4'
+python -m pip install 'h3-image-mlx==0.1.0a6'
 
 h3-image-mlx fetch --models ./models
 h3-image-mlx generate --models ./models --output teapot.png \
@@ -93,12 +93,12 @@ h3-image-mlx generate --models ./models --output teapot.png \
 
 ## 推荐开启分块推理加速
 
-**使用 `--dit-mode stream` 时，推荐同时开启权重预读和异步计算，减少加载权重时的等待。两个开关默认关闭。** 原版六步采样保持不变；本次 1024×1024 实测与常驻速度基本持平，进程峰值减少约 85%。[同机实测](#分块推理达到常驻速度) · [贡献者实测](docs/PERFORMANCE.zh-CN.md#贡献者实测)
+**使用 `--dit-mode stream` 时，推荐同时开启权重预读和异步计算，减少加载权重时的等待。INT8 分块推理在 portable 后端默认开启这两项优化。W8A8 TensorOps 后端可用下方命令开启。** 原版六步采样保持不变；本次 1024×1024 实测与常驻速度基本持平，进程峰值减少约 85%。[同机实测](#分块推理达到常驻速度) · [贡献者实测](docs/PERFORMANCE.zh-CN.md#贡献者实测)
 
 这些开关从 `0.1.0a2` 开始提供；升级后在单次命令中开启：
 
 ```bash
-python -m pip install --upgrade 'h3-image-mlx==0.1.0a4'
+python -m pip install --upgrade 'h3-image-mlx==0.1.0a6'
 H3_ASYNC=1 H3_PREFETCH=1 h3-image-mlx generate \
   --models ./models --dit-mode stream --output teapot.png \
   --prompt 'A yellow enamel teapot and a white cup on a blue wooden table.'

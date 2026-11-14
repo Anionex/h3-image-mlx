@@ -4,7 +4,7 @@
 
 ## 推荐的分块推理加速
 
-从 `0.1.0a2` 开始，推荐在 `stream` 模式下尝试**同时开启权重预取和异步计算**。它们**默认关闭**，需要手动开启。
+H3 的 `portable` 后端在 INT8 分块去噪时默认预读下一块权重，并异步执行当前块。设置 `H3_PREFETCH=0 H3_ASYNC=0` 可使用同步读取。W8A8 TensorOps 后端可用以下命令启用两项优化。
 
 ```bash
 H3_ASYNC=1 H3_PREFETCH=1 h3-image-mlx generate \

@@ -3,7 +3,7 @@ Weights: MiniMaxAI/MiniMax-H3-Image, repackaged and quantized by Comfy-Org.
 See MODEL_LICENSE.txt for the upstream model license. Model weights and the VAE configuration are downloaded separately.
 The implementation authored for this project is licensed under Apache-2.0.
 This implementation adapts H3 Image inference to Apple MLX, including staged memory management and ConvRot projections.
-The three Metal kernel source files are from ddalcu/mlx-serve commit 9191fbdf697df333cac19ec7a93eaa1098ce3ad5.
+mpp_tensor_ops.metal, w8a8_gemm_body.metal and w8a8_epi_plain.metal are from ddalcu/mlx-serve commit 9191fbdf697df333cac19ec7a93eaa1098ce3ad5.
 Their copyright and MIT license are in kernels/LICENSE.
 
 Qwen Image 2.1 uses a separate optional native runtime based on ddalcu/mlx-serve
