@@ -1,4 +1,4 @@
-"""Evaluate H3's quantized projections with standard MLX operations."""
+"""Evaluate H3's quantized projections on Apple GPUs and the MLX CPU backend."""
 
 from functools import cache
 from pathlib import Path
@@ -31,13 +31,16 @@ def portable_matmul(xq, weight, xs, scale, output_dtype):
     row_scale = xs.reshape(rows, 1).astype(mx.float32)
     channel_scale = mx.broadcast_to(scale.reshape(-1), (channels,)).astype(mx.float32)
 
-    if rows <= 512 and width % 64 == 0 and channels % 64 == 0 and mx.default_device() == mx.Device(mx.gpu):
+    aligned = width % 64 == 0 and channels % 64 == 0
+    if rows <= 512 and aligned and mx.default_device() == mx.Device(mx.gpu):
         bm, bn, bk = (32, 64, 64) if rows <= 128 else (64, 64, 32)
         return _simd_gemm()(
             inputs=[xq, weight, row_scale, channel_scale],
             template=[("T", output_dtype), ("BM", bm), ("BN", bn), ("BK", bk)],
-            grid=(channels // bn * 128, (rows + bm - 1) // bm, 1), threadgroup=(128, 1, 1),
-            output_shapes=[(rows,channels)], output_dtypes=[output_dtype],
+            grid=(channels // bn * 128, (rows + bm - 1) // bm, 1),
+            threadgroup=(128, 1, 1),
+            output_shapes=[(rows, channels)],
+            output_dtypes=[output_dtype],
         )[0]
 
     row_tiles = []

@@ -4,7 +4,7 @@
 
 ## Recommended streaming acceleration
 
-Starting with `0.1.0a2`, we recommend trying **both weight prefetch and asynchronous evaluation** in `stream` mode. They are **off by default** and must be enabled explicitly.
+Streamed INT8 denoising on the H3 portable backend enables one-block weight prefetch and asynchronous evaluation by default. Set `H3_PREFETCH=0 H3_ASYNC=0` for synchronous reads. To enable both on the W8A8 TensorOps backend:
 
 ```bash
 H3_ASYNC=1 H3_PREFETCH=1 h3-image-mlx generate \

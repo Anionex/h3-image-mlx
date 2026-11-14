@@ -7,7 +7,7 @@
 使用支持 Metal 的 Apple Silicon Mac 和 Python 3.11 或更高版本。首次下载模型需要 49.30 GB 磁盘空间。
 
 ```bash
-python -m pip install --upgrade 'h3-image-mlx==0.1.0a4'
+python -m pip install --upgrade 'h3-image-mlx==0.1.0a6'
 h3-image-mlx fetch --models ./models
 ```
 
