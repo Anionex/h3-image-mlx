@@ -40,11 +40,15 @@ def _direct_tensor_kernel():
 def _tensor_dot(x, weight):
     rows, _ = x.shape
     channels = weight.shape[0]
+    # TensorOps may access a complete final tile on a physical GPU.
+    tail = (-rows) % 64
+    if tail:
+        x = mx.pad(x, [(0, tail), (0, 0)])
     return _direct_tensor_kernel()(
         inputs=[x, weight], template=[("BM", 64), ("BN", 64)],
         grid=((channels + 63) // 64 * 128, (rows + 63) // 64, 1),
-        threadgroup=(128, 1, 1), output_shapes=[(rows, channels)], output_dtypes=[mx.int32],
-    )[0]
+        threadgroup=(128, 1, 1), output_shapes=[(rows + tail, channels)], output_dtypes=[mx.int32],
+    )[0][:rows]
 
 
 @cache
