@@ -1,0 +1,17 @@
+name: Probe MPS projection input formats
+on:
+  push:
+    branches: [experiment/mps-projection]
+permissions:
+  contents: read
+jobs:
+  mps:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - run: clang++ -std=c++17 -fobjc-arc -framework Foundation -framework Metal -framework MetalPerformanceShaders scripts/probe_mps.mm -o "$RUNNER_TEMP/probe"
+      - run: |
+          ulimit -c 0
+          for format in "1 0" "0 0" "0 1"; do
+            if "$RUNNER_TEMP/probe" 1100 21504 5376 $format; then echo "supported $format"; else echo "unavailable $format"; fi
+          done
