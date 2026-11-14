@@ -1,12 +1,14 @@
 """Text-to-image forward on the six-step H3 Image grid."""
 
+from concurrent.futures import ThreadPoolExecutor
+
 import itertools
 import json
 import os
 import time
 
 import numpy as np
-from .core import Weights, attention, flag, heads, mx, norm, rope, swiglu
+from .core import Weights, attention, backend, flag, heads, mx, norm, rope, swiglu
 
 # P-H3-Image (PrunaAI) ships no sampling metadata; this is the checkpoint's own 8-step grid.
 PH3_SIGMAS = [1.0, 0.984753, 0.967905, 0.951688, 0.925372, 0.881923, 0.810083, 0.528718, 0.0]
@@ -142,7 +144,11 @@ def denoise(
                 w.file.close()
                 raise ValueError(f"BF16 requires floating-point weights; {path}: {key} is {spec['dtype']}. Check H3_DIT.")
     # H3_ASYNC: queue each block on the GPU and read the next block's weights meanwhile.
-    pipelined, profile = bool(flag("H3_ASYNC")), dict(steps=[], eval_s=0.0)
+    portable_stream = not resident and precision != "bf16" and backend.get() == "portable"
+    if portable_stream and "H3_PREFETCH" not in os.environ and w.pool is None:
+        w.pool = ThreadPoolExecutor(1)
+    pipelined = bool(flag("H3_ASYNC")) if "H3_ASYNC" in os.environ else portable_stream
+    profile = dict(steps=[], eval_s=0.0)
     meta = w.header.get("__metadata__") or {}
     grid = sigmas = json.loads(meta["config"])["transformer"]["pdd_sigmas"] if "config" in meta else PH3_SIGMAS
     # A checkpoint with an audio stream (P-H3-Image) is the joint model: a still image spans two audio latents.

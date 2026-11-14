@@ -1,5 +1,8 @@
 """Evaluate H3's quantized projections with standard MLX operations."""
 
+from functools import cache
+from pathlib import Path
+
 import mlx.core as mx
 
 # An int8 dot product of length 1024 has an absolute sum <= 2**24, so its
@@ -10,12 +13,32 @@ _TILE = 1024
 _CHUNKS_PER_BATCH = 4
 
 
+@cache
+def _simd_gemm():
+    return mx.fast.metal_kernel(
+        name="h3_portable_simd",
+        input_names=["x", "w", "s", "z"],
+        output_names=["y"],
+        header="#include <metal_simdgroup_matrix>\n",
+        source=Path(__file__).with_name("kernels").joinpath("portable_simd.metal").read_text(),
+    )
+
+
 def portable_matmul(xq, weight, xs, scale, output_dtype):
     """Compute row-scaled int8 dot products without the M5 Metal TensorOps kernel."""
     rows, width = xq.shape
     channels = weight.shape[0]
     row_scale = xs.reshape(rows, 1).astype(mx.float32)
     channel_scale = mx.broadcast_to(scale.reshape(-1), (channels,)).astype(mx.float32)
+
+    if rows <= 512 and width % 64 == 0 and channels % 64 == 0 and mx.default_device() == mx.Device(mx.gpu):
+        bm, bn, bk = (32, 64, 64) if rows <= 128 else (64, 64, 32)
+        return _simd_gemm()(
+            inputs=[xq, weight, row_scale, channel_scale],
+            template=[("T", output_dtype), ("BM", bm), ("BN", bn), ("BK", bk)],
+            grid=(channels // bn * 128, (rows + bm - 1) // bm, 1), threadgroup=(128, 1, 1),
+            output_shapes=[(rows,channels)], output_dtypes=[output_dtype],
+        )[0]
 
     row_tiles = []
     for r in range(0, rows, _TILE):

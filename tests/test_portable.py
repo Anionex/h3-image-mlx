@@ -65,6 +65,22 @@ class PortableProjectionTests(unittest.TestCase):
         w[1,::2] = -128
         self.check_outputs(x, w, np.ones(3, np.float32), np.ones(7, np.float32), mx.float32)
 
+    @unittest.skipUnless(mx.metal.is_available(), "requires Metal")
+    def test_simd_gemm_exact_scales_edges_and_cancellation(self):
+        rng = np.random.default_rng(19)
+        for rows, width in ((33, 1088), (129, 25600)):
+            with self.subTest(rows=rows):
+                x = rng.integers(-128, 128, (rows, width), dtype=np.int8)
+                w = rng.integers(-128, 128, (64, width), dtype=np.int8)
+                x[0] = -128
+                w[0] = -128
+                w[1, :width // 2] = 127
+                w[1, width // 2:] = -127
+                w[1, 0] = 126
+                xs = rng.uniform(.001, .02, rows).astype(np.float32)
+                for dtype in (mx.float32, mx.bfloat16):
+                    self.check_outputs(x, w, xs, np.array([.013], np.float32), dtype)
+
     def test_convrot_projection_without_custom_metal_kernel(self):
         # Integer activations make the normalized Hadamard rotation exact.
         rng = np.random.default_rng(13)
