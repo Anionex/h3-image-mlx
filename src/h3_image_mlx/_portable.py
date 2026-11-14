@@ -7,6 +7,7 @@ import mlx.core as mx
 # projection has K=25600, safely within int32 for the combined sum.
 _DOT_CHUNK = 1024
 _TILE = 1024
+_CHUNKS_PER_BATCH = 4
 
 
 def portable_matmul(xq, weight, xs, scale, output_dtype):
@@ -22,12 +23,23 @@ def portable_matmul(xq, weight, xs, scale, output_dtype):
         row_slice = slice(r, r + _TILE)
         for c in range(0, channels, _TILE):
             col_slice = slice(c, c + _TILE)
+            # Batch exact partial dots along K. Limit the number of temporary
+            # result planes, even for H3's 25,600-wide text projections.
+            a = xq[row_slice]
+            b = weight[col_slice]
+            full_width = width - width % _DOT_CHUNK
+            batch_width = _CHUNKS_PER_BATCH * _DOT_CHUNK
             total = None
-            for k in range(0, width, _DOT_CHUNK):
-                inner = slice(k, k + _DOT_CHUNK)
-                a = xq[row_slice, inner].astype(mx.float32)
-                b = weight[col_slice, inner].astype(mx.float32)
-                partial = (a @ b.T).astype(mx.int32)
+            for k in range(0, full_width, batch_width):
+                inner = slice(k, min(k + batch_width, full_width))
+                av = a[:, inner].reshape(a.shape[0], -1, _DOT_CHUNK).transpose(1, 0, 2)
+                bv = b[:, inner].reshape(b.shape[0], -1, _DOT_CHUNK).transpose(1, 0, 2)
+                dots = av.astype(mx.float32) @ bv.astype(mx.float32).swapaxes(1, 2)
+                partial = dots.astype(mx.int32).sum(axis=0)
+                total = partial if total is None else total + partial
+            if full_width < width:
+                tail = a[:, full_width:].astype(mx.float32) @ b[:, full_width:].astype(mx.float32).T
+                partial = tail.astype(mx.int32)
                 total = partial if total is None else total + partial
             # Evaluate before advancing to the next tile: no dense floating
             # point copy of an entire large weight is retained across tiles.

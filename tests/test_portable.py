@@ -46,6 +46,15 @@ class PortableProjectionTests(unittest.TestCase):
             self.check_outputs(x, w, xs, np.array([.004], np.float32), mx.float32)
             self.check_outputs(x, w, xs, np.linspace(.001, .016, len(w), dtype=np.float32)[:, None], mx.bfloat16)
 
+    def test_batch_and_tail_boundaries(self):
+        rng = np.random.default_rng(91)
+        batch = _portable._DOT_CHUNK * _portable._CHUNKS_PER_BATCH
+        for width in (17, batch - 1, batch, batch + 1):
+            with self.subTest(width=width):
+                x = rng.integers(-128, 128, (3, width), dtype=np.int8)
+                w = rng.integers(-128, 128, (7, width), dtype=np.int8)
+                self.check_outputs(x, w, np.ones(3, np.float32), np.ones(7, np.float32), mx.float32)
+
     def test_worst_case_dot_and_cancellation(self):
         # Positive partials exceed the float32 exact-integer range before
         # cancellation leaves a small, odd integer in the first output.
