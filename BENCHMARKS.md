@@ -7,9 +7,9 @@ M5 Pro (48 GB), MLX 0.32.4, six steps, seed 42, streamed DiT. Each timing includ
 | Resolution | Runs per version | Previous wall time | Updated wall time | Latency reduction |
 | --- | ---: | ---: | ---: | ---: |
 | 512×512 | 3 | 124.28 s (90.09–133.60) | 56.40 s (52.94–60.92) | 54.6% |
-| 1024×1024 | 1 | 257.35 s | 219.36 s | 14.8% |
+| 1024×1024 | 3 | 254.00 s (218.79–257.35) | 219.36 s (206.22–223.68) | 13.6% |
 
-The 512×512 figures are medians with the full range. The M5 Pro was explicitly set to the portable backend used on earlier chips. Physical M4 latency remains unmeasured. [Trial order, per-stage timings, disk reads, cache residency and PNG hashes](benchmarks/controlled/2026-11-15-portable/runs.json).
+Both resolutions report medians with the full range. The M5 Pro was explicitly set to the portable backend used on earlier chips. Physical M4 latency remains unmeasured. [Trial order, per-stage timings, disk reads, cache residency and PNG hashes](benchmarks/controlled/2026-11-15-portable/runs.json).
 
 ## H3 Image
 
