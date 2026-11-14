@@ -22,3 +22,4 @@ jobs:
           python -m unittest discover -s tests -p test_portable.py -v
           git archive d8fab94 src/h3_image_mlx | tar -x -C "$RUNNER_TEMP"
           python scripts/bench_portable.py "$RUNNER_TEMP/src/h3_image_mlx/_portable.py"
+          df -h "$RUNNER_TEMP"

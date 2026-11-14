@@ -71,7 +71,7 @@ def portable_matmul(xq, weight, xs, scale, output_dtype):
 
     aligned = width % 64 == 0 and channels % 64 == 0
     on_gpu = mx.default_device() == mx.Device(mx.gpu)
-    if aligned and on_gpu and _has_integer_tensor_ops():
+    if rows > 512 and aligned and on_gpu and _has_integer_tensor_ops():
         # Bound the intermediate int32 output for high-resolution generation.
         chunks = []
         for begin in range(0, rows, 1536):
