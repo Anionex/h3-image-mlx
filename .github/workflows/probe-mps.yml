@@ -15,3 +15,8 @@ jobs:
           for format in "1 0" "0 0" "0 1"; do
             if "$RUNNER_TEMP/probe" 1100 21504 5376 $format; then echo "supported $format"; else echo "unavailable $format"; fi
           done
+      - run: clang -O3 -Wno-deprecated-declarations -framework Accelerate scripts/probe_bnns.c -o "$RUNNER_TEMP/bnns"
+      - run: |
+          for format in "0 0" "0 1" "1 1"; do
+            if "$RUNNER_TEMP/bnns" 1100 21504 5376 $format; then echo "BNNS supported $format"; else echo "BNNS unavailable $format"; fi
+          done
