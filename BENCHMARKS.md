@@ -1,5 +1,16 @@
 # Benchmarks
 
+## H3 native W8A8 on M5 Pro
+
+On a 48 GB M5 Pro, the default resident path reduced median 1024×1024 generation time by **28.5%**. Timing includes text encoding, all six denoising steps, VAE decoding and writing the PNG.
+
+| Version | Median | Range across three runs | Median peak process footprint |
+| --- | ---: | ---: | ---: |
+| 0.1.0a7 | 26.49 s | 26.30–29.46 s | 21.08 GB |
+| 0.1.0a8 | **18.93 s** | 18.23–21.51 s | 21.67 GB |
+
+Six interleaved runs used AC power, identical INT8 weights, the same prompt and seed 42. All six PNG hashes matched. Aligned uncached reads bypassed the weight file cache throughout each run. Sampled weight-file residency stayed under 16 MiB, and physical reads covered at least 95% of aligned bytes both per stage and system-wide. Peak memory is the maximum lifetime process footprint across the stages, in decimal GB. [Per-run times, power, cache residency, disk reads, PNG hashes and stage footprints](benchmarks/controlled/2026-11-15-m5/resident.json).
+
 ## H3 portable INT8 generation
 
 M5 Pro (48 GB), MLX 0.32.4, six steps, seed 42, streamed DiT. Each timing includes text encoding, denoising, VAE decoding and PNG output. Baseline is the previous main revision (`d8fab94`). Both versions bypassed the filesystem cache on weight reads in all stages. All PNGs matched byte for byte at each resolution.
