@@ -91,6 +91,17 @@ class PortableProjectionTests(unittest.TestCase):
         w[0, 0] = 126
         self.check_outputs(x, w, np.ones(len(x), np.float32), np.ones(64, np.float32), mx.float32)
 
+    def test_direct_tensor_pads_partial_output_tiles(self):
+        if not mx.metal.is_available() or not _portable._has_integer_tensor_ops():
+            self.skipTest("requires direct integer TensorOps")
+        # A partially filled tile on the last channel group must be writable
+        # even on devices that issue a full-tile store.
+        x = mx.ones((1093, 5376), dtype=mx.int8)
+        w = mx.ones((5376, 5376), dtype=mx.int8)
+        dots = _portable._tensor_dot(x, w)
+        self.assertEqual(dots.shape, (1093, 5376))
+        self.assertTrue(mx.all(dots == 5376).item())
+
     def test_full_row_batch_handles_a_partial_dot_and_odd_row_count(self):
         rng = np.random.default_rng(32)
         width = 5376
