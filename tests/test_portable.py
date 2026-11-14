@@ -81,6 +81,15 @@ class PortableProjectionTests(unittest.TestCase):
                 for dtype in (mx.float32, mx.bfloat16):
                     self.check_outputs(x, w, xs, np.array([.013], np.float32), dtype)
 
+    def test_full_row_batch_handles_a_partial_dot_and_odd_row_count(self):
+        rng = np.random.default_rng(32)
+        width = 5376
+        x = rng.integers(-128, 128, (1025, width), dtype=np.int8)
+        w = rng.integers(-128, 128, (64, width), dtype=np.int8)
+        x[0] = -128
+        w[0] = -128
+        self.check_outputs(x, w, np.ones(len(x), np.float32), np.ones(64, np.float32), mx.float32)
+
     def test_convrot_projection_without_custom_metal_kernel(self):
         # Integer activations make the normalized Hadamard rotation exact.
         rng = np.random.default_rng(13)

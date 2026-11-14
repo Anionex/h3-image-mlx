@@ -43,18 +43,28 @@ def portable_matmul(xq, weight, xs, scale, output_dtype):
             output_dtypes=[output_dtype],
         )[0]
 
+    # Keep medium-length sequences together so a short trailing row tile
+    # does not reload every weight. Bound both the row count and dot planes.
+    full_rows = (
+        512 < rows <= 1536 and aligned and _DOT_CHUNK <= width <= 8192
+        and mx.default_device() == mx.Device(mx.gpu)
+    )
+    row_height = rows if full_rows else _TILE
+    batch_width = width if full_rows else _CHUNKS_PER_BATCH * _DOT_CHUNK
+    full_width = width - width % _DOT_CHUNK
+
     row_tiles = []
-    for r in range(0, rows, _TILE):
+    for r in range(0, rows, row_height):
         columns = []
-        row_slice = slice(r, r + _TILE)
+        row_slice = slice(r, r + row_height)
+        a = xq[row_slice]
+        if full_rows:
+            a = a.astype(mx.float32)
         for c in range(0, channels, _TILE):
             col_slice = slice(c, c + _TILE)
             # Batch exact partial dots along K. Limit the number of temporary
             # result planes, even for H3's 25,600-wide text projections.
-            a = xq[row_slice]
             b = weight[col_slice]
-            full_width = width - width % _DOT_CHUNK
-            batch_width = _CHUNKS_PER_BATCH * _DOT_CHUNK
             total = None
             for k in range(0, full_width, batch_width):
                 inner = slice(k, min(k + batch_width, full_width))
