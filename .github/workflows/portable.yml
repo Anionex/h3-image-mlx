@@ -49,6 +49,6 @@ jobs:
           BASE: ${{ github.event.pull_request.base.sha }}
         run: |
           if python -c 'import mlx.core as mx; raise SystemExit(not mx.metal.is_available())'; then
-            git show "$BASE:src/h3_image_mlx/_portable.py" > "$RUNNER_TEMP/baseline.py"
-            python scripts/bench_portable.py "$RUNNER_TEMP/baseline.py"
+            git archive "$BASE" src/h3_image_mlx | tar -x -C "$RUNNER_TEMP"
+            python scripts/bench_portable.py "$RUNNER_TEMP/src/h3_image_mlx/_portable.py"
           fi
