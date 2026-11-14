@@ -20,3 +20,9 @@ jobs:
           for format in "0 0" "0 1" "1 1"; do
             if "$RUNNER_TEMP/bnns" 1100 21504 5376 $format; then echo "BNNS supported $format"; else echo "BNNS unavailable $format"; fi
           done
+      - run: clang++ -std=c++17 -fobjc-arc -framework Foundation -framework Metal -framework MetalPerformanceShaders scripts/probe_nd.mm -o "$RUNNER_TEMP/nd"
+      - run: |
+          ulimit -c 0
+          for format in "1 1" "0 1" "0 0"; do
+            if "$RUNNER_TEMP/nd" 1100 21504 5376 $format; then echo "ND supported $format"; else echo "ND unavailable $format"; fi
+          done
