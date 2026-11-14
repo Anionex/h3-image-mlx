@@ -81,6 +81,16 @@ class PortableProjectionTests(unittest.TestCase):
                 for dtype in (mx.float32, mx.bfloat16):
                     self.check_outputs(x, w, xs, np.array([.013], np.float32), dtype)
 
+    def test_direct_tensor_cancellation_and_row_boundary(self):
+        if not mx.metal.is_available() or not _portable._has_integer_tensor_ops():
+            self.skipTest("requires direct integer TensorOps")
+        width = 25600
+        x = np.full((513, width), -128, np.int8)
+        w = np.full((64, width), 127, np.int8)
+        w[0, width // 2:] = -127
+        w[0, 0] = 126
+        self.check_outputs(x, w, np.ones(len(x), np.float32), np.ones(64, np.float32), mx.float32)
+
     def test_full_row_batch_handles_a_partial_dot_and_odd_row_count(self):
         rng = np.random.default_rng(32)
         width = 5376

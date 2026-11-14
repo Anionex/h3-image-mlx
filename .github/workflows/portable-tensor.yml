@@ -1,0 +1,24 @@
+name: H3 integer TensorOps on Metal 4
+on:
+  pull_request:
+    paths: ['src/h3_image_mlx/_portable.py', 'src/h3_image_mlx/kernels/portable_tensor.metal', 'tests/test_portable.py', '.github/workflows/portable-tensor.yml']
+  push:
+    branches: [main]
+    paths: ['src/h3_image_mlx/_portable.py', 'src/h3_image_mlx/kernels/portable_tensor.metal', 'tests/test_portable.py', '.github/workflows/portable-tensor.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  integer-projections:
+    runs-on: macos-26
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: python -m pip install .
+      - name: Verify direct integer projection selection and exactness
+        run: |
+          python -c 'import mlx.core as mx; from h3_image_mlx._portable import _has_integer_tensor_ops; print(mx.device_info()); assert _has_integer_tensor_ops()'
+          python -m unittest discover -s tests -p test_portable.py -v
