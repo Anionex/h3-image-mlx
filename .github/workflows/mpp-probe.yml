@@ -1,0 +1,17 @@
+name: Probe integer TensorOps on virtual Metal
+on:
+  push:
+    branches: [experiment/mpp-portability]
+permissions:
+  contents: read
+jobs:
+  projection:
+    runs-on: macos-26
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: python -m pip install .
+      - run: python scripts/probe_mpp.py
