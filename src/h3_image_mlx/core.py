@@ -16,6 +16,7 @@ import numpy as np
 ROOT = Path(__file__).resolve().parent
 KERNELS = ROOT / "kernels"
 backend = ContextVar("h3_backend", default="portable")
+m5_resident = ContextVar("h3_m5_resident", default=False)
 
 
 @cache
@@ -59,17 +60,41 @@ def w8a8(x, weight, scale):
     if backend.get() == "portable":
         from ._portable import portable_matmul
         return portable_matmul(xq, weight, xs, scale.reshape(-1), x.dtype)
-    bm = 128 if rows < 8192 else 64
-    bn = 8192 // bm
+    if m5_resident.get():
+        bm, bn = (32, 64) if rows <= 32 else (64, 128)
+        bk = 256
+    else:
+        bm = 128 if rows < 8192 else 64
+        bn, bk = 8192 // bm, 64
     (y,) = tensorops_kernel()(
         inputs=[xq, weight, xs, scale.reshape(-1)],
-        template=[("BM", bm), ("BN", bn), ("T", x.dtype)],
+        template=[("BM", bm), ("BN", bn), ("BK", bk), ("T", x.dtype)],
         grid=((n + bn - 1) // bn * 128, (rows + bm - 1) // bm, 1),
         threadgroup=(128, 1, 1),
         output_shapes=[(rows, n)],
         output_dtypes=[x.dtype],
     )
     return y
+
+
+def _read_owned(fd, length, offset):
+    """Read a tensor into owned storage using complete pages up to EOF."""
+    if not length:
+        return np.empty(0, dtype=np.uint8)
+    page = os.sysconf("SC_PAGESIZE")
+    skip = offset % page
+    aligned_length = (skip + length + page - 1) // page * page
+    allocation = np.empty(aligned_length + page - 1, dtype=np.uint8)
+    start = (-allocation.ctypes.data) % page
+    data = allocation[start:start + aligned_length]
+    done = 0
+    while done < skip + length:
+        end = min(done + 8 * 1024**2, aligned_length)
+        got = os.preadv(fd, [data[done:end]], offset - skip + done)
+        if not got:
+            raise EOFError("Unexpected end of weight file")
+        done += got
+    return data[skip:skip + length]
 
 
 class Weights:
@@ -80,6 +105,7 @@ class Weights:
         (length,) = struct.unpack("<Q", self.file.read(8))
         self.start = 8 + length
         self.header = json.loads(self.file.read(length))
+        self.direct_reads = m5_resident.get() and hasattr(os, "preadv")
         self.resident = resident
         self.cache = {}
         self.int8_calls = 0
@@ -130,7 +156,8 @@ class Weights:
 
         def job():
             t = time.perf_counter()
-            out = {key: os.pread(fd, b - a, start + a) for key, a, b in spans}
+            read = _read_owned if self.direct_reads else os.pread
+            out = {key: read(fd, b - a, start + a) for key, a, b in spans}
             return out, time.perf_counter() - t
 
         self.pending[group] = self.pool.submit(job)
@@ -146,7 +173,9 @@ class Weights:
             shape = shape[1:]
         buf = None
         t = time.perf_counter()
-        future = row is None and self.pending.get(".".join(key.split(".")[:2]))
+        future = None
+        if self.pending and row is None:
+            future = next((f for group, f in self.pending.items() if key.startswith(group + ".")), None)
         if future:
             fetched, seconds = future.result()
             buf = fetched.pop(key, None)
@@ -155,11 +184,13 @@ class Weights:
                 self.stats["read_s"] += seconds
             self.stats["wait_s"] += time.perf_counter() - t
         if buf is None:
-            buf = os.pread(self.file.fileno(), b - a, self.start + a)
+            read = _read_owned if self.direct_reads and b - a >= 65536 else os.pread
+            buf = read(self.file.fileno(), b - a, self.start + a)
             self.stats["read_s"] += time.perf_counter() - t
         self.stats["read_bytes"] += len(buf)
         t = time.perf_counter()
-        data = mx.array(np.frombuffer(buf, DTYPES[spec["dtype"]]).reshape(shape))
+        shaped = np.frombuffer(buf, DTYPES[spec["dtype"]]).reshape(shape)
+        data = mx.from_dlpack(shaped) if isinstance(buf, np.ndarray) else mx.array(shaped)
         if spec["dtype"] == "BF16":
             data = data.view(mx.bfloat16)
         self.stats["convert_s"] += time.perf_counter() - t

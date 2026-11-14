@@ -1,0 +1,376 @@
+{
+  "device": "Apple M5 Pro, 48 GB",
+  "mlx": "0.32.4",
+  "resolution": [
+    1024,
+    1024
+  ],
+  "backend": "auto (w8a8)",
+  "dit_mode": "auto (resident)",
+  "seed": 42,
+  "steps": 6,
+  "prompt": "A photographic study of a blue porcelain teapot on a wooden table.",
+  "baseline": "db40c68",
+  "runs": [
+    {
+      "trial": "release-1",
+      "version": "a8",
+      "seconds": 18.930902333988342,
+      "peak_GB": 21.668248792,
+      "weight_cache_bytes": [
+        360448,
+        360448,
+        360448,
+        360448,
+        360448,
+        360448
+      ],
+      "physical_read_bytes": 46261780480,
+      "power": [
+        "Now drawing from 'AC Power'",
+        "Now drawing from 'AC Power'",
+        "Now drawing from 'AC Power'",
+        "Now drawing from 'AC Power'",
+        "Now drawing from 'AC Power'"
+      ],
+      "sha256": "d54d2fcd2b833ec49e87658c76c6157feb5fb3a05a4495739284170d533afc32",
+      "stages": {
+        "text": {
+          "calls": 4014,
+          "logical": 24409547888,
+          "aligned": 24415319280,
+          "errors": 0,
+          "elapsed": 3.0840909160324372,
+          "footprint_bytes": 1279755944,
+          "lifetime_peak_bytes": 1280804520,
+          "resident_bytes": 1240907776,
+          "disk_read_bytes": 24427261952
+        },
+        "vae": {
+          "calls": 369,
+          "logical": 809370288,
+          "aligned": 812643264,
+          "errors": 0,
+          "elapsed": 0.8730010419967584,
+          "footprint_bytes": 720520560,
+          "lifetime_peak_bytes": 1051919992,
+          "resident_bytes": 607485952,
+          "disk_read_bytes": 818139136
+        },
+        "dit": {
+          "calls": 3315,
+          "logical": 20990755346,
+          "aligned": 20994388082,
+          "errors": 0,
+          "elapsed": 14.575949000020046,
+          "footprint_bytes": 6399857992,
+          "lifetime_peak_bytes": 21668248792,
+          "resident_bytes": 5609865216,
+          "disk_read_bytes": 20994486272
+        }
+      }
+    },
+    {
+      "trial": "releasebase-1",
+      "version": "a7",
+      "seconds": 26.298158291960135,
+      "peak_GB": 21.092285848,
+      "weight_cache_bytes": [
+        360448,
+        360448,
+        360448,
+        360448,
+        360448,
+        360448,
+        360448,
+        360448
+      ],
+      "physical_read_bytes": 46254116864,
+      "power": [
+        "Now drawing from 'AC Power'",
+        "Now drawing from 'AC Power'",
+        "Now drawing from 'AC Power'",
+        "Now drawing from 'AC Power'",
+        "Now drawing from 'AC Power'",
+        "Now drawing from 'AC Power'"
+      ],
+      "sha256": "d54d2fcd2b833ec49e87658c76c6157feb5fb3a05a4495739284170d533afc32",
+      "stages": {
+        "dit": {
+          "calls": 928,
+          "logical": 20979210144,
+          "aligned": 20994388082,
+          "errors": 0,
+          "elapsed": 19.56517358298879,
+          "footprint_bytes": 8338070296,
+          "lifetime_peak_bytes": 21092285848,
+          "resident_bytes": 8159657984,
+          "disk_read_bytes": 20994433024
+        },
+        "text": {
+          "calls": 1264,
+          "logical": 24394946160,
+          "aligned": 24415319280,
+          "errors": 0,
+          "elapsed": 5.511474917002488,
+          "footprint_bytes": 562529456,
+          "lifetime_peak_bytes": 1221396064,
+          "resident_bytes": 535314432,
+          "disk_read_bytes": 24427241472
+        },
+        "vae": {
+          "calls": 297,
+          "logical": 807781040,
+          "aligned": 812643264,
+          "errors": 0,
+          "elapsed": 0.9328312920406461,
+          "footprint_bytes": 449020936,
+          "lifetime_peak_bytes": 1070237064,
+          "resident_bytes": 335544320,
+          "disk_read_bytes": 817258496
+        }
+      }
+    },
+    {
+      "trial": "releasebase-2",
+      "version": "a7",
+      "seconds": 29.458799040992744,
+      "peak_GB": 21.069888896,
+      "weight_cache_bytes": [
+        360448,
+        360448,
+        360448,
+        360448,
+        360448,
+        360448,
+        360448,
+        360448,
+        360448
+      ],
+      "physical_read_bytes": 46274256896,
+      "power": [
+        "Now drawing from 'AC Power'",
+        "Now drawing from 'AC Power'",
+        "Now drawing from 'AC Power'",
+        "Now drawing from 'AC Power'",
+        "Now drawing from 'AC Power'",
+        "Now drawing from 'AC Power'",
+        "Now drawing from 'AC Power'"
+      ],
+      "sha256": "d54d2fcd2b833ec49e87658c76c6157feb5fb3a05a4495739284170d533afc32",
+      "stages": {
+        "text": {
+          "calls": 1264,
+          "logical": 24394946160,
+          "aligned": 24415319280,
+          "errors": 0,
+          "elapsed": 5.531476250034757,
+          "footprint_bytes": 694093144,
+          "lifetime_peak_bytes": 1221183120,
+          "resident_bytes": 665976832,
+          "disk_read_bytes": 24427196416
+        },
+        "dit": {
+          "calls": 928,
+          "logical": 20979210144,
+          "aligned": 20994388082,
+          "errors": 0,
+          "elapsed": 22.687618124997243,
+          "footprint_bytes": 5316104680,
+          "lifetime_peak_bytes": 21069888896,
+          "resident_bytes": 226738176,
+          "disk_read_bytes": 20994457600
+        },
+        "vae": {
+          "calls": 297,
+          "logical": 807781040,
+          "aligned": 812643264,
+          "errors": 0,
+          "elapsed": 0.9596578340278938,
+          "footprint_bytes": 449332256,
+          "lifetime_peak_bytes": 1070581128,
+          "resident_bytes": 335839232,
+          "disk_read_bytes": 818085888
+        }
+      }
+    },
+    {
+      "trial": "release-2",
+      "version": "a8",
+      "seconds": 21.512481125013437,
+      "peak_GB": 21.692464272,
+      "weight_cache_bytes": [
+        360448,
+        360448,
+        360448,
+        360448,
+        360448,
+        360448,
+        360448
+      ],
+      "physical_read_bytes": 46263189504,
+      "power": [
+        "Now drawing from 'AC Power'",
+        "Now drawing from 'AC Power'",
+        "Now drawing from 'AC Power'",
+        "Now drawing from 'AC Power'",
+        "Now drawing from 'AC Power'"
+      ],
+      "sha256": "d54d2fcd2b833ec49e87658c76c6157feb5fb3a05a4495739284170d533afc32",
+      "stages": {
+        "vae": {
+          "calls": 369,
+          "logical": 809370288,
+          "aligned": 812643264,
+          "errors": 0,
+          "elapsed": 0.8751262500300072,
+          "footprint_bytes": 721618312,
+          "lifetime_peak_bytes": 1053066896,
+          "resident_bytes": 608567296,
+          "disk_read_bytes": 817278976
+        },
+        "dit": {
+          "calls": 3315,
+          "logical": 20990755346,
+          "aligned": 20994388082,
+          "errors": 0,
+          "elapsed": 17.445667291001882,
+          "footprint_bytes": 6572971384,
+          "lifetime_peak_bytes": 21692464272,
+          "resident_bytes": 63553536,
+          "disk_read_bytes": 20994449408
+        },
+        "text": {
+          "calls": 4014,
+          "logical": 24409547888,
+          "aligned": 24415319280,
+          "errors": 0,
+          "elapsed": 2.8151096670189872,
+          "footprint_bytes": 1281951424,
+          "lifetime_peak_bytes": 1283327680,
+          "resident_bytes": 1240154112,
+          "disk_read_bytes": 24427229184
+        }
+      }
+    },
+    {
+      "trial": "release-3",
+      "version": "a8",
+      "seconds": 18.225724624993745,
+      "peak_GB": 21.667331288,
+      "weight_cache_bytes": [
+        360448,
+        360448,
+        360448,
+        360448,
+        360448,
+        360448
+      ],
+      "physical_read_bytes": 46265167872,
+      "power": [
+        "Now drawing from 'AC Power'",
+        "Now drawing from 'AC Power'",
+        "Now drawing from 'AC Power'",
+        "Now drawing from 'AC Power'",
+        "Now drawing from 'AC Power'"
+      ],
+      "sha256": "d54d2fcd2b833ec49e87658c76c6157feb5fb3a05a4495739284170d533afc32",
+      "stages": {
+        "text": {
+          "calls": 4014,
+          "logical": 24409547888,
+          "aligned": 24415319280,
+          "errors": 0,
+          "elapsed": 2.866922082961537,
+          "footprint_bytes": 1279723176,
+          "lifetime_peak_bytes": 1280722600,
+          "resident_bytes": 1237860352,
+          "disk_read_bytes": 24427196416
+        },
+        "dit": {
+          "calls": 3315,
+          "logical": 20990755346,
+          "aligned": 20994388082,
+          "errors": 0,
+          "elapsed": 14.090121000015642,
+          "footprint_bytes": 6376133984,
+          "lifetime_peak_bytes": 21667331288,
+          "resident_bytes": 4909023232,
+          "disk_read_bytes": 20994449408
+        },
+        "vae": {
+          "calls": 369,
+          "logical": 809370288,
+          "aligned": 812643264,
+          "errors": 0,
+          "elapsed": 0.8926188750192523,
+          "footprint_bytes": 721159536,
+          "lifetime_peak_bytes": 1052542584,
+          "resident_bytes": 608124928,
+          "disk_read_bytes": 817291264
+        }
+      }
+    },
+    {
+      "trial": "releasebase-3",
+      "version": "a7",
+      "seconds": 26.4876307080267,
+      "peak_GB": 21.081406848,
+      "weight_cache_bytes": [
+        360448,
+        360448,
+        360448,
+        360448,
+        360448,
+        360448,
+        360448,
+        360448
+      ],
+      "physical_read_bytes": 46264487936,
+      "power": [
+        "Now drawing from 'AC Power'",
+        "Now drawing from 'AC Power'",
+        "Now drawing from 'AC Power'",
+        "Now drawing from 'AC Power'",
+        "Now drawing from 'AC Power'",
+        "Now drawing from 'AC Power'"
+      ],
+      "sha256": "d54d2fcd2b833ec49e87658c76c6157feb5fb3a05a4495739284170d533afc32",
+      "stages": {
+        "vae": {
+          "calls": 297,
+          "logical": 807781040,
+          "aligned": 812643264,
+          "errors": 0,
+          "elapsed": 0.9855647920048796,
+          "footprint_bytes": 452052048,
+          "lifetime_peak_bytes": 1073350120,
+          "resident_bytes": 338526208,
+          "disk_read_bytes": 817291264
+        },
+        "text": {
+          "calls": 1264,
+          "logical": 24394946160,
+          "aligned": 24415319280,
+          "errors": 0,
+          "elapsed": 5.470938125043176,
+          "footprint_bytes": 825738584,
+          "lifetime_peak_bytes": 1221084792,
+          "resident_bytes": 757891072,
+          "disk_read_bytes": 24427229184
+        },
+        "dit": {
+          "calls": 928,
+          "logical": 20979210144,
+          "aligned": 20994388082,
+          "errors": 0,
+          "elapsed": 19.72922054200899,
+          "footprint_bytes": 7783111064,
+          "lifetime_peak_bytes": 21081406848,
+          "resident_bytes": 6965428224,
+          "disk_read_bytes": 20994449408
+        }
+      }
+    }
+  ]
+}

@@ -34,6 +34,12 @@ def main(stage, work):
     models = Path(request["models"])
     refs = request["references"]
     embedding, latents, result = (str(work / (key + ".safetensors")) for key in ("embedding", "references", "latent"))
+    mode = request.get("dit_mode")
+    auto_resident = mode == "auto" and backend == "w8a8" and info["memory_size"] >= 32 * 1024**3
+    # The exact DiT sequence length becomes available after encoding.
+    m5 = backend == "w8a8" and bool(re.search(r"\bApple M5\b", info["device_name"]))
+    likely_resident = auto_resident and not refs and request["width"] * request["height"] // 1024 < 8192
+    core.m5_resident.set(m5 and (mode == "resident" or likely_resident))
     if stage == "text":
         from .text import encode
         # H3_TEXT / H3_TOKENIZER / H3_VAE / H3_DIT: use another checkpoint (e.g. P-H3-Image) instead of the manifest's.
@@ -55,9 +61,8 @@ def main(stage, work):
         zs = [images[str(i)] for i in range(len(refs))]
         width, height = request["width"], request["height"]
         rows = inputs["embedding"].shape[0] + width * height // 1024 + sum(z.shape[1] * z.shape[2] // 4 for z in zs)
-        mode = request["dit_mode"]
-        resident = mode == "resident" or (mode == "auto" and backend == "w8a8" and
-                    info["memory_size"] >= 32 * 1024**3 and rows <= 8192)
+        resident = mode == "resident" or (auto_resident and rows <= 8192)
+        core.m5_resident.set(m5 and resident)
         # H3_DIT=<file>: use another DiT checkpoint with the same layout (e.g. one with a LoRA merged in).
         z, _ = denoise(os.environ.get("H3_DIT") or models / dit, inputs["embedding"], width, height, request["seed"], resident, zs, inputs["tags"], precision=precision)
         mx.save_safetensors(result, {"latent": z})

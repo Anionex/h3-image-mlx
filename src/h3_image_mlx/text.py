@@ -1,4 +1,7 @@
-from .core import H256, Weights, attention, heads, mx, norm, rope
+import os
+from concurrent.futures import ThreadPoolExecutor
+
+from .core import H256, Weights, attention, flag, heads, m5_resident, mx, norm, rope
 from tokenizers import Tokenizer
 
 # P-H3-Image conditions on these hidden states of its 4B encoder (0 = embeddings, 36 = final norm output).
@@ -43,7 +46,14 @@ def encode(path, tokenizer_path, prompt, refs=()):
     else:
         x = embed(w, lm + "embed_tokens.weight", ids)
         tags = mx.ones((len(ids),), dtype=mx.int32)
+    previous = None
+    native = m5_resident.get()
+    pipelined = native and ("H3_ASYNC" not in os.environ or flag("H3_ASYNC"))
+    if native and "H3_PREFETCH" not in os.environ and w.pool is None:
+        w.pool = ThreadPoolExecutor(1)
     for i in range(layers):
+        if native and i + 1 < layers:
+            w.ahead(f"{lm}layers.{i + 1}", keep=(f"{lm}layers.{i}",))
         if ph3 and i in PH3_STATES:
             states.append(x)
         prefix = f"{lm}layers.{i}."
@@ -75,7 +85,15 @@ def encode(path, tokenizer_path, prompt, refs=()):
         )
         if refs and i < len(deep):
             x = x.at[rows].add(deep[i].astype(x.dtype))
-        mx.eval(x)
+        if pipelined and i + 1 < layers:
+            mx.async_eval(x)
+            if previous is not None:
+                mx.eval(previous)
+            previous = x
+        else:
+            mx.eval(x)
+    if w.pool is not None:
+        w.pool.shutdown()
     if ph3:
         states.append(norm(x, w[lm + "norm.weight"], 1e-6))
         x = connect(w, states)
