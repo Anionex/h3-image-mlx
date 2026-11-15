@@ -35,6 +35,8 @@ jobs:
           assert mx.metal.is_available() and disk_bytes()>0
           PY
           PYTHONPATH=src:tests python -m unittest test_portable.PortableProjectionTests.test_certified_full_and_multiple_spans
+      - name: Exercise the selected SIMD tile on long K and a partial row tile
+        run: PYTHONPATH=src:tests python -m unittest test_portable.PortableProjectionTests.test_legacy_large_projection_spans_and_last_panel
       - name: Make space on the temporary runner and fetch pinned weights
         timeout-minutes: 35
         run: |
@@ -67,7 +69,16 @@ jobs:
         with:
           python-version: '3.13'
       - run: python -m pip install 'mlx==0.32.4' 'h3-image-mlx==0.1.0a8'
-      - run: python scripts/legacy_bench/shape_sweep.py
+      - uses: actions/checkout@v4
+        with:
+          ref: 2b2d602
+          path: sweep
+          persist-credentials: false
+      - run: |
+          mv pr sweep/pr
+          cd sweep
+          python scripts/legacy_bench/shape_sweep.py
+          mv shape-results.json ..
       - uses: actions/upload-artifact@v4
         with:
           name: legacy-shapes

@@ -133,64 +133,14 @@ def _max_row_energy(x):
     return energies.max()
 
 
-@cache
-def _half_energy_kernel():
-    return mx.fast.metal_kernel(
-        name="h3_half_energy", input_names=["x"], output_names=["energies"],
-        source=Path(__file__).with_name("kernels").joinpath("portable_half_energy.metal").read_text(),
-    )
-
-
-def _half_energies(x, cut):
-    (energies,) = _half_energy_kernel()(
-        inputs=[x], template=[("CUT", cut)], grid=(256, x.shape[0], 1), threadgroup=(128, 1, 1),
-        output_shapes=[(x.shape[0], 2)], output_dtypes=[mx.uint32],
-    )
-    return mx.concatenate((energies.max(axis=0), energies.sum(axis=1).max().reshape(1)))
-
-
-def _certified_halves(x, weight):
-    width = x.shape[1]
-    cut = ((width // 2) // 64) * 64
-    left, right = _half_energies(x, cut), _half_energies(weight, cut)
-    mx.eval(left, right)
-    products = [a * b for a, b in zip(left.tolist(), right.tolist())]
-    if products[2] <= 1 << 48:
-        return [(0, width)]
-    if max(products[:2]) <= 1 << 48:
-        return [(0, cut), (cut, width)]
-    return None
-
-
 def _large_portable_matmul(x, weight, row_scale, channel_scale, dtype):
-    width = x.shape[1]
-    halves = _certified_halves(x, weight) if width > 8192 else None
-    spans = halves or _safe_spans(x)
-    if width <= 8192 and len(spans) > 1:
-        # Cauchy-Schwarz also bounds any subset of products. If this tighter
-        # bound fits, one GEMM is exact even when the activation-only bound fails.
-        left_energy, right_energy = _max_row_energy(x), _max_row_energy(weight)
-        mx.eval(left_energy, right_energy)
-        if left_energy.item() * right_energy.item() <= 1 << 48:
-            spans = [(0, width)]
-    if len(spans) > 4:
-        return _planes_matmul(x, weight, row_scale, channel_scale, dtype)
-    left = [mx.contiguous(x[:, start:end]).astype(mx.float32) for start, end in spans]
-    columns = []
-    panel = 2048 if width > 8192 else 4096
-    for col in range(0, weight.shape[0], panel):
-        right = weight[col:col + panel]
-        total = None
-        for a, (start, end) in zip(left, spans):
-            b = mx.contiguous(right[:, start:end]).astype(mx.float32)
-            dot = a @ b.T
-            if len(spans) > 1:
-                dot = dot.astype(mx.int32)
-            total = dot if total is None else total + dot
-        out = (total.astype(mx.float32) * row_scale * channel_scale[col:col + panel]).astype(dtype)
-        mx.eval(out)
-        columns.append(out)
-    return mx.concatenate(columns, axis=1)
+    rows, channels = x.shape[0], weight.shape[0]
+    return _simd_gemm()(
+        inputs=[x, weight, row_scale, channel_scale],
+        template=[("T", dtype), ("BM", 64), ("BN", 64), ("BK", 32)],
+        grid=(channels // 64 * 128, (rows + 63) // 64, 1),
+        threadgroup=(128, 1, 1), output_shapes=[(rows, channels)], output_dtypes=[dtype],
+    )[0]
 
 
 def _planes_matmul(x, weight, row_scale, channel_scale, dtype):
