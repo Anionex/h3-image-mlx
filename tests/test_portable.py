@@ -81,6 +81,22 @@ class PortableProjectionTests(unittest.TestCase):
                 for dtype in (mx.float32, mx.bfloat16):
                     self.check_outputs(x, w, xs, np.array([.013], np.float32), dtype)
 
+    def test_simd_reads_byte_aligned_dlpack_weight(self):
+        if not mx.metal.is_available():
+            self.skipTest("requires Metal")
+        rng = np.random.default_rng(412)
+        width, channels = 1088, 64
+        buf = rng.integers(-128, 128, channels * width + 1, dtype=np.int8)
+        w = buf[1:].reshape(channels, width)
+        self.assertEqual(w.ctypes.data % 4, 1)
+        weight = mx.from_dlpack(w)
+        for rows in (33, 513):
+            x = rng.integers(-128, 128, (rows, width), dtype=np.int8)
+            expected = (x.astype(np.int32) @ w.astype(np.int32).T).astype(np.float32)
+            with patch.object(_portable, "_legacy_metal", return_value=True), patch.object(_portable, "_has_integer_tensor_ops", return_value=False):
+                output = _portable.portable_matmul(mx.array(x), weight, mx.ones((rows,)), mx.ones((channels,)), mx.float32)
+            np.testing.assert_array_equal(np.array(output), expected)
+
     def test_direct_tensor_cancellation_and_row_boundary(self):
         if not mx.metal.is_available() or not _portable._has_integer_tensor_ops():
             self.skipTest("requires direct integer TensorOps")
@@ -110,6 +126,58 @@ class PortableProjectionTests(unittest.TestCase):
         x[0] = -128
         w[0] = -128
         self.check_outputs(x, w, np.ones(len(x), np.float32), np.ones(64, np.float32), mx.float32)
+
+    def test_activation_bound_includes_negative_128_and_partial_chunk(self):
+        if not mx.metal.is_available():
+            self.skipTest("requires Metal")
+        x = np.zeros((3, 2112), dtype=np.int8)
+        self.assertEqual(_portable._safe_spans(mx.array(x)), [(0, 2112)])
+        x[1, :1024] = -128
+        x[2, 1024] = 1
+        self.assertEqual(_portable._safe_spans(mx.array(x)), [(0, 1024), (1024, 2112)])
+
+    def test_row_energy_includes_all_simdgroups_and_the_last_column(self):
+        if not mx.metal.is_available():
+            self.skipTest("requires Metal")
+        x = np.zeros((3, 14336), np.int8)
+        x[1, :] = -128
+        x[1, -1] = 127
+        expected = int(np.square(x.astype(np.int64)).sum(axis=1).max())
+        self.assertEqual(_portable._max_row_energy(mx.array(x)).item(), expected)
+
+    def test_certified_full_and_multiple_spans(self):
+        if not mx.metal.is_available():
+            self.skipTest("requires Metal")
+        rng = np.random.default_rng(927)
+        b = rng.integers(-128, 128, (64, 2560), dtype=np.int8)
+        b[0] = -128
+        for magnitude in (2, 127):
+            a = rng.integers(-magnitude, magnitude + 1, (513, 2560), dtype=np.int8)
+            a[0] = -magnitude
+            with patch.object(_portable, "_legacy_metal", return_value=True), patch.object(_portable, "_has_integer_tensor_ops", return_value=False):
+                self.check_outputs(a, b, np.ones(513, np.float32), np.ones(64, np.float32), mx.float32)
+
+    def test_legacy_large_projection_spans_and_last_panel(self):
+        if not mx.metal.is_available():
+            self.skipTest("requires Metal")
+        rng = np.random.default_rng(502)
+        rows, width, channels = 513, 8256, 1088
+        a = rng.integers(-128, 128, (rows, width), dtype=np.int8)
+        b = rng.integers(-128, 128, (channels, width), dtype=np.int8)
+        a[0] = -128
+        b[0] = -128
+        b[-1, :width // 2] = 127
+        b[-1, width // 2:] = -127
+        b[-1, 0] = 126
+        xs = np.linspace(.125, .5, rows, dtype=np.float32)
+        ws = np.linspace(.25, .75, channels, dtype=np.float32)
+        indices = [0, 1, 1023, 1024, channels - 1]
+        oracle = a.astype(np.int64) @ b[indices].astype(np.int64).T
+        reference = oracle.astype(np.float32) * xs[:, None] * ws[indices]
+        with patch.object(_portable, "_legacy_metal", return_value=True), patch.object(_portable, "_has_integer_tensor_ops", return_value=False):
+            for dtype in (mx.float32, mx.bfloat16):
+                y = _portable.portable_matmul(mx.array(a), mx.array(b), mx.array(xs), mx.array(ws), dtype)
+                self.assertTrue(mx.array_equal(y[:, indices], mx.array(reference).astype(dtype)).item())
 
     def test_convrot_projection_without_custom_metal_kernel(self):
         # Integer activations make the normalized Hadamard rotation exact.

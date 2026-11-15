@@ -30,6 +30,8 @@ def main(stage, work):
     dit, text, vae, tokenizer, vae_config = model_paths(precision)
     backend = select_backend(request["backend"], info["device_name"], precision)
     core.backend.set(backend)
+    from ._portable import _legacy_metal
+    core.legacy_int8_reads.set(precision == "int8" and backend == "portable" and _legacy_metal())
     mx.set_cache_limit(96 << 20)
     models = Path(request["models"])
     refs = request["references"]
