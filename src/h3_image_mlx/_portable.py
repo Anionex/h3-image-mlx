@@ -117,9 +117,32 @@ def _safe_spans(x):
     return spans
 
 
+@cache
+def _row_energy_kernel():
+    return mx.fast.metal_kernel(
+        name="h3_row_energy", input_names=["x"], output_names=["squares"],
+        source=Path(__file__).with_name("kernels").joinpath("portable_energy.metal").read_text(),
+    )
+
+
+def _max_row_energy(x):
+    (energies,) = _row_energy_kernel()(
+        inputs=[x], grid=(x.shape[0] * 128, 1, 1), threadgroup=(128, 1, 1),
+        output_shapes=[(x.shape[0],)], output_dtypes=[mx.uint32],
+    )
+    return energies.max()
+
+
 def _large_portable_matmul(x, weight, row_scale, channel_scale, dtype):
     width = x.shape[1]
     spans = _safe_spans(x)
+    if len(spans) > 1:
+        # Cauchy-Schwarz also bounds any subset of products. If this tighter
+        # bound fits, one GEMM is exact even when the activation-only bound fails.
+        left_energy, right_energy = _max_row_energy(x), _max_row_energy(weight)
+        mx.eval(left_energy, right_energy)
+        if left_energy.item() * right_energy.item() <= 1 << 48:
+            spans = [(0, width)]
     if len(spans) > 4:
         return _planes_matmul(x, weight, row_scale, channel_scale, dtype)
     left = [mx.contiguous(x[:, start:end]).astype(mx.float32) for start, end in spans]

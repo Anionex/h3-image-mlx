@@ -120,6 +120,15 @@ class PortableProjectionTests(unittest.TestCase):
         x[2, 1024] = 1
         self.assertEqual(_portable._safe_spans(mx.array(x)), [(0, 1024), (1024, 2112)])
 
+    def test_row_energy_includes_all_simdgroups_and_the_last_column(self):
+        if not mx.metal.is_available():
+            self.skipTest("requires Metal")
+        x = np.zeros((3, 14336), np.int8)
+        x[1, :] = -128
+        x[1, -1] = 127
+        expected = int(np.square(x.astype(np.int64)).sum(axis=1).max())
+        self.assertEqual(_portable._max_row_energy(mx.array(x)).item(), expected)
+
     def test_certified_full_and_multiple_spans(self):
         if not mx.metal.is_available():
             self.skipTest("requires Metal")
