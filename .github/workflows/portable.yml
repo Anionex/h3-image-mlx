@@ -1,62 +1,45 @@
-name: H3 portable projection
-on:
-  pull_request:
-    paths:
-      - src/h3_image_mlx/**
-      - scripts/bench_portable.py
-      - tests/test_m5.py
-      - tests/test_portable.py
-      - .github/workflows/portable.yml
-  push:
-    branches: [main]
-    paths:
-      - src/h3_image_mlx/**
-      - scripts/bench_portable.py
-      - tests/test_m5.py
-      - tests/test_portable.py
-      - .github/workflows/portable.yml
-  workflow_dispatch:
-
+name: H3 legacy Metal full render on hosted macOS
+on: workflow_dispatch
 permissions:
   contents: read
-
 jobs:
-  correctness:
+  render:
     runs-on: macos-15
-    timeout-minutes: 10
+    timeout-minutes: 115
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 2
+          persist-credentials: false
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
-      - run: python -m pip install .
-      - name: Test the portable operator against integer reference results
+      - run: python -m pip install 'mlx==0.32.4' 'h3-image-mlx==0.1.0a8'
+      - name: Verify macOS, GPU, disk counters and target geometry
         run: |
           python - <<'PY'
-          import platform
-          import shutil
-          import subprocess
-          import unittest
+          import os, platform, sys
           import mlx.core as mx
-
-          device = mx.gpu if mx.metal.is_available() else mx.cpu
-          mx.set_default_device(device)
-          chip = subprocess.check_output(["sysctl", "-n", "machdep.cpu.brand_string"], text=True).strip()
-          print(f"macOS {platform.mac_ver()[0]}, CPU {chip}, MLX {device}, GPU {mx.device_info() if mx.metal.is_available() else None}", flush=True)
-          print(f"Free workspace disk: {shutil.disk_usage('.').free / 1e9:.1f} GB", flush=True)
-          suite = unittest.defaultTestLoader.discover("tests", pattern="test_portable.py")
-          suite.addTests(unittest.defaultTestLoader.discover("tests", pattern="test_m5.py"))
-          result = unittest.TextTestRunner(verbosity=2).run(suite)
-          raise SystemExit(not result.wasSuccessful())
+          sys.path.insert(0,'scripts/legacy_bench')
+          from cache_stats import disk_bytes
+          import subprocess
+          cpu=subprocess.check_output(['sysctl','-n','machdep.cpu.brand_string'],text=True).strip()
+          print(cpu,platform.mac_ver()[0],mx.device_info(),disk_bytes(),flush=True)
+          assert 'Apple M1' in cpu and tuple(map(int,platform.mac_ver()[0].split('.')[:2]))<(26,4)
+          assert mx.metal.is_available() and disk_bytes()>0
           PY
-      - name: Compare projection latency with the PR base on Metal
-        if: github.event_name == 'pull_request'
-        env:
-          BASE: ${{ github.event.pull_request.base.sha }}
+          PYTHONPATH=src:tests python -m unittest test_portable.PortableProjectionTests.test_certified_full_and_multiple_spans
+      - name: Make space on the temporary runner and fetch pinned weights
+        timeout-minutes: 35
         run: |
-          if python -c 'import mlx.core as mx; raise SystemExit(not mx.metal.is_available())'; then
-            git archive "$BASE" src/h3_image_mlx | tar -x -C "$RUNNER_TEMP"
-            python scripts/bench_portable.py "$RUNNER_TEMP/src/h3_image_mlx/_portable.py"
-          fi
+          python scripts/legacy_bench/fetch.py "$RUNNER_TEMP/h3-models"
+          clang -O2 -dynamiclib scripts/legacy_bench/io.c -o scripts/legacy_bench/audit.dylib
+          sudo -n purge
+      - name: Run same-machine paired 1024px trials
+        run: python scripts/legacy_bench/compare.py --candidate . --weights "$RUNNER_TEMP/h3-models" --results results --pairs 3
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: macos15-m1-1024-raw
+          path: results/
+          if-no-files-found: warn
+          retention-days: 14
