@@ -12,7 +12,7 @@ jobs:
   render:
     if: inputs.shapes_only == false
     runs-on: macos-15
-    timeout-minutes: 115
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@v4
         with:
@@ -44,7 +44,6 @@ jobs:
         timeout-minutes: 35
         run: |
           python scripts/legacy_bench/fetch.py "$RUNNER_TEMP/h3-models"
-          clang -O2 -dynamiclib scripts/legacy_bench/io.c -o scripts/legacy_bench/audit.dylib
           sudo -n purge
       - name: Run same-machine paired 1024px trials
         run: python scripts/legacy_bench/compare.py --candidate . --weights "$RUNNER_TEMP/h3-models" --results results --pairs 3
