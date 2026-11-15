@@ -135,12 +135,14 @@ def _max_row_energy(x):
 
 def _large_portable_matmul(x, weight, row_scale, channel_scale, dtype):
     rows, channels = x.shape[0], weight.shape[0]
-    return _simd_gemm()(
+    output = _simd_gemm()(
         inputs=[x, weight, row_scale, channel_scale],
         template=[("T", dtype), ("BM", 64), ("BN", 64), ("BK", 32)],
         grid=(channels // 64 * 128, (rows + 63) // 64, 1),
         threadgroup=(128, 1, 1), output_shapes=[(rows, channels)], output_dtypes=[dtype],
     )[0]
+    mx.eval(output)
+    return output
 
 
 def _planes_matmul(x, weight, row_scale, channel_scale, dtype):

@@ -36,7 +36,10 @@ jobs:
           PY
           PYTHONPATH=src:tests python -m unittest test_portable.PortableProjectionTests.test_certified_full_and_multiple_spans
       - name: Exercise the selected SIMD tile on long K and a partial row tile
-        run: PYTHONPATH=src:tests python -m unittest test_portable.PortableProjectionTests.test_legacy_large_projection_spans_and_last_panel
+        run: |
+          PYTHONPATH=src:tests python -m unittest \
+            test_portable.PortableProjectionTests.test_legacy_large_projection_spans_and_last_panel \
+            test_portable.PortableProjectionTests.test_simd_reads_byte_aligned_dlpack_weight
       - name: Make space on the temporary runner and fetch pinned weights
         timeout-minutes: 35
         run: |
