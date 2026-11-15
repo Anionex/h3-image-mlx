@@ -10,9 +10,15 @@ import numpy as np
 from h3_image_mlx._portable import portable_matmul
 
 
-def compare(baseline, rows, channels, width):
+def compare(baseline, rows, channels, width, *, narrow=False):
     rng = np.random.default_rng(42)
-    x, w = (mx.array(rng.integers(-128, 128, (n, width), dtype=np.int8)) for n in (rows, channels))
+    bound = 32 if narrow else 128
+    def operand(count):
+        values = rng.integers(-bound, bound, (count, width), dtype=np.int8)
+        if narrow:
+            values[:, 0] = 127
+        return mx.array(values)
+    x, w = operand(rows), operand(channels)
     args = (x, w, mx.ones((rows,)), mx.ones((channels,)), mx.float32)
     mx.eval(*args[:-1])
     methods = (baseline, portable_matmul)
@@ -29,7 +35,8 @@ def compare(baseline, rows, channels, width):
             times[index].append((time.perf_counter() - start) * 1000)
             del output
     before, after = map(statistics.median, times)
-    print(f"{rows} x {channels} x {width}: {before:.2f} -> {after:.2f} ms ({before / after:.2f}x)", flush=True)
+    label = "synthetic narrow with outliers" if narrow else "uniform int8"
+    print(f"{label}, {rows} x {channels} x {width}: {before:.2f} -> {after:.2f} ms ({before / after:.2f}x)", flush=True)
 
 
 if __name__ == "__main__":
@@ -42,3 +49,6 @@ if __name__ == "__main__":
     print(f"MLX {mx.__version__}, {mx.device_info()['device_name']}", flush=True)
     for shape in ((32, 25600, 5120), (1024, 21504, 5376), (64, 5120, 25600)):
         compare(module.portable_matmul, *shape)
+    # Same geometry, different input magnitudes exercise exact-span selection.
+    for shape in ((1024, 21504, 5376), (1024, 5376, 14336)):
+        compare(module.portable_matmul, *shape, narrow=True)
