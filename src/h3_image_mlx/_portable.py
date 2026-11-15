@@ -52,9 +52,14 @@ def _tensor_dot(x, weight):
 
 
 @cache
-def _has_integer_tensor_ops():
+def _legacy_metal():
     version = platform.mac_ver()[0]
-    if not version or tuple(map(int, version.split(".")[:2])) < (26, 4):
+    return bool(version) and tuple(map(int, version.split(".")[:2])) < (26, 4)
+
+
+@cache
+def _has_integer_tensor_ops():
+    if _legacy_metal() or not platform.mac_ver()[0]:
         return False
     # MLX can construct a kernel lazily. Evaluate a tail tile before selecting
     # this path, since shader compilation and device support vary independently.
@@ -83,7 +88,59 @@ def _dot_planes(tensor, padding):
     return mx.contiguous(planes).astype(mx.float32)
 
 
+@cache
+def _activation_bounds_kernel():
+    return mx.fast.metal_kernel(
+        name="h3_activation_l1", input_names=["x"], output_names=["bounds"],
+        source=Path(__file__).with_name("kernels").joinpath("portable_l1.metal").read_text(),
+    )
+
+
+def _safe_spans(x):
+    """Find K ranges whose dot product is exact in float32 for every int8 weight row."""
+    rows, width = x.shape
+    groups = (width + _DOT_CHUNK - 1) // _DOT_CHUNK
+    (bounds,) = _activation_bounds_kernel()(
+        inputs=[x], grid=(groups * 32, rows, 1), threadgroup=(32, 1, 1),
+        output_shapes=[(rows, groups)], output_dtypes=[mx.uint32],
+    )
+    spans = []
+    start = magnitude = 0
+    # A weight has magnitude at most 128. Bound every partial sum by
+    # 128 * sum(abs(x)), including intermediate sums inside the GPU GEMM.
+    for group, bound in enumerate(bounds.max(axis=0).tolist()):
+        if magnitude + bound > (1 << 17):
+            spans.append((start, group * _DOT_CHUNK))
+            start, magnitude = group * _DOT_CHUNK, 0
+        magnitude += bound
+    spans.append((start, width))
+    return spans
+
+
 def _large_portable_matmul(x, weight, row_scale, channel_scale, dtype):
+    width = x.shape[1]
+    spans = _safe_spans(x)
+    if len(spans) > 4:
+        return _planes_matmul(x, weight, row_scale, channel_scale, dtype)
+    left = [mx.contiguous(x[:, start:end]).astype(mx.float32) for start, end in spans]
+    columns = []
+    panel = 2048 if width > 8192 else 4096
+    for col in range(0, weight.shape[0], panel):
+        right = weight[col:col + panel]
+        total = None
+        for a, (start, end) in zip(left, spans):
+            b = mx.contiguous(right[:, start:end]).astype(mx.float32)
+            dot = a @ b.T
+            if len(spans) > 1:
+                dot = dot.astype(mx.int32)
+            total = dot if total is None else total + dot
+        out = (total.astype(mx.float32) * row_scale * channel_scale[col:col + panel]).astype(dtype)
+        mx.eval(out)
+        columns.append(out)
+    return mx.concatenate(columns, axis=1)
+
+
+def _planes_matmul(x, weight, row_scale, channel_scale, dtype):
     rows, width = x.shape
     padding = (-width) % _DOT_CHUNK
     left = _dot_planes(x, padding)
@@ -124,7 +181,7 @@ def portable_matmul(xq, weight, xs, scale, output_dtype):
                 mx.eval(result)
             chunks.append(result)
         return chunks[0] if len(chunks) == 1 else mx.concatenate(chunks)
-    if 512 < rows <= 1536 and 1024 <= width <= 25600 and aligned and on_gpu:
+    if 512 < rows <= 1536 and 1024 <= width <= 25600 and aligned and on_gpu and _legacy_metal():
         return _large_portable_matmul(xq, weight, row_scale, channel_scale, output_dtype)
     if rows <= 512 and aligned and on_gpu:
         bm, bn, bk = (32, 64, 64) if rows <= 128 else (64, 64, 32)

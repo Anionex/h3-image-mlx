@@ -111,6 +111,27 @@ class PortableProjectionTests(unittest.TestCase):
         w[0] = -128
         self.check_outputs(x, w, np.ones(len(x), np.float32), np.ones(64, np.float32), mx.float32)
 
+    def test_activation_bound_includes_negative_128_and_partial_chunk(self):
+        if not mx.metal.is_available():
+            self.skipTest("requires Metal")
+        x = np.zeros((3, 2112), dtype=np.int8)
+        self.assertEqual(_portable._safe_spans(mx.array(x)), [(0, 2112)])
+        x[1, :1024] = -128
+        x[2, 1024] = 1
+        self.assertEqual(_portable._safe_spans(mx.array(x)), [(0, 1024), (1024, 2112)])
+
+    def test_certified_full_and_multiple_spans(self):
+        if not mx.metal.is_available():
+            self.skipTest("requires Metal")
+        rng = np.random.default_rng(927)
+        b = rng.integers(-128, 128, (64, 2560), dtype=np.int8)
+        b[0] = -128
+        for magnitude in (2, 127):
+            a = rng.integers(-magnitude, magnitude + 1, (513, 2560), dtype=np.int8)
+            a[0] = -magnitude
+            with patch.object(_portable, "_legacy_metal", return_value=True), patch.object(_portable, "_has_integer_tensor_ops", return_value=False):
+                self.check_outputs(a, b, np.ones(513, np.float32), np.ones(64, np.float32), mx.float32)
+
     def test_legacy_large_projection_spans_and_last_panel(self):
         if not mx.metal.is_available():
             self.skipTest("requires Metal")
@@ -128,7 +149,7 @@ class PortableProjectionTests(unittest.TestCase):
         indices = [0, 1, 1023, 1024, channels - 1]
         oracle = a.astype(np.int64) @ b[indices].astype(np.int64).T
         reference = oracle.astype(np.float32) * xs[:, None] * ws[indices]
-        with patch.object(_portable, "_has_integer_tensor_ops", return_value=False):
+        with patch.object(_portable, "_legacy_metal", return_value=True), patch.object(_portable, "_has_integer_tensor_ops", return_value=False):
             for dtype in (mx.float32, mx.bfloat16):
                 y = _portable.portable_matmul(mx.array(a), mx.array(b), mx.array(xs), mx.array(ws), dtype)
                 self.assertTrue(mx.array_equal(y[:, indices], mx.array(reference).astype(dtype)).item())
