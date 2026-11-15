@@ -24,5 +24,6 @@ Use a new results directory each time. For a six-render comparison of the SIMD c
 
 - `summary.json` gives the median end-to-end time in seconds and median peak stage-process footprint in bytes. For each render, the peak is the largest lifetime process footprint among text encoding, denoising and VAE decoding. Divide bytes by 1e9 for decimal GB.
 - Every numbered directory contains the generated PNG and its SHA-256, plus uncached I/O counters and residency observations. All three stages must pass physical-read checks. The harness also checks that each PNG matches the released baseline on that machine.
+- On a virtual Mac, disk counters describe reads issued to the guest block device. The guest can verify its own file-cache residency. Host-side storage caching requires separate host telemetry.
 - A warm weight cache causes the run to stop. On a personally controlled Mac, a reboot followed by running the benchmark before opening the model is one way to start cold. The harness samples file residency throughout generation.
 - When sharing results, include `configuration.json`, `summary.json` and the numbered `result.json` files. They identify the hardware, macOS, runtime paths, file hashes, timing and measurement conditions. Runs using the optional `--proxy` flag are labeled as forced-dispatch screening.
