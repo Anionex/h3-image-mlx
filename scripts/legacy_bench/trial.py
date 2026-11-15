@@ -40,7 +40,8 @@ if a.disk_bytes() <= 0:
 dest=args.result.resolve()
 dest.mkdir(parents=True)
 sources=args.candidate.resolve(strict=True)/'src'
-assert (sources/'h3_image_mlx/kernels/portable_reduce.metal').is_file()
+if not (sources/'h3_image_mlx/_portable.py').is_file():
+    raise ValueError(f"Missing H3 portable backend in {sources}")
 def residency(): return a.file_residency(files)['resident_bytes']
 monitor_errors=[]
 samples=[residency()]
