@@ -133,10 +133,40 @@ def _max_row_energy(x):
     return energies.max()
 
 
+@cache
+def _half_energy_kernel():
+    return mx.fast.metal_kernel(
+        name="h3_half_energy", input_names=["x"], output_names=["energies"],
+        source=Path(__file__).with_name("kernels").joinpath("portable_half_energy.metal").read_text(),
+    )
+
+
+def _half_energies(x, cut):
+    (energies,) = _half_energy_kernel()(
+        inputs=[x], template=[("CUT", cut)], grid=(256, x.shape[0], 1), threadgroup=(128, 1, 1),
+        output_shapes=[(x.shape[0], 2)], output_dtypes=[mx.uint32],
+    )
+    return mx.concatenate((energies.max(axis=0), energies.sum(axis=1).max().reshape(1)))
+
+
+def _certified_halves(x, weight):
+    width = x.shape[1]
+    cut = ((width // 2) // 64) * 64
+    left, right = _half_energies(x, cut), _half_energies(weight, cut)
+    mx.eval(left, right)
+    products = [a * b for a, b in zip(left.tolist(), right.tolist())]
+    if products[2] <= 1 << 48:
+        return [(0, width)]
+    if max(products[:2]) <= 1 << 48:
+        return [(0, cut), (cut, width)]
+    return None
+
+
 def _large_portable_matmul(x, weight, row_scale, channel_scale, dtype):
     width = x.shape[1]
-    spans = _safe_spans(x)
-    if len(spans) > 1:
+    halves = _certified_halves(x, weight) if width > 8192 else None
+    spans = halves or _safe_spans(x)
+    if width <= 8192 and len(spans) > 1:
         # Cauchy-Schwarz also bounds any subset of products. If this tighter
         # bound fits, one GEMM is exact even when the activation-only bound fails.
         left_energy, right_energy = _max_row_energy(x), _max_row_energy(weight)

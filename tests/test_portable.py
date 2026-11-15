@@ -141,6 +141,21 @@ class PortableProjectionTests(unittest.TestCase):
             with patch.object(_portable, "_legacy_metal", return_value=True), patch.object(_portable, "_has_integer_tensor_ops", return_value=False):
                 self.check_outputs(a, b, np.ones(513, np.float32), np.ones(64, np.float32), mx.float32)
 
+    def test_energy_halves_bound_every_partial_dot(self):
+        if not mx.metal.is_available():
+            self.skipTest("requires Metal")
+        width = 14336
+        x = mx.full((3, width), 40, dtype=mx.int8)
+        for value, expected in ((1, [(0, width)]), (40, [(0, 7168), (7168, width)]), (-128, None)):
+            w = mx.full((5, width), value, dtype=mx.int8)
+            self.assertEqual(_portable._certified_halves(x, w), expected)
+        w = np.full((64, width), 40, dtype=np.int8)
+        w[0, width // 2:] = -40
+        w[0, -1] = -39
+        a = np.full((513, width), 40, dtype=np.int8)
+        with patch.object(_portable, "_legacy_metal", return_value=True), patch.object(_portable, "_has_integer_tensor_ops", return_value=False):
+            self.check_outputs(a, w, np.ones(len(a), np.float32), np.ones(len(w), np.float32), mx.float32)
+
     def test_legacy_large_projection_spans_and_last_panel(self):
         if not mx.metal.is_available():
             self.skipTest("requires Metal")

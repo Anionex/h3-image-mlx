@@ -1,9 +1,16 @@
 name: H3 legacy Metal full render on hosted macOS
-on: workflow_dispatch
+on:
+  workflow_dispatch:
+    inputs:
+      shapes_only:
+        type: boolean
+        default: false
+        description: Run four projection shapes on Metal without fetching weights
 permissions:
   contents: read
 jobs:
   render:
+    if: inputs.shapes_only == false
     runs-on: macos-15
     timeout-minutes: 115
     steps:
@@ -43,3 +50,25 @@ jobs:
           path: results/
           if-no-files-found: warn
           retention-days: 14
+  shapes:
+    if: inputs.shapes_only
+    runs-on: macos-15
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: f0b93570384d3b4165b1c94f93f4c7c5db599642
+          path: pr
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: python -m pip install 'mlx==0.32.4' 'h3-image-mlx==0.1.0a8'
+      - run: python scripts/legacy_bench/shape_sweep.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: legacy-shapes
+          path: shape-results.json
