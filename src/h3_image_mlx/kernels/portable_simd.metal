@@ -20,7 +20,8 @@ for (int k0 = 0; k0 < K; k0 += BK) {
   }
   for (int i = tid; i < BN * (BK / 8); i += 128) {
     int n = i / (BK / 8), k = (i % (BK / 8)) * 8;
-    device const char4 *p = (device const char4 *)(w + (n0 + n) * K + k0 + k);
+    // A streamed safetensors weight may start at any byte offset.
+    device const packed_char4 *p = (device const packed_char4 *)(w + (n0 + n) * K + k0 + k);
     *((threadgroup half4 *)(B + n * (BK + 8) + k)) = half4(p[0]);
     *((threadgroup half4 *)(B + n * (BK + 8) + k + 4)) = half4(p[1]);
   }

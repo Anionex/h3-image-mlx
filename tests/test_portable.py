@@ -81,6 +81,22 @@ class PortableProjectionTests(unittest.TestCase):
                 for dtype in (mx.float32, mx.bfloat16):
                     self.check_outputs(x, w, xs, np.array([.013], np.float32), dtype)
 
+    def test_simd_reads_byte_aligned_dlpack_weight(self):
+        if not mx.metal.is_available():
+            self.skipTest("requires Metal")
+        rng = np.random.default_rng(412)
+        width, channels = 1088, 64
+        buf = rng.integers(-128, 128, channels * width + 1, dtype=np.int8)
+        w = buf[1:].reshape(channels, width)
+        self.assertEqual(w.ctypes.data % 4, 1)
+        weight = mx.from_dlpack(w)
+        for rows in (33, 513):
+            x = rng.integers(-128, 128, (rows, width), dtype=np.int8)
+            expected = (x.astype(np.int32) @ w.astype(np.int32).T).astype(np.float32)
+            with patch.object(_portable, "_legacy_metal", return_value=True), patch.object(_portable, "_has_integer_tensor_ops", return_value=False):
+                output = _portable.portable_matmul(mx.array(x), weight, mx.ones((rows,)), mx.ones((channels,)), mx.float32)
+            np.testing.assert_array_equal(np.array(output), expected)
+
     def test_direct_tensor_cancellation_and_row_boundary(self):
         if not mx.metal.is_available() or not _portable._has_integer_tensor_ops():
             self.skipTest("requires direct integer TensorOps")
