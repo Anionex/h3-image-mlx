@@ -66,6 +66,44 @@ def _has_integer_tensor_ops():
         return False
 
 
+@cache
+def _reduce_int8_planes():
+    return mx.fast.metal_kernel(
+        name="h3_reduce_int8_planes",
+        input_names=["dots", "xs", "ws"],
+        output_names=["out"],
+        source=Path(__file__).with_name("kernels").joinpath("portable_reduce.metal").read_text(),
+    )
+
+
+def _dot_planes(tensor, padding):
+    if padding:
+        tensor = mx.pad(tensor, [(0, 0), (0, padding)])
+    planes = tensor.reshape(tensor.shape[0], -1, _DOT_CHUNK).transpose(1, 0, 2)
+    return mx.contiguous(planes).astype(mx.float32)
+
+
+def _large_portable_matmul(x, weight, row_scale, channel_scale, dtype):
+    rows, width = x.shape
+    padding = (-width) % _DOT_CHUNK
+    left = _dot_planes(x, padding)
+    # Limit each set of scratch planes. Long K needs more planes per column.
+    panel = 1024 if width >= 8192 else 2048
+    parts = []
+    for start in range(0, weight.shape[0], panel):
+        right = _dot_planes(weight[start:start + panel], padding)
+        cols = right.shape[1]
+        dots = left @ right.swapaxes(1, 2)
+        (out,) = _reduce_int8_planes()(
+            inputs=[dots, row_scale, channel_scale[start:start + panel]],
+            template=[("T", dtype)], grid=(rows * cols, 1, 1),
+            threadgroup=(256, 1, 1), output_shapes=[(rows, cols)], output_dtypes=[dtype],
+        )
+        mx.eval(out)
+        parts.append(out)
+    return mx.concatenate(parts, axis=1)
+
+
 def portable_matmul(xq, weight, xs, scale, output_dtype):
     """Compute row-scaled int8 dot products without the M5 Metal TensorOps kernel."""
     rows, width = xq.shape
@@ -86,6 +124,8 @@ def portable_matmul(xq, weight, xs, scale, output_dtype):
                 mx.eval(result)
             chunks.append(result)
         return chunks[0] if len(chunks) == 1 else mx.concatenate(chunks)
+    if 512 < rows <= 1536 and 1024 <= width <= 25600 and aligned and on_gpu:
+        return _large_portable_matmul(xq, weight, row_scale, channel_scale, output_dtype)
     if rows <= 512 and aligned and on_gpu:
         bm, bn, bk = (32, 64, 64) if rows <= 128 else (64, 64, 32)
         return _simd_gemm()(
