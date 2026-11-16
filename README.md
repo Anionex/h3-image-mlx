@@ -21,10 +21,21 @@
 
 Generate and edit images on an Apple Silicon Mac with MiniMax H3 Image. Optimized for fast inference, with 4K generation using around 7 GB of peak inference-process memory. Available through a CLI and Python API, ready to use out of the box.
 
+## Recent updates
+
+| Release | What changed | Median H3 generation time |
+| --- | --- | --- |
+| 0.1.0a9 | Tiled Metal projections speed up streamed INT8 on older macOS versions. | M4 Pro, 1024×1024: 250.55 → **101.56 s** (59.5% less time). |
+| 0.1.0a8 | Resident inference overlaps weight loading with GPU work and uses wider W8A8 tiles. | M5 Pro, 1024×1024: 26.49 → **18.93 s** (28.5% less time). |
+| 0.1.0a7 | The portable backend uses INT8 TensorOps for larger matrix multiplications. | M5 Pro, 1024×1024: 141.84 → **41.13 s** (71.0% less time). |
+| 0.1.0a6 | Streamed inference prefetches the next block while the GPU processes the current one. | M5 Pro, portable backend, 512×512: 124.28 → **56.40 s** (54.6% less time). |
+
+Each row compares two versions on the same machine with the same six-step sampler. [Test conditions and raw data](BENCHMARKS.md)
+
 ## Highlights
 
 - **Native Apple Silicon inference.** Built on MLX to take advantage of your Mac's compute capabilities, H3 Image runs locally with text-to-image generation and multi-image editing.
-- **W8A8 quantization and Metal acceleration.** Reduce weight memory usage with a portable MLX inference path, plus W8A8 Metal TensorOps acceleration on supported chips. Compatible with M1–M4.
+- **W8A8 quantization and Metal acceleration.** Quantized weights reduce memory use. On M1–M4 Macs running macOS earlier than 26.4, a9 automatically uses Metal to accelerate eligible large matrix multiplications. M5 and M6 use W8A8 Metal TensorOps by default.
 - **Staged inference with on-demand block loading.** Each stage runs in a separate process to release its memory on completion. Denoiser weights can be read one block at a time, greatly reducing peak memory usage and leaving more room for other apps.
 - **Overlap weight reads with GPU computation.** Prefetch the next block while evaluating the current one, keeping streaming memory low and reducing time spent waiting for weights. [Enable prefetch and async](#recommended-streaming-acceleration)
 
@@ -32,7 +43,14 @@ In our 1024×1024 same-machine test, streaming with both switches **matched resi
 
 ### Benchmark results
 
-On an M4 Pro VM running macOS 26.3, tiled Metal projections and aligned weight reads cut median 1024×1024 generation time from **250.55 s to 101.56 s** in streamed INT8 mode. All six PNGs matched byte for byte. [Same-machine benchmark](BENCHMARKS.md#h3-streamed-int8-on-m4-pro).
+On an M4 Pro running macOS 26.3, a9 cut median 1024×1024 generation time by **59.5%** in streamed INT8 mode.
+
+| Version | Median generation time | Median peak process footprint |
+| --- | ---: | ---: |
+| 0.1.0a8 | 250.55 s | 2.44 GB |
+| 0.1.0a9 | **101.56 s** | **2.30 GB** |
+
+<sub>Three runs per version, interleaved on the same machine. All six PNGs matched byte for byte. [Test conditions and raw data](BENCHMARKS.md#h3-streamed-int8-on-m4-pro)</sub>
 
 M5 Pro, resident INT8, 1024×1024: v0.1.0a8 reduced median generation time from **26.49 s to 18.93 s** (28.5%). Median peak process footprint increased from 21.08 GB to 21.67 GB. [Same-machine uncached results](BENCHMARKS.md#h3-native-w8a8-on-m5-pro).
 
