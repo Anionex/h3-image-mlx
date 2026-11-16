@@ -23,12 +23,12 @@ Generate and edit images on an Apple Silicon Mac with MiniMax H3 Image. Optimize
 
 ## Recent updates
 
-| Release | What changed | Median H3 generation time |
-| --- | --- | --- |
-| 0.1.0a9 | Tiled Metal projections speed up streamed INT8 on older macOS versions. | M4 Pro, 1024×1024: 250.55 → **101.56 s** (59.5% less time). |
-| 0.1.0a8 | Resident inference overlaps weight loading with GPU work and uses wider W8A8 tiles. | M5 Pro, 1024×1024: 26.49 → **18.93 s** (28.5% less time). |
-| 0.1.0a7 | The portable backend uses INT8 TensorOps for larger matrix multiplications. | M5 Pro, 1024×1024: 141.84 → **41.13 s** (71.0% less time). |
-| 0.1.0a6 | Streamed inference prefetches the next block while the GPU processes the current one. | M5 Pro, portable backend, 512×512: 124.28 → **56.40 s** (54.6% less time). |
+| Release | Intended hardware and mode | What changed | Measured hardware and median time |
+| --- | --- | --- | --- |
+| 0.1.0a9 | M1–M4 on macOS earlier than 26.4, portable INT8 | Tiled Metal projections speed up streamed INT8. | M4 Pro, 1024×1024: 250.55 → **101.56 s** (59.5% less time). |
+| 0.1.0a8 | M5 family, resident W8A8 | Resident inference overlaps weight loading with GPU work and uses wider W8A8 tiles. | M5 Pro, 1024×1024: 26.49 → **18.93 s** (28.5% less time). |
+| 0.1.0a7 | M1–M4, or M5 with `--backend portable`; macOS 26.4+ and a successful GPU integer TensorOps check | The portable backend uses INT8 TensorOps for larger matrix multiplications. | M5 Pro, 1024×1024: 141.84 → **41.13 s** (71.0% less time). |
+| 0.1.0a6 | M1–M4 with streamed INT8, or M5 with `--backend portable` and streamed INT8 | Streamed inference prefetches the next block while the GPU processes the current one. | M5 Pro, portable backend, 512×512: 124.28 → **56.40 s** (54.6% less time). |
 
 Each row compares two versions on the same machine with the same six-step sampler. [Test conditions and raw data](BENCHMARKS.md)
 
