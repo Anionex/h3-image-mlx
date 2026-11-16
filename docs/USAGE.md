@@ -7,7 +7,7 @@
 Use Python 3.11 or newer on an Apple Silicon Mac with Metal. A fresh model download needs 49.30 GB of disk space.
 
 ```bash
-python -m pip install --upgrade 'h3-image-mlx==0.1.0a8'
+python -m pip install --upgrade 'h3-image-mlx==0.1.0a9'
 h3-image-mlx fetch --models ./models
 ```
 

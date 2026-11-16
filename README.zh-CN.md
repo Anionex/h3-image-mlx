@@ -27,6 +27,8 @@
 
 ### 实测数据
 
+M4 Pro 虚拟机（macOS 26.3）上，新版通过 Metal 分块矩阵运算和对齐权重读取，将 1024×1024 流式 INT8 生图耗时中位数从 **250.55 秒降至 101.56 秒**。六次生成的 PNG 逐字节一致。[同机实测](BENCHMARKS.md#h3-streamed-int8-on-m4-pro)
+
 M5 Pro 上，v0.1.0a8 的 INT8 常驻模式将 1024×1024 整图耗时中位数从 **26.49 秒降至 18.93 秒**，缩短 28.5%。推理进程峰值中位数从 21.08 GB 增至 21.67 GB。[同机无文件缓存实测](BENCHMARKS.md#h3-native-w8a8-on-m5-pro)。
 
 #### 分块推理达到常驻速度
@@ -84,7 +86,7 @@ M5 Pro 48 GB，`0.1.0a3`，1024×1024，相同权重、提示词和 seed，原�
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install 'h3-image-mlx==0.1.0a8'
+python -m pip install 'h3-image-mlx==0.1.0a9'
 
 h3-image-mlx fetch --models ./models
 h3-image-mlx generate --models ./models --output teapot.png \
@@ -100,7 +102,7 @@ h3-image-mlx generate --models ./models --output teapot.png \
 这些开关从 `0.1.0a2` 开始提供；升级后在单次命令中开启：
 
 ```bash
-python -m pip install --upgrade 'h3-image-mlx==0.1.0a8'
+python -m pip install --upgrade 'h3-image-mlx==0.1.0a9'
 H3_ASYNC=1 H3_PREFETCH=1 h3-image-mlx generate \
   --models ./models --dit-mode stream --output teapot.png \
   --prompt 'A yellow enamel teapot and a white cup on a blue wooden table.'

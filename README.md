@@ -32,6 +32,8 @@ In our 1024×1024 same-machine test, streaming with both switches **matched resi
 
 ### Benchmark results
 
+On an M4 Pro VM running macOS 26.3, tiled Metal projections and aligned weight reads cut median 1024×1024 generation time from **250.55 s to 101.56 s** in streamed INT8 mode. All six PNGs matched byte for byte. [Same-machine benchmark](BENCHMARKS.md#h3-streamed-int8-on-m4-pro).
+
 M5 Pro, resident INT8, 1024×1024: v0.1.0a8 reduced median generation time from **26.49 s to 18.93 s** (28.5%). Median peak process footprint increased from 21.08 GB to 21.67 GB. [Same-machine uncached results](BENCHMARKS.md#h3-native-w8a8-on-m5-pro).
 
 #### Streaming at resident speed
@@ -89,7 +91,7 @@ Use Python 3.11 or later on a Mac with Metal. Allow 49.30 GB of disk space for a
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install 'h3-image-mlx==0.1.0a8'
+python -m pip install 'h3-image-mlx==0.1.0a9'
 
 h3-image-mlx fetch --models ./models
 h3-image-mlx generate --models ./models --output teapot.png \
@@ -105,7 +107,7 @@ This writes a 1024×1024 RGB PNG. Set `--width` and `--height` to change the siz
 Available from `0.1.0a2`; upgrade and enable both switches for this command:
 
 ```bash
-python -m pip install --upgrade 'h3-image-mlx==0.1.0a8'
+python -m pip install --upgrade 'h3-image-mlx==0.1.0a9'
 H3_ASYNC=1 H3_PREFETCH=1 h3-image-mlx generate \
   --models ./models --dit-mode stream --output teapot.png \
   --prompt 'A yellow enamel teapot and a white cup on a blue wooden table.'
