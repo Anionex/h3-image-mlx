@@ -16,6 +16,7 @@ import numpy as np
 ROOT = Path(__file__).resolve().parent
 KERNELS = ROOT / "kernels"
 backend = ContextVar("h3_backend", default="portable")
+legacy_int8_reads = ContextVar("h3_legacy_int8_reads", default=False)
 m5_resident = ContextVar("h3_m5_resident", default=False)
 
 
@@ -105,7 +106,7 @@ class Weights:
         (length,) = struct.unpack("<Q", self.file.read(8))
         self.start = 8 + length
         self.header = json.loads(self.file.read(length))
-        self.direct_reads = m5_resident.get() and hasattr(os, "preadv")
+        self.direct_reads = (m5_resident.get() or legacy_int8_reads.get()) and hasattr(os, "preadv")
         self.resident = resident
         self.cache = {}
         self.int8_calls = 0

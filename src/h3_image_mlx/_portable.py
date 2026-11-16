@@ -52,9 +52,14 @@ def _tensor_dot(x, weight):
 
 
 @cache
-def _has_integer_tensor_ops():
+def _legacy_metal():
     version = platform.mac_ver()[0]
-    if not version or tuple(map(int, version.split(".")[:2])) < (26, 4):
+    return bool(version) and tuple(map(int, version.split(".")[:2])) < (26, 4)
+
+
+@cache
+def _has_integer_tensor_ops():
+    if _legacy_metal() or not platform.mac_ver()[0]:
         return False
     # MLX can construct a kernel lazily. Evaluate a tail tile before selecting
     # this path, since shader compilation and device support vary independently.
@@ -64,6 +69,18 @@ def _has_integer_tensor_ops():
         return mx.all(_tensor_dot(x, w) == -128 * 127 * 64).item()
     except RuntimeError:
         return False
+
+
+def _large_portable_matmul(x, weight, row_scale, channel_scale, dtype):
+    rows, channels = x.shape[0], weight.shape[0]
+    output = _simd_gemm()(
+        inputs=[x, weight, row_scale, channel_scale],
+        template=[("T", dtype), ("BM", 64), ("BN", 64), ("BK", 32)],
+        grid=(channels // 64 * 128, (rows + 63) // 64, 1),
+        threadgroup=(128, 1, 1), output_shapes=[(rows, channels)], output_dtypes=[dtype],
+    )[0]
+    mx.eval(output)
+    return output
 
 
 def portable_matmul(xq, weight, xs, scale, output_dtype):
@@ -86,6 +103,8 @@ def portable_matmul(xq, weight, xs, scale, output_dtype):
                 mx.eval(result)
             chunks.append(result)
         return chunks[0] if len(chunks) == 1 else mx.concatenate(chunks)
+    if 512 < rows <= 1536 and 1024 <= width <= 25600 and aligned and on_gpu and _legacy_metal():
+        return _large_portable_matmul(xq, weight, row_scale, channel_scale, output_dtype)
     if rows <= 512 and aligned and on_gpu:
         bm, bn, bk = (32, 64, 64) if rows <= 128 else (64, 64, 32)
         return _simd_gemm()(

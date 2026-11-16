@@ -1,5 +1,18 @@
 # Benchmarks
 
+## H3 streamed INT8 on M4 Pro
+
+A CircleCI M4 Pro VM with 28 GiB of unified memory, macOS 26.3 and MLX 0.32.4 ran both versions. The release combines tiled SIMD projections with aligned direct weight reads and cut median end-to-end time by **59.5%** at 1024×1024 (2.47× faster).
+
+| Version | Median generation time | Range across three runs | Median peak process footprint |
+| --- | ---: | ---: | ---: |
+| 0.1.0a8 | 250.55 s | 249.34–252.72 s | 2.44 GB |
+| 0.1.0a9 | **101.56 s** | 101.35–101.93 s | 2.30 GB |
+
+Both versions used identical INT8 weights, streamed DiT blocks, seed 42 and the original six-step sampler. Timing covers prompt encoding through PNG output. All six interleaved runs produced byte-identical PNGs. Peak memory is the largest stage process’s lifetime physical footprint, in decimal GB. Weight reads bypassed the guest filesystem cache in every stage. Sampled weight-file residency peaked at 0.34 MiB. Guest disk counters covered at least 95% of aligned reads in each stage and across each run. Host cache residency was outside the VM’s measurement scope. [Raw measurements](benchmarks/controlled/2026-11-16-m4/legacy-simd.json) · [CircleCI job](https://app.circleci.com/pipelines/circleci/Fgj3ag6Hvoi6A5g87UXdUY/JT2ZvxXCcu2NUT7rcFLMfJ/6/workflows/3bc366b4-3668-43fb-81f1-3684d722a46e/jobs/3).
+
+A separate M4 Pro VM running macOS 15.3.2 passed the kernel tests. The 0.1.0a8 baseline reported non-finite output at VAE decode on that VM, so the table covers macOS 26.3 only.
+
 ## H3 native W8A8 on M5 Pro
 
 On a 48 GB M5 Pro, the default resident path reduced median 1024×1024 generation time by **28.5%**. Timing includes text encoding, all six denoising steps, VAE decoding and writing the PNG.
