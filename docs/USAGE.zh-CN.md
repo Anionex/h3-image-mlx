@@ -118,3 +118,11 @@ tokenizer.json
 ```
 
 `fetch` 会校验已有文件，并从 ModelScope 下载缺失的文件。如果已经有三个权重文件和 tokenizer，只需再下载 1,826 字节的 VAE 配置。要从 Hugging Face 下载，加上 `--source huggingface`。要按 [SHA-256 清单](../src/h3_image_mlx/weights.json) 校验文件，运行 `h3-image-mlx verify --models ./models`。
+
+## 零拷贝权重（可选）
+
+`h3-image-mlx align --models ./models` 把 DiT 和文本编码器重写为按页对齐的副本（`*.aligned16k.safetensors`：每个张量从 16 KiB 页边界开始，张量字节原样复制并校验），除非加 `--keep-original`，否则删除原文件。`verify` 和生成都接受对齐副本代替固定文件。
+
+设置 `H3_ZERO_COPY=1` 后，各阶段以只读方式映射对齐文件，不再读入新缓冲区：Metal 直接从页缓存读取权重，文本和 DiT 阶段启动更快，权重不计入进程 footprint（内存紧张时 macOS 可以回收这些页）。输出逐字节相同。
+
+`H3_GPU_BUDGET_MB=<MB>` 允许 DiT 阶段在这个预算内使用更大的 MLX 缓冲区缓存（每个 token 最多约 0.5 MB），而不是默认的 96 MB。较大尺寸下，小缓存会让 MLX 为大多数运算重新分配缓冲区。输出逐字节相同。

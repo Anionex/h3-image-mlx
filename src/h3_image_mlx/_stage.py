@@ -4,7 +4,7 @@ import os
 import re
 import sys
 from pathlib import Path
-from .models import model_paths, manifest_for
+from .models import dit_file, model_paths, manifest_for, text_file
 
 
 def select_backend(requested, device, precision="int8"):
@@ -33,6 +33,9 @@ def main(stage, work):
     from ._portable import _legacy_metal
     core.legacy_int8_reads.set(precision == "int8" and backend == "portable" and _legacy_metal())
     mx.set_cache_limit(96 << 20)
+    # A 96 MB buffer cache makes MLX allocate fresh Metal buffers for most ops at image sizes (2x slower DiT at
+    # 2048^2). With H3_GPU_BUDGET_MB set, the DiT stage may cache up to ~0.5 MB per token, within the budget left
+    # after the stage's own measured peak.
     models = Path(request["models"])
     refs = request["references"]
     embedding, latents, result = (str(work / (key + ".safetensors")) for key in ("embedding", "references", "latent"))
@@ -45,7 +48,7 @@ def main(stage, work):
     if stage == "text":
         from .text import encode
         # H3_TEXT / H3_TOKENIZER / H3_VAE / H3_DIT: use another checkpoint (e.g. P-H3-Image) instead of the manifest's.
-        x, tags, _ = encode(os.environ.get("H3_TEXT") or models / text, os.environ.get("H3_TOKENIZER") or models / tokenizer, request["prompt"], refs)
+        x, tags, _ = encode(os.environ.get("H3_TEXT") or text_file(models, precision), os.environ.get("H3_TOKENIZER") or models / tokenizer, request["prompt"], refs)
         mx.save_safetensors(embedding, {"embedding": x, "tags": tags})
     elif stage == "references":
         from .ref_vae import encode_reference
@@ -64,9 +67,25 @@ def main(stage, work):
         width, height = request["width"], request["height"]
         rows = inputs["embedding"].shape[0] + width * height // 1024 + sum(z.shape[1] * z.shape[2] // 4 for z in zs)
         resident = mode == "resident" or (auto_resident and rows <= 8192)
+        dit_path = os.environ.get("H3_DIT") or dit_file(models, precision)
+        zero_copy = False
+        if os.environ.get("H3_ZERO_COPY") == "1":
+            probe = core.Weights(dit_path)
+            zero_copy = probe.mapped is not None
+            probe.file.close()
+        # Zero copy keeps the entry's mode: resident holds every block's mapped buffer (MLX keeps its buffers resident,
+        # so ~20 GB is wired as with a copy, but loading skips the copy); stream drops each block after use.
         core.m5_resident.set(m5 and resident)
+        budget = int(os.environ.get("H3_GPU_BUDGET_MB") or 0)
+        if budget:
+            # Measured DiT peaks without cache (MB): resident ~21300-21800 at 1024^2-2048^2; stream ~2700 / 3100 /
+            # 6200 at 1046 / 4118 / 16406 tokens. Plus 500 MB margin.
+            own_peak = 22000 if resident and not zero_copy else 3000 + rows * 23 // 100
+            cache = min(rows // 2, budget - own_peak)    # MB
+            if cache > 96:
+                mx.set_cache_limit(cache << 20)
         # H3_DIT=<file>: use another DiT checkpoint with the same layout (e.g. one with a LoRA merged in).
-        z, _ = denoise(os.environ.get("H3_DIT") or models / dit, inputs["embedding"], width, height, request["seed"], resident, zs, inputs["tags"], precision=precision)
+        z, _ = denoise(dit_path, inputs["embedding"], width, height, request["seed"], resident, zs, inputs["tags"], precision=precision)
         mx.save_safetensors(result, {"latent": z})
     elif stage == "vae":
         from .vae import decode

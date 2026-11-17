@@ -75,7 +75,11 @@ def main(argv=None):
         "--source", choices=("modelscope", "huggingface"), default="modelscope"
     )
     verify = commands.add_parser("verify", help="Verify pinned file hashes")
-    for command in (gen, get, verify):
+    align = commands.add_parser(
+        "align", help="Replace the DiT and text encoder by page-aligned copies for zero-copy loading (H3_ZERO_COPY=1)"
+    )
+    align.add_argument("--keep-original", action="store_true")
+    for command in (gen, get, verify, align):
         command.add_argument("--models", type=Path, required=True)
         command.add_argument("--model", choices=MODEL_IDS, default="h3")
         command.add_argument("--precision", choices=("int8", "bf16"), default="int8")
@@ -107,6 +111,10 @@ def main(argv=None):
                 from .qwen.assets import fetch
 
                 print(fetch(args.models, args.source))
+        elif args.command == "align":
+            from .align import align_models
+
+            print(align_models(args.models, args.precision, args.keep_original))
         elif args.command == "verify":
             if args.model == "h3":
                 print(check_models(args.models, hashes=True, precision=args.precision))
