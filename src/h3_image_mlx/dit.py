@@ -1,6 +1,7 @@
 """Text-to-image forward on the six-step H3 Image grid."""
 
 from concurrent.futures import ThreadPoolExecutor
+from functools import cache
 
 import itertools
 import json
@@ -9,6 +10,49 @@ import time
 
 import numpy as np
 from .core import Weights, attention, backend, flag, heads, m5_resident, mx, norm, rope, swiglu
+
+# Fused elementwise ops of the DiT blocks. Each fused form performs the same bfloat16 operations in the same
+# order as the composed ops, so the result is the same bytes; only the number of passes over the activations
+# changes. modulate: AdaLN shift/scale and the gated residual over the [text | ... | image] segments in one
+# compiled kernel each (a per-row select between the table rows) instead of per-segment ops, a concatenate and
+# an add. swiglu / rope: the activation and the rotary embedding compiled.
+swiglu_fused = mx.compile(swiglu)
+rope_fused = mx.compile(rope)
+
+
+def _segment_rows(segments):
+    """(rows, 1) int32 table-row index of every token, and the distinct table rows in use."""
+    ids = np.concatenate([np.full(stop - start, row, np.int32) for start, stop, row in segments])
+    return mx.array(ids[:, None]), tuple(sorted({row for _, _, row in segments}))
+
+
+def _select(ids, table, rows):
+    value = table[rows[-1]]
+    for row in reversed(rows[:-1]):
+        value = mx.where(ids == row, table[row], value)
+    return value
+
+
+@cache
+def _shift_kernel(rows):
+    return mx.compile(lambda x, ids, scale, shift: x * (1 + _select(ids, scale, rows)) + _select(ids, shift, rows))
+
+
+@cache
+def _gated_add_kernel(rows):
+    return mx.compile(lambda x, y, ids, gate: x + y * _select(ids, gate, rows))
+
+
+def shifted_fused(x, scale, shift, seg):
+    """shifted() in one pass; seg = _segment_rows(segments)."""
+    ids, rows = seg
+    return _shift_kernel(rows)(x, ids, scale.astype(x.dtype), shift.astype(x.dtype))
+
+
+def gated_add(x, y, gate, seg):
+    """x + modulate(y, gate, segments) in one pass."""
+    ids, rows = seg
+    return _gated_add_kernel(rows)(x, y, ids, gate.astype(y.dtype))
 
 # P-H3-Image (PrunaAI) ships no sampling metadata; this is the checkpoint's own 8-step grid.
 PH3_SIGMAS = [1.0, 0.984753, 0.967905, 0.951688, 0.925372, 0.881923, 0.810083, 0.528718, 0.0]
@@ -21,12 +65,12 @@ def qkv_attention(w, prefix, x, angles=None):
     q = norm(q, w[prefix + ".q_norm.weight"])
     k = norm(k, w[prefix + ".k_norm.weight"])
     if angles is not None:
-        q, k = rope(q, angles), rope(k, angles)
+        q, k = rope_fused(q, angles), rope_fused(k, angles)
     return w.linear(prefix + ".out_proj", attention(q, k, v))
 
 
 def mlp(w, prefix, x):
-    return w.linear(prefix + ".fc2", swiglu(w.linear(prefix + ".fc1", x)))
+    return w.linear(prefix + ".fc2", swiglu_fused(w.linear(prefix + ".fc1", x)))
 
 
 def prepare_text(w, embedding):
@@ -198,6 +242,7 @@ def denoise(
         segments.append((audio_start, audio_start + 2 * audio, 2))
         target_start += 2 * audio
     segments.append((target_start, target_start + rows * cols, 0))
+    seg = _segment_rows(segments)
     prefix = mx.concatenate(fixed)
     mx.eval(prefix)
     rng = np.random.default_rng(seed)
@@ -223,12 +268,10 @@ def denoise(
             tab = mods[i][step]
             if refs:
                 tab = mx.concatenate([tab, mods[i][-1, :1]])
-            h = shifted(norm(x, w[b + ".norm1.weight"]), tab[:, 1], tab[:, 0], segments)
-            x = x + modulate(
-                qkv_attention(w, b + ".attn", h, angles), tab[:, 2], segments
-            )
-            h = shifted(norm(x, w[b + ".norm2.weight"]), tab[:, 4], tab[:, 3], segments)
-            x = x + modulate(mlp(w, b + ".mlp", h), tab[:, 5], segments)
+            h = shifted_fused(norm(x, w[b + ".norm1.weight"]), tab[:, 1], tab[:, 0], seg)
+            x = gated_add(x, qkv_attention(w, b + ".attn", h, angles), tab[:, 2], seg)
+            h = shifted_fused(norm(x, w[b + ".norm2.weight"]), tab[:, 4], tab[:, 3], seg)
+            x = gated_add(x, mlp(w, b + ".mlp", h), tab[:, 5], seg)
             t = time.perf_counter()
             if resident_batch:
                 if i % 5 == 4:
