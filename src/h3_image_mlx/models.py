@@ -20,10 +20,39 @@ def model_paths(precision="int8"):
     return tuple(entry["path"] for entry in manifest_for(precision)["files"])
 
 
+# Components that `h3-image-mlx align` may replace by a page-aligned copy: DiT (0) and text encoder (1).
+ALIGNABLE = (0, 1)
+
+
+def component_file(directory, index, precision="int8"):
+    """A component to load: its page-aligned copy (align.py) when present, else the pinned file."""
+    from .align import aligned_name
+
+    path = Path(directory).expanduser() / model_paths(precision)[index]
+    aligned = aligned_name(path)
+    return aligned if index in ALIGNABLE and aligned.is_file() else path
+
+
+def dit_file(directory, precision="int8"):
+    return component_file(directory, 0, precision)
+
+
+def text_file(directory, precision="int8"):
+    return component_file(directory, 1, precision)
+
+
 def check_models(directory, *, hashes=False, precision="int8"):
     directory = Path(directory).expanduser().resolve()
-    for entry in manifest_for(precision)["files"]:
+    for index, entry in enumerate(manifest_for(precision)["files"]):
         path = directory / entry["path"]
+        if index in ALIGNABLE and component_file(directory, index, precision) != path:
+            from .align import is_aligned, read_header
+
+            aligned = component_file(directory, index, precision)
+            meta = read_header(aligned)[0].get("__metadata__") or {}
+            if not is_aligned(aligned) or meta.get("h3_source") != path.name:
+                raise ValueError(f"Not a page-aligned copy of {path.name}: {aligned}")
+            continue  # sizes differ by design; tensor bytes were verified when aligning
         if not path.is_file():
             raise FileNotFoundError(f"Missing model file: {path}. Run h3-image-mlx fetch --models '{directory}' --precision {precision} to complete this directory.")
         if path.stat().st_size != entry["bytes"]:

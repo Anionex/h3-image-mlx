@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Sequence
 
 from PIL import Image
-from .models import check_models, manifest_for, model_paths
+from .models import check_models, manifest_for, model_paths, text_file
 
 
 def embedding_cache(directory, prompt, refs, backend, precision="int8"):
@@ -18,8 +18,7 @@ def embedding_cache(directory, prompt, refs, backend, precision="int8"):
     root = os.environ.get("H3_EMBED_CACHE")
     if not root:
         return None
-    text = model_paths(precision)[1]
-    encoder = Path(os.environ.get("H3_TEXT") or directory / text).resolve()
+    encoder = Path(os.environ.get("H3_TEXT") or text_file(directory, precision)).resolve()
     stat = encoder.stat()
     tokenizer = Path(os.environ.get("H3_TOKENIZER") or directory / model_paths(precision)[3])
     key = [prompt, backend, precision, str(encoder), stat.st_size, stat.st_mtime_ns,
