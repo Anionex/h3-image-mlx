@@ -1,7 +1,8 @@
 """Distribution and dispatch regressions, runnable against an installed wheel."""
+import base64
 import hashlib
+import threading
 import json
-import subprocess
 import tempfile
 import unittest
 from importlib.resources import files
@@ -11,7 +12,7 @@ from unittest.mock import patch
 import httpx
 from PIL import Image
 
-from h3_image_mlx import generate
+from h3_image_mlx import Cancelled, generate, generate_result
 from h3_image_mlx._stage import select_backend
 from h3_image_mlx.download import _download_file
 from h3_image_mlx.models import check_models
@@ -31,8 +32,14 @@ class PackageTests(unittest.TestCase):
             self.assertEqual(select_backend("auto", f"Apple {device}"), "portable")
             with self.assertRaises(ValueError):
                 select_backend("w8a8", f"Apple {device}")
-        self.assertEqual(select_backend("auto", "Apple M5 Pro"), "w8a8")
-        self.assertEqual(select_backend("portable", "Apple M5 Pro"), "portable")
+        for release in ("26.0", "26.1.1"):
+            with patch("h3_image_mlx.runtime.platform.mac_ver", return_value=(release, ("", "", ""), "arm64")):
+                self.assertEqual(select_backend("auto", "Apple M5 Pro"), "portable")
+                with self.assertRaisesRegex(ValueError, r"macOS 26\.2"):
+                    select_backend("w8a8", "Apple M5 Pro")
+        with patch("h3_image_mlx.runtime.platform.mac_ver", return_value=("26.2", ("", "", ""), "arm64")):
+            self.assertEqual(select_backend("auto", "Apple M5 Pro"), "w8a8")
+            self.assertEqual(select_backend("portable", "Apple M5 Pro"), "portable")
 
     def test_order_and_stage_boundaries(self):
         calls = []
@@ -45,17 +52,49 @@ class PackageTests(unittest.TestCase):
                 stage, folder = command[-2:]
                 work = Path(folder)
                 calls.append(stage)
-                request = json.loads((work / "request.json").read_text())
-                self.assertEqual(request["references"], list(map(str, paths)))
+                request = json.loads(kwargs["input_bytes"])
+                expected = list(map(str, paths)) if stage in ("text", "references") else [None] * len(paths)
+                self.assertEqual(request["references"], expected)
                 if stage == "vae":
                     Image.new("RGB", (256, 256), "blue").save(work / "image.png")
-                return subprocess.CompletedProcess(command, 0, "", "")
-            with patch("h3_image_mlx.pipeline.check_models", return_value=root), patch("h3_image_mlx.pipeline.subprocess.run", side_effect=run):
+                return b"", {}
+            with patch("h3_image_mlx.pipeline.check_models", return_value=root), patch("h3_image_mlx.pipeline.run_worker", side_effect=run):
                 image = generate("Use <Picture 16>", models=root, references=paths, width=256, height=256)
             self.assertEqual(image.getpixel((0, 0)), (0, 0, 255))
             self.assertEqual(calls, ["text","references","dit","vae"])
             with self.assertRaisesRegex(ValueError, "16"):
                 generate("Edit", models=root, references=paths+[paths[0]])
+
+    def test_private_bytes_progress_and_cancel(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            path = root / "ref.png"
+            Image.new("RGB", (32, 32), "blue").save(path)
+            raw = path.read_bytes()
+            seen = []
+            def run(command, **kwargs):
+                stage, folder = command[-2:]
+                request = json.loads(kwargs["input_bytes"])
+                self.assertFalse((Path(folder) / "request.json").exists())
+                if stage in ("text", "references"):
+                    self.assertEqual(base64.b64decode(request["references"][0]["data"]), raw)
+                kwargs["on_progress"]({"stage": stage, "step": 0, "total": 6})
+                if stage == "vae":
+                    Image.new("RGB", (256, 256), "blue").save(Path(folder) / "image.png")
+                return b"", {"peak_bytes": 32, "mlx_peak_bytes": 12}
+
+            with patch("h3_image_mlx.pipeline.check_models", return_value=root), \
+                 patch("h3_image_mlx.pipeline.run_worker", side_effect=run), \
+                 patch("h3_image_mlx.pipeline.embedding_cache") as cache:
+                result = generate_result("Use <Picture 1>", models=root, width=256, height=256,
+                                         private=True, references=[raw], on_progress=seen.append)
+                cache.assert_not_called()
+            self.assertEqual([e["stage"] for e in seen], ["text", "references", "dit", "vae"])
+            self.assertEqual(result.metrics["worker_peak_bytes"], 32)
+            cancel = threading.Event()
+            cancel.set()
+            with self.assertRaises(Cancelled):
+                generate_result("Stop", models=root, cancel=cancel)
 
     def test_invalid_request(self):
         with self.assertRaisesRegex(ValueError, "multiples"):

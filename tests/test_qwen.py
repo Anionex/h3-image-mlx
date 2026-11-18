@@ -44,8 +44,6 @@ class Requests(unittest.TestCase):
             generate("x", models="missing", qwen=QwenOptions())
         with self.assertRaisesRegex(ValueError, "Unknown model"):
             generate("x", models="missing", model="qwen-image-2.0")
-        with self.assertRaisesRegex(ValueError, "callbacks"):
-            generate("x", models="missing", on_progress=print)
 
     def test_uncached_policy_rejects_unverified_execution_paths(self):
         for backend, options in (
@@ -135,6 +133,34 @@ class Requests(unittest.TestCase):
             ):
                 with Image.open(io.BytesIO(base64.b64decode(encoded))) as im:
                     self.assertEqual(im.getpixel((0, 0)), color)
+
+    def test_presets_reuse_base_view_and_keep_effective_schedule(self):
+        import h3_image_mlx.qwen.assets as assets
+        with tempfile.TemporaryDirectory() as tmp:
+            cache = Path(tmp)
+            model = cache / "turbo"
+            model.mkdir()
+            (model / "model_index.json").write_text('{"sample_sigmas":[1,0.5]}')
+            base = cache / "base-dit"
+            base.mkdir()
+            (base / "dit.safetensors").write_bytes(b"base fixture")
+            (cache / "lightning").mkdir()
+            (cache / "lightning" / "adapter.safetensors").write_bytes(b"LoRA fixture")
+            options = QwenOptions(profile="lightning", profile_assets=cache,
+                                  profile_base=base, auto_strength=True)
+            with patch.object(assets, "check", side_effect=lambda root, *_: Path(root)):
+                a, small, auto, scales = assets.resolve_profile(model, options, cache, 352, 512)
+                b, large, *_ = assets.resolve_profile(model, options, cache, 704, 1024)
+            self.assertEqual(a, b)
+            self.assertNotEqual(small["sample_sigmas"], large["sample_sigmas"])
+            self.assertEqual(small["steps"], 4)
+            self.assertEqual(scales, [1.0])
+            self.assertEqual(Path(auto[0]).resolve(), (cache / "lightning" / "adapter.safetensors").resolve())
+            self.assertEqual(json.loads((a / "model_index.json").read_text()), {})
+            for profile, steps in (("turbo3", 3), ("turbo4", 4)):
+                picked, requested, *_ = assets.resolve_profile(model, QwenOptions(profile=profile), cache, 512, 512)
+                self.assertEqual(picked, model)
+                self.assertEqual(len(requested["sample_sigmas"]), steps)
 
     def test_cache_is_bound_to_transformer(self):
         with tempfile.TemporaryDirectory() as tmp:

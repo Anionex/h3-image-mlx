@@ -2,7 +2,6 @@
 import json
 import os
 import tempfile
-import subprocess
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -110,13 +109,13 @@ class PrecisionTests(unittest.TestCase):
                 from PIL import Image
                 stage, folder = command[-2:]
                 work = Path(folder)
-                request = json.loads((work/'request.json').read_text())
+                request = json.loads(kwargs['input_bytes'])
                 self.assertEqual(request['precision'], 'bf16')
                 calls.append(stage)
                 if stage == 'vae':
                     Image.new('RGB', (256, 256), 'blue').save(work/'image.png')
-                return subprocess.CompletedProcess(command, 0, '', '')
-            with patch.dict(os.environ, {'H3_EMBED_CACHE':''}), patch('h3_image_mlx.pipeline.check_models', return_value=root) as check, patch('h3_image_mlx.pipeline.subprocess.run', side_effect=run):
+                return b'', {}
+            with patch.dict(os.environ, {'H3_EMBED_CACHE':''}), patch('h3_image_mlx.pipeline.check_models', return_value=root) as check, patch('h3_image_mlx.pipeline.run_worker', side_effect=run):
                 generate('test', models=root, width=256, height=256, precision='bf16')
                 check.assert_called_once_with(root, precision='bf16')
             self.assertEqual(calls, ['text', 'dit', 'vae'])

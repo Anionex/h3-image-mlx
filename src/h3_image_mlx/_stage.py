@@ -1,10 +1,14 @@
 """Private stage entry point. Each child releases its weights on exit."""
+import base64
+import ctypes
+import io
 import json
 import os
 import re
 import sys
 from pathlib import Path
 from .models import model_paths, manifest_for
+from .runtime import tensorops_available_on_macos
 
 
 def select_backend(requested, device, precision="int8"):
@@ -13,18 +17,38 @@ def select_backend(requested, device, precision="int8"):
         if requested == "w8a8":
             raise ValueError("W8A8 requires INT8 weights; use --backend auto or portable with BF16")
         return "portable"
-    native = bool(re.search(r"\bApple M[56]\b", device))
+    native = bool(re.search(r"\bApple M[56]\b", device)) and tensorops_available_on_macos()
     if requested == "auto":
         return "w8a8" if native else "portable"
     if requested == "w8a8" and not native:
-        raise ValueError(f"The W8A8 TensorOps kernel requires an M5/M6 GPU; found {device}")
+        raise ValueError(f"W8A8 requires an M5/M6 GPU and macOS 26.2 or later; found {device}")
     return requested
 
 
-def main(stage, work):
+def stage_request():
+    return json.load(sys.stdin)
+
+
+def emit(kind, **data):
+    print(f"{kind} " + json.dumps(data), file=sys.stderr, flush=True)
+
+
+def peak_footprint():
+    if sys.platform != "darwin":
+        return 0
+    lib = ctypes.CDLL("/usr/lib/libproc.dylib")
+    lib.proc_pid_rusage.argtypes = [ctypes.c_int, ctypes.c_int, ctypes.c_void_p]
+    # rusage_info_v4 has a UUID followed by uint64 fields. Field 28 is
+    # ri_lifetime_max_phys_footprint.
+    data = (ctypes.c_uint64 * 37)()
+    return data[30] if lib.proc_pid_rusage(os.getpid(), 4, ctypes.byref(data)) == 0 else 0
+
+
+def main(stage, work, request=None):
     import mlx.core as mx
     from . import core
-    request = json.loads((work / "request.json").read_text())
+    if request is None:
+        request = json.loads((work / "request.json").read_text())
     info = mx.device_info()
     precision = request.get("precision", "int8")
     dit, text, vae, tokenizer, vae_config = model_paths(precision)
@@ -34,7 +58,12 @@ def main(stage, work):
     core.legacy_int8_reads.set(precision == "int8" and backend == "portable" and _legacy_metal())
     mx.set_cache_limit(96 << 20)
     models = Path(request["models"])
-    refs = request["references"]
+    refs = [io.BytesIO(base64.b64decode(ref["data"])) if isinstance(ref, dict) else ref
+            for ref in request["references"]]
+    metrics = {}
+
+    def progress(label, step=0, total=0):
+        emit("PROGRESS", stage=label, step=step, total=total)
     embedding, latents, result = (str(work / (key + ".safetensors")) for key in ("embedding", "references", "latent"))
     mode = request.get("dit_mode")
     auto_resident = mode == "auto" and backend == "w8a8" and info["memory_size"] >= 32 * 1024**3
@@ -43,11 +72,14 @@ def main(stage, work):
     likely_resident = auto_resident and not refs and request["width"] * request["height"] // 1024 < 8192
     core.m5_resident.set(m5 and (mode == "resident" or likely_resident))
     if stage == "text":
+        progress("Encoding prompt")
         from .text import encode
         # H3_TEXT / H3_TOKENIZER / H3_VAE / H3_DIT: use another checkpoint (e.g. P-H3-Image) instead of the manifest's.
-        x, tags, _ = encode(os.environ.get("H3_TEXT") or models / text, os.environ.get("H3_TOKENIZER") or models / tokenizer, request["prompt"], refs)
+        x, tags, calls = encode(os.environ.get("H3_TEXT") or models / text, os.environ.get("H3_TOKENIZER") or models / tokenizer, request["prompt"], refs)
         mx.save_safetensors(embedding, {"embedding": x, "tags": tags})
+        metrics["w8a8_calls"] = calls
     elif stage == "references":
+        progress("Encoding references")
         from .ref_vae import encode_reference
         weights = core.Weights(models / vae, True)
         stats = json.loads((models / vae_config).read_text())
@@ -57,6 +89,7 @@ def main(stage, work):
             mx.eval(zs[str(i)])
         mx.save_safetensors(latents, zs)
     elif stage == "dit":
+        progress("Loading model")
         from .dit import denoise
         inputs = mx.load(embedding)
         images = mx.load(latents) if refs else {}
@@ -65,17 +98,35 @@ def main(stage, work):
         rows = inputs["embedding"].shape[0] + width * height // 1024 + sum(z.shape[1] * z.shape[2] // 4 for z in zs)
         resident = mode == "resident" or (auto_resident and rows <= 8192)
         core.m5_resident.set(m5 and resident)
+        overlap = request.get("overlap_streaming")
+        if not resident and overlap is not None:
+            os.environ["H3_PREFETCH"] = os.environ["H3_ASYNC"] = "1" if overlap else "0"
         # H3_DIT=<file>: use another DiT checkpoint with the same layout (e.g. one with a LoRA merged in).
-        z, _ = denoise(os.environ.get("H3_DIT") or models / dit, inputs["embedding"], width, height, request["seed"], resident, zs, inputs["tags"], precision=precision)
+        def schedule(sigmas):
+            metrics["sample_sigmas"] = sigmas
+
+        def step(done, _elapsed):
+            progress("Denoising", done, len(metrics["sample_sigmas"]) - 1)
+
+        z, calls = denoise(
+            os.environ.get("H3_DIT") or models / dit,
+            inputs["embedding"], width, height, request["seed"], resident, zs,
+            inputs["tags"], progress=step, precision=precision, on_schedule=schedule,
+        )
+        metrics.update(dit_mode="resident" if resident else "stream", w8a8_calls=calls)
         mx.save_safetensors(result, {"latent": z})
     elif stage == "vae":
+        progress("Decoding image")
         from .vae import decode
         stats = json.loads((models / vae_config).read_text())
         decode(os.environ.get("H3_VAE") or models / vae, mx.load(result)["latent"], stats).save(work / "image.png")
     else:
         raise ValueError(f"Unknown stage: {stage}")
     mx.synchronize()
+    emit("METRICS", backend=backend, peak_bytes=peak_footprint(),
+         mlx_peak_bytes=mx.get_peak_memory(), **metrics)
 
 
 if __name__ == "__main__":
-    main(sys.argv[1], Path(sys.argv[2]))
+    work = Path(sys.argv[2])
+    main(sys.argv[1], work, None if (work / "request.json").exists() else stage_request())
