@@ -1,5 +1,6 @@
 """Entry point for hosts that freeze Python into a desktop executable."""
 
+import platform
 import sys
 from pathlib import Path
 
@@ -7,6 +8,12 @@ from .qwen.runtime import qwen_runtime_path
 
 
 _STAGE_FLAG = "--h3-image-mlx-stage"
+
+
+def tensorops_available_on_macos() -> bool:
+    """Return whether macOS provides the Metal primitives used by W8A8."""
+    version = platform.mac_ver()[0]
+    return bool(version) and tuple(map(int, version.split(".")[:2])) >= (26, 2)
 
 
 def dispatch_frozen_stage() -> bool:

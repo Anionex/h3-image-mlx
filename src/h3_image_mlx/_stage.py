@@ -8,6 +8,7 @@ import re
 import sys
 from pathlib import Path
 from .models import model_paths, manifest_for
+from .runtime import tensorops_available_on_macos
 
 
 def select_backend(requested, device, precision="int8"):
@@ -16,11 +17,11 @@ def select_backend(requested, device, precision="int8"):
         if requested == "w8a8":
             raise ValueError("W8A8 requires INT8 weights; use --backend auto or portable with BF16")
         return "portable"
-    native = bool(re.search(r"\bApple M[56]\b", device))
+    native = bool(re.search(r"\bApple M[56]\b", device)) and tensorops_available_on_macos()
     if requested == "auto":
         return "w8a8" if native else "portable"
     if requested == "w8a8" and not native:
-        raise ValueError(f"The W8A8 TensorOps kernel requires an M5/M6 GPU; found {device}")
+        raise ValueError(f"W8A8 requires an M5/M6 GPU and macOS 26.2 or later; found {device}")
     return requested
 
 

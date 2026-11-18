@@ -32,8 +32,14 @@ class PackageTests(unittest.TestCase):
             self.assertEqual(select_backend("auto", f"Apple {device}"), "portable")
             with self.assertRaises(ValueError):
                 select_backend("w8a8", f"Apple {device}")
-        self.assertEqual(select_backend("auto", "Apple M5 Pro"), "w8a8")
-        self.assertEqual(select_backend("portable", "Apple M5 Pro"), "portable")
+        for release in ("26.0", "26.1.1"):
+            with patch("h3_image_mlx.runtime.platform.mac_ver", return_value=(release, ("", "", ""), "arm64")):
+                self.assertEqual(select_backend("auto", "Apple M5 Pro"), "portable")
+                with self.assertRaisesRegex(ValueError, r"macOS 26\.2"):
+                    select_backend("w8a8", "Apple M5 Pro")
+        with patch("h3_image_mlx.runtime.platform.mac_ver", return_value=("26.2", ("", "", ""), "arm64")):
+            self.assertEqual(select_backend("auto", "Apple M5 Pro"), "w8a8")
+            self.assertEqual(select_backend("portable", "Apple M5 Pro"), "portable")
 
     def test_order_and_stage_boundaries(self):
         calls = []

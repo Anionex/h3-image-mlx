@@ -134,3 +134,5 @@ executables and their shared dependency closure. `--deployment-target` records
 and checks the intended Mach-O floor for the entire closure. A 26.0 build also
 requires MLX and MLX-C built for that deployment target with baseline Metal
 kernels. The existing accelerated dependencies require 26.2.
+On macOS 26.0 and 26.1, a compatible build selects the portable backend in
+`auto` mode. The W8A8 backend requires macOS 26.2 or later.
