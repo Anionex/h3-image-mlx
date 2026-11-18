@@ -118,3 +118,19 @@ tokenizer.json
 ```
 
 `fetch` checks existing files and downloads missing ones from ModelScope. If you already have the three weight files and tokenizer, it downloads just the 1,826-byte VAE configuration. For Hugging Face, add `--source huggingface`. To check the files against the [SHA-256 manifest](../src/h3_image_mlx/weights.json), run `h3-image-mlx verify --models ./models`.
+
+
+### Embedding the core in a desktop worker
+
+`generate_result` returns a PIL image and model execution metrics. References
+can be ordered paths or encoded image bytes. Both models accept `on_progress`
+with stage/step/total events and a `threading.Event` named `cancel`.
+Cancellation reaps staged workers before raising `h3_image_mlx.Cancelled`.
+H3 uses temporary derived tensors between its stages. Passing encoded reference
+bytes keeps the originals in pipes, and `private=True` disables opt-in
+embedding caches.
+
+Frozen Python hosts should call `h3_image_mlx.runtime.dispatch_frozen_stage()`
+in their executable entry point before host initialization and exit when it
+returns true. The library owns the internal stage arguments. Package the core
+modules, distribution metadata, and bundled resources with the frozen host.

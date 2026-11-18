@@ -108,10 +108,29 @@ The uncached option selects a read policy; the benchmark runner additionally che
 The source revision and patch digest are in `native/source.json`. Starting from that revision of `ddalcu/mlx-serve`, apply `native/qwen-runtime.patch`, initialize its pinned submodules, and follow that repository's source-build prerequisites (Xcode and pinned Zig/MLX). Build and bundle with:
 
 ```bash
-python scripts/build_qwen_runtime.py --source /path/to/patched/mlx-serve --build
+python scripts/build_qwen_runtime.py --source /path/to/patched/mlx-serve --build --with-resident
 python -m build --wheel packages/qwen-runtime
 ```
 
 An already-built source tree can omit `--build`. The bundler checks its source patch against the pinned digest, collects the dylib dependency closure and Metal resource, rewrites local library paths, signs the copies, and includes license notices plus per-file hashes. It does not modify source binaries or installed applications. `native/aligned_nocache.c` supplies the optional uncached reader. The runtime wheel contains no model weights.
 
 Uncached reads currently require W8A8, `micro` / `micro-fast`, and default eight-step plain text-to-image. Editing, LoRA, private pipes, the portable backend and other modes reject this option until their read paths are verified.
+
+
+## Reusing a resident native worker
+
+Create one `QwenSession` for the lifetime of a serial client and pass it to
+`generate_result(..., qwen_session=session, qwen=QwenOptions(memory_mode="resident"))`.
+The session holds the effective transformer and conditioning model across requests.
+Changing prompt, reference images, canvas size, CFG, or the per-request LoRA
+stack reuses the same worker when the model pack is unchanged. Call `close()`
+on explicit unload or use the session as a context manager. The same
+`on_progress` / `cancel` contract applies. Private requests use the native
+request cleanup hook and keep the resident weights. `session.status()` exposes
+the native PID and observed model loads.
+
+Build the optional native wheel with `--with-resident` to include the two
+executables and their shared dependency closure. `--deployment-target` records
+and checks the intended Mach-O floor for the entire closure. A 26.0 build also
+requires MLX and MLX-C built for that deployment target with baseline Metal
+kernels. The existing accelerated dependencies require 26.2.

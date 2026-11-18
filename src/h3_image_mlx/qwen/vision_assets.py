@@ -4,8 +4,7 @@ import json
 import struct
 
 
-class Cancelled(RuntimeError):
-    pass
+from .._subprocess import Cancelled
 
 
 def extract_vision(source, target, cancel=None):
@@ -27,19 +26,22 @@ def extract_vision(source, target, cancel=None):
         encoded += b" " * (-len(encoded) % 8)
         target.parent.mkdir(parents=True, exist_ok=True)
         temp = target.with_suffix(".partial")
-        with temp.open("wb") as out:
-            out.write(struct.pack("<Q", len(encoded)))
-            out.write(encoded)
-            for key in tensors:
-                a, b = header[key]["data_offsets"]
-                f.seek(8 + size + a)
-                remaining = b - a
-                while remaining:
-                    if cancel and cancel.is_set():
-                        raise Cancelled()
-                    chunk = f.read(min(8 * 1024**2, remaining))
-                    if not chunk:
-                        raise ValueError("truncated vision source")
-                    out.write(chunk)
-                    remaining -= len(chunk)
-        temp.replace(target)
+        try:
+            with temp.open("wb") as out:
+                out.write(struct.pack("<Q", len(encoded)))
+                out.write(encoded)
+                for key in tensors:
+                    a, b = header[key]["data_offsets"]
+                    f.seek(8 + size + a)
+                    remaining = b - a
+                    while remaining:
+                        if cancel and cancel.is_set():
+                            raise Cancelled()
+                        chunk = f.read(min(8 * 1024**2, remaining))
+                        if not chunk:
+                            raise ValueError("truncated vision source")
+                        out.write(chunk)
+                        remaining -= len(chunk)
+            temp.replace(target)
+        finally:
+            temp.unlink(missing_ok=True)

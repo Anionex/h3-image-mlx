@@ -130,7 +130,7 @@ def patchify(latent):
 
 def denoise(
     path, text, width, height, seed, resident=True, refs=(), tags=None, progress=None,
-    precision=None,
+    precision=None, on_schedule=None,
 ):
     if min(width, height) < 32 or width % 32 or height % 32:
         raise ValueError("Image dimensions must be positive multiples of 32")
@@ -164,6 +164,8 @@ def denoise(
     if os.environ.get("H3_SIGMAS"):  # explicit grid, e.g. a subset of the checkpoint's own
         sigmas = [float(v) for v in os.environ["H3_SIGMAS"].split(",")]
         steps = len(sigmas) - 1
+    if on_schedule:
+        on_schedule(sigmas)
     coords = curve_coordinates(w, sigmas[:-1])
     if refs:
         coords = np.concatenate([coords, curve_coordinates(w, [0.001])])

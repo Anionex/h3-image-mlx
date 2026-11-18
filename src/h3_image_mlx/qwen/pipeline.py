@@ -15,6 +15,7 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 
+from .._subprocess import Cancelled
 from ..api import GenerationResult, QwenOptions
 from . import assets
 from .lora import inspect_adapter
@@ -46,7 +47,7 @@ def validate(prompt, width, height, seed, references, o):
         raise ValueError("Dimensions must be multiples of 32 from 256 to 4096")
     if type(seed) is not int or not 0 <= seed < 2**64:
         raise ValueError("Seed must be an unsigned 64-bit integer")
-    if isinstance(references, (str, Path)) or len(references) > 10:
+    if isinstance(references, (str, Path, bytes)) or len(references) > 10:
         raise ValueError("Qwen accepts an ordered list of up to 10 references")
     if not isinstance(o, QwenOptions):
         raise ValueError("qwen must be QwenOptions")
@@ -54,7 +55,7 @@ def validate(prompt, width, height, seed, references, o):
         raise ValueError(f"Unknown memory mode: {o.memory_mode}")
     if o.weight_cache not in ("system", "uncached"):
         raise ValueError("weight_cache must be system or uncached")
-    if o.prepared and not o.prepare_weights:
+    if (o.prepared or o.prepared_candidates) and not o.prepare_weights:
         raise ValueError("prepared and prepare_weights=False conflict")
     if o.profile not in assets.PROFILES:
         raise ValueError(f"Unknown profile: {o.profile}")
@@ -106,17 +107,20 @@ def encode_references(references):
     encoded = []
     total = 0
     for value in references:
-        with Image.open(Path(value).expanduser()) as image:
-            image.load()
+        raw = value if isinstance(value, bytes) else Path(value).expanduser().read_bytes()
+        with Image.open(io.BytesIO(raw)) as image:
             if image.format not in ("PNG", "JPEG", "WEBP"):
                 raise ValueError("References must be PNG, JPEG or WebP")
-            out = io.BytesIO()
-            image.save(out, format="PNG")
-            raw = out.getvalue()
-            total += len(raw)
-            if len(raw) > 20 * 1024**2 or total > 100 * 1024**2:
-                raise ValueError("Reference images exceed the request size budget")
-            encoded.append(base64.b64encode(raw).decode())
+            if image.format == "WEBP":
+                converted = io.BytesIO()
+                image.save(converted, format="PNG")
+                raw = converted.getvalue()
+            else:
+                image.verify()
+        total += len(raw)
+        if len(raw) > 20 * 1024**2 or total > 100 * 1024**2:
+            raise ValueError("Reference images exceed the request size budget")
+        encoded.append(base64.b64encode(raw).decode())
     return encoded
 
 
@@ -148,13 +152,15 @@ def generate(
     references,
     backend,
     options,
+    session=None,
     on_progress=None,
     cancel=None,
 ):
     o = options
+    if cancel is not None and cancel.is_set():
+        raise Cancelled("Generation cancelled")
     validate(prompt, width, height, seed, references, o)
     model = assets.check(models)
-    binary = locate(o.runtime)
     if backend not in ("auto", "portable", "w8a8"):
         raise ValueError("Unknown compute backend")
     chip = subprocess.check_output(
@@ -211,6 +217,15 @@ def generate(
         body.update(
             lora_paths=paths, lora_scales=preset_scales + [x.scale for x in o.loras]
         )
+    schedule = body.get("sample_sigmas")
+    if schedule is None and o.profile == "complete":
+        schedule = json.loads((model / "model_index.json").read_text()).get("sample_sigmas")
+    if session is not None:
+        if o.memory_mode != "resident" or o.weight_cache != "system":
+            raise ValueError("QwenSession requires resident mode and system weight reads")
+        return session._generate(model, body, selected, o, on_progress, cancel, schedule, assets.auto_adapter_path(cache))
+    binary = locate(o.runtime)
+
     mode, knobs = TUNING[o.memory_mode]
     if native_backend == "packed" and mode == "resident-cache":
         mode = "resident"
@@ -235,7 +250,10 @@ def generate(
 
     def execute(stage, source, output, blocks=None, body_bytes=None):
         if on_progress:
-            on_progress(dict(stage=stage, step=0, total=body["steps"]))
+            labels = {"prepare": "Preparing weights", "request": "Loading model",
+                      "text": "Encoding prompt", "dit": "Loading model", "vae": "Decoding image"}
+            on_progress(dict(stage=labels[stage], step=body["steps"] if stage == "vae" else 0,
+                             total=body["steps"]))
         env = dict(os.environ)
         env.pop("SHENGTU_LIGHTNING_AUTO_ADAPTER", None)
         if o.auto_strength:
@@ -267,7 +285,18 @@ def generate(
         metric["stage"] = stage
         return out, metric
 
-    if selected == "w8a8" and o.prepare_weights:
+    if selected == "w8a8" and o.prepare_weights and not o.prepared:
+        for candidate in o.prepared_candidates:
+            path = Path(candidate).expanduser().resolve()
+            if not all((path / f"block-{i:02d}.safetensors").is_file() for i in range(32)):
+                continue
+            try:
+                assets.validate_prepared(path, model)
+            except (KeyError, ValueError, OSError):
+                continue
+            prepared = path
+            break
+    if selected == "w8a8" and o.prepare_weights and prepared is None:
         prepared = (
             Path(o.prepared).expanduser().resolve()
             if o.prepared
@@ -353,9 +382,11 @@ def generate(
             profile=o.profile,
             steps=body["steps"],
             seed=seed,
+            sample_sigmas=schedule,
             stages=stages,
             preparation=preparation,
             worker_peak_bytes=max(x.get("peak_bytes", 0) for x in stages),
+            mlx_peak_bytes=max(x.get("mlx_peak_bytes", 0) for x in stages),
             disk_read_bytes=sum(x.get("disk_read_bytes", 0) for x in stages),
             generation_seconds=time.monotonic() - started,
             execution="staged" if staged else "request",

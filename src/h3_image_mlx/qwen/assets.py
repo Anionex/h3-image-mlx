@@ -81,13 +81,21 @@ def validate_prepared(directory, model):
             raise ValueError("Prepared weights belong to another transformer")
     else:
         source = Path(data["model"])
-        if (source / "transformer").resolve() != (model / "transformer").resolve():
-            raise ValueError("Prepared weights belong to another transformer")
-        for name, size, mtime in data["files"]:
-            if name.startswith("transformer/"):
-                stat = (model / name).stat()
-                if (stat.st_size, stat.st_mtime_ns) != (size, mtime):
-                    raise ValueError("Prepared weights are stale")
+        entries = [item for item in data["files"] if item[0].startswith("transformer/")]
+        names = {name for name, _, _ in entries}
+        required = {str(p.relative_to(model)) for p in (model / "transformer").glob("*.safetensors")}
+        if not required or not required <= names:
+            raise ValueError("Prepared weights are missing transformer provenance")
+        for name, size, mtime in entries:
+            if (source / name).resolve() != (model / name).resolve():
+                raise ValueError("Prepared weights belong to another transformer")
+            stat = (model / name).stat()
+            if (stat.st_size, stat.st_mtime_ns) != (size, mtime):
+                raise ValueError("Prepared weights are stale")
+
+
+def auto_adapter_path(cache):
+    return cache / "auto" / ADAPTERS["lightning"]["files"][0]["sha256"] / "lightning-auto.safetensors"
 
 
 def resolve_profile(model, options, cache, width, height):
@@ -107,7 +115,7 @@ def resolve_profile(model, options, cache, width, height):
     if not options.profile_assets:
         raise ValueError(f"{profile} needs profile_assets; fetch the preset first")
     assets = Path(options.profile_assets).expanduser().resolve()
-    base = check(assets / "base", ADAPTERS["base"])
+    base = check(options.profile_base or assets / "base", ADAPTERS["base"])
     index = json.loads((model / "model_index.json").read_text())
     index.pop("sample_sigmas", None)
     if profile != "standard":
@@ -152,9 +160,11 @@ def resolve_profile(model, options, cache, width, height):
                 ],
             )
         if profile == "lightning" and options.auto_strength:
-            auto = cache / "auto" / sha256(adapter) / "lightning-auto.safetensors"
+            auto = auto_adapter_path(cache)
             with locked(auto.parent / ".lock"):
-                if not auto.exists():
+                if auto.is_symlink() and auto.resolve() != adapter.resolve():
+                    auto.unlink()
+                if not auto.is_symlink():
                     auto.symlink_to(adapter)
             adapter = auto
         paths.append(str(adapter))
