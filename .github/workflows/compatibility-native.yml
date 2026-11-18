@@ -1,0 +1,62 @@
+name: Qwen macOS 26.0 compatibility build
+on:
+  push:
+    branches: [test/qwen-macos-26-0-runtime]
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: macos-26
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare the build tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          sw_vers
+          uname -m
+          test "$(uname -m)" = arm64
+          if ! xcrun -sdk macosx metal --version; then
+            xcodebuild -downloadComponent MetalToolchain
+          fi
+          xcrun -sdk macosx metal --version
+          brew list --versions webp || brew install webp
+      - name: Build the pinned MLX pair with baseline Metal kernels
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --branch v26.11.2 --depth 1 --recurse-submodules https://github.com/ddalcu/mlx-serve.git "$RUNNER_TEMP/native"
+          cd "$RUNNER_TEMP/native"
+          test "$(git rev-parse HEAD)" = 4e231ceebe63308cc038117d40b9f9b64bd0372e
+          git apply --index "$GITHUB_WORKSPACE/native/qwen-runtime.patch"
+          bash scripts/fetch-zig.sh
+          bash scripts/fetch-llama.sh
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('scripts/build-mlx.sh')
+          text = path.read_text()
+          start = text.index('NAX_COUNT=')
+          end = text.index('[ -f "$STAGE/lib/libmlxc.dylib" ]', start)
+          text = text[:start] + '''MINOS="$(otool -l "$STAGE/lib/libmlx.dylib" | awk '/LC_BUILD_VERSION/{f=1} f && /minos/{print $2; exit}')"
+          [ "$MINOS" = 26.0 ] || die "Unexpected MLX deployment target: $MINOS"
+          NAX_COUNT=0
+
+          ''' + text[end:]
+          path.write_text(text)
+          PY
+          MLX_DEPLOYMENT_TARGET=26.0 bash scripts/build-mlx.sh
+      - name: Bundle and probe the two native executables
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/build_qwen_runtime.py --source "$RUNNER_TEMP/native" --build --with-resident --deployment-target 26.0 --destination "$RUNNER_TEMP/payload"
+          "$RUNNER_TEMP/payload/mlx-serve" --version
+          ("$RUNNER_TEMP/payload/qwen-stream-probe" 2>&1 || true) | grep StageRequired
+        continue-on-error: false
+      - name: Upload the compatibility runtime
+        uses: actions/upload-artifact@v4
+        with:
+          name: qwen-runtime-macos-26-0
+          path: ${{ runner.temp }}/payload
+          retention-days: 1
