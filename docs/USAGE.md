@@ -7,7 +7,7 @@
 Use Python 3.11 or newer on an Apple Silicon Mac with Metal. A fresh model download needs 49.30 GB of disk space.
 
 ```bash
-python -m pip install --upgrade 'h3-image-mlx==0.1.0a9'
+python -m pip install --upgrade 'h3-image-mlx==0.1.0a10'
 h3-image-mlx fetch --models ./models
 ```
 
@@ -121,7 +121,7 @@ tokenizer.json
 
 ## Zero-copy weights (optional)
 
-`h3-image-mlx align --models ./models` rewrites the DiT and the text encoder as page-aligned copies (`*.aligned16k.safetensors`; every tensor starts on a 16 KiB page, the tensor bytes are copied unchanged and verified) and removes the originals unless you pass `--keep-original`. `verify` and generation accept the aligned copies in place of the pinned files.
+`h3-image-mlx align --models ./models` rewrites the DiT and the text encoder as page-aligned copies (`*.aligned16k.safetensors`; every tensor starts on a 16 KiB page, the tensor bytes are copied unchanged and verified) and removes the originals unless you pass `--keep-original`. `align` verifies each replacement against the pinned checkpoint before removing the original. `verify` checks the original metadata and tensor bytes even after the original is removed. If an aligned copy created before 0.1.0a10 is the only copy left, restore the pinned original with `fetch` and run `align` again to enable SHA-256 verification.
 
 With `H3_ZERO_COPY=1`, the stages map the aligned files read-only instead of reading them into new buffers: Metal reads the weights from the page cache, the text and DiT stages start faster, and the weights do not count toward the process footprint (macOS can drop the pages when it needs the memory). Outputs are byte-identical.
 

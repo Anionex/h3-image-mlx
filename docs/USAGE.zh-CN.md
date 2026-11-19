@@ -7,7 +7,7 @@
 使用支持 Metal 的 Apple Silicon Mac 和 Python 3.11 或更高版本。首次下载模型需要 49.30 GB 磁盘空间。
 
 ```bash
-python -m pip install --upgrade 'h3-image-mlx==0.1.0a9'
+python -m pip install --upgrade 'h3-image-mlx==0.1.0a10'
 h3-image-mlx fetch --models ./models
 ```
 
@@ -121,7 +121,7 @@ tokenizer.json
 
 ## 零拷贝权重（可选）
 
-`h3-image-mlx align --models ./models` 把 DiT 和文本编码器重写为按页对齐的副本（`*.aligned16k.safetensors`：每个张量从 16 KiB 页边界开始，张量字节原样复制并校验），除非加 `--keep-original`，否则删除原文件。`verify` 和生成都接受对齐副本代替固定文件。
+`h3-image-mlx align --models ./models` 把 DiT 和文本编码器重写为按页对齐的副本（`*.aligned16k.safetensors`：每个张量从 16 KiB 页边界开始，张量字节原样复制并校验），除非加 `--keep-original`，否则删除原文件。`align` 会按发布清单校验每份对齐副本，再删除对应原件。原件移除后，`verify` 仍会校验原始元数据和张量字节。如果只剩 0.1.0a10 之前生成的对齐副本，先用 `fetch` 恢复原件，再运行 `align`，即可进行 SHA-256 校验。
 
 设置 `H3_ZERO_COPY=1` 后，各阶段以只读方式映射对齐文件，不再读入新缓冲区：Metal 直接从页缓存读取权重，文本和 DiT 阶段启动更快，权重不计入进程 footprint（内存紧张时 macOS 可以回收这些页）。输出逐字节相同。
 
