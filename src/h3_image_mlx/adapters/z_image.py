@@ -137,7 +137,7 @@ def generate_z_image(
             self.lora_paths = self.lora_scales = None
             index = json.loads((root / "transformer/model.safetensors.index.json").read_text())
             bits = index.get("metadata", {}).get("quantization_level")
-            self.bits = int(bits) if bits else None
+            self.bits = None if bits in (None, "None", "null", "") else int(bits)
             self.callbacks.register(Progress())
 
         def _encode_prompts(self, **kwargs):
