@@ -6,6 +6,7 @@ import plistlib
 import re
 import subprocess
 import time
+from collections import defaultdict
 
 LIBC = ctypes.CDLL(None, use_errno=True)
 LIBC.mmap.restype = ctypes.c_void_p
@@ -51,6 +52,25 @@ def disk_bytes():
         )
     )
     return sum(x.get("Statistics", {}).get("Bytes (Read)", 0) for x in data)
+
+
+def process_tree_rss(root_pid):
+    rows = call("ps", "-ax", "-o", "pid=,ppid=,rss=,comm=")
+    children = defaultdict(list)
+    rss = {}
+    for row in rows.splitlines():
+        pid, parent, kilobytes, command = row.split(maxsplit=3)
+        if os.path.basename(command) == "ps":
+            continue
+        children[int(parent)].append(int(pid))
+        rss[int(pid)] = int(kilobytes) * 1024
+    pending = [root_pid]
+    total = 0
+    while pending:
+        pid = pending.pop()
+        total += rss.get(pid, 0)
+        pending.extend(children.get(pid, ()))
+    return total
 
 
 def file_residency(paths):

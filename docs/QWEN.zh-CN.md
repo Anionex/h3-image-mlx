@@ -85,6 +85,10 @@ h3-image-mlx generate --model qwen-image-2.1-turbo --models ./qwen-models \
 
 架构与运行时构建细节见 [ARCHITECTURE](ARCHITECTURE.md) 和[英文使用文档](QWEN.md)。
 
-无缓存读取目前限定于 W8A8、`micro` / `micro-fast` 的默认八步纯文生图。编辑、LoRA、私密管道、通用后端及其他模式会明确拒绝该选项，避免把未验证的读取路径标成无缓存。
+原生去噪执行器在 W8A8、`micro` 或 `micro-fast` 模式的完整八步文生图支持无缓存读取。
+
+## 共享 MLX 去噪执行器
+
+在本地源码安装 `mflux` 可选依赖并配置原生运行时后，使用 `--qwen-dit-execution stream-overlap` 或 `QwenOptions(dit_execution="stream-overlap")` 运行完整八步文生图。去噪按块直接读取原始 Q8 权重，沿用权重包里的采样表。文本编码和 VAE 解码继续使用原生运行时。`stream-sync` 以同步方式读取同一份权重，供对照。配合 `--memory-mode micro-fast --weight-cache uncached` 可在三个阶段都启用对齐的无缓存读取。
 
 Lightning、DMD2 与 Turbo 适配器预设沿用 App 的采样配置，固定 CFG 为 1 并清空负向提示词；需要自行控制 CFG 时使用 complete 或 standard。

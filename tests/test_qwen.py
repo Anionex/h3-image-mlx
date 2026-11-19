@@ -100,6 +100,50 @@ class Requests(unittest.TestCase):
             QwenOptions(sample_sigmas=(1, 0.5), steps=2),
         )
 
+    def test_dit_execution_preserves_native_default_and_streams_without_preparation(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            model = root / "model"
+            model.mkdir()
+            (model / "model_index.json").write_text(json.dumps({
+                "sample_sigmas": [1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3],
+            }))
+            binary = root / "qwen-stream-probe"
+            seen = []
+
+            def run(command, **_):
+                seen.append(command)
+                return b"", {}
+
+            with (
+                patch("h3_image_mlx.qwen.pipeline.find_spec", return_value=object()) as find_mflux,
+                patch("h3_image_mlx._stage.select_backend", return_value="w8a8") as backend,
+                patch("h3_image_mlx.qwen.pipeline.assets.check", return_value=model),
+                patch("h3_image_mlx.qwen.pipeline.locate", return_value=binary),
+                patch("h3_image_mlx.qwen.pipeline.pixels", return_value=Image.new("RGB", (256, 256))),
+                patch("h3_image_mlx.qwen.pipeline.run_worker", side_effect=run),
+                patch("h3_image_mlx.qwen.pipeline.subprocess.check_output", return_value="Apple M5 Pro"),
+                patch.object(Path, "home", return_value=root),
+            ):
+                result = generate(
+                    "tea", model="qwen-image-2.1-turbo", models=model, width=256, height=256,
+                    qwen=QwenOptions(dit_execution="stream-overlap", cache=root / "cache"),
+                )
+                streamed = seen.copy()
+                seen.clear()
+                backend.return_value = "portable"
+                find_mflux.side_effect = AssertionError("The native route must not need MFLUX")
+                default_result = generate("tea", model="qwen-image-2.1-turbo", models=model)
+            self.assertEqual(result.size, (256, 256))
+            self.assertEqual(len(streamed), 3)
+            self.assertEqual(streamed[0][:2], [binary, "text"])
+            self.assertEqual(streamed[1][:3], [sys.executable, "-m", "h3_image_mlx.qwen.streaming_dit"])
+            self.assertEqual(streamed[1][-1], "--overlap")
+            self.assertEqual(streamed[2][:2], [binary, "vae"])
+            self.assertEqual(default_result.size, (256, 256))
+            self.assertEqual([cmd[:2] for cmd in seen], [[binary, name] for name in ("text", "dit", "vae")])
+            self.assertTrue(all(cmd[6:9] == ["prefetch", "packed", "-"] for cmd in seen))
+
     def test_lora_dimensions_pairs_and_alpha(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "adapter.safetensors"

@@ -1,0 +1,498 @@
+{
+  "date": "2026-11-19",
+  "environment": {
+    "chip": "Apple M5 Pro",
+    "unified_memory_gib": 48,
+    "macos": "26.6",
+    "mlx": "0.32.4",
+    "mflux": "0.24.0",
+    "project_revision": "baa63761f16da8cc4a40a328a7f949d501e7ed39"
+  },
+  "start_condition": "Independent cold APFS weight clones per trial",
+  "qwen_image_2_1_turbo": {
+    "source_weights": "ddalcu/Qwen-Image-2.1-Turbo-MLX-Serve-8bit",
+    "native_runtime": "0.1.0a2",
+    "native_runtime_sha256": "3160ab04f9b70c849d299fa5855c09049363c831181e81364ae0711b830c0a9e",
+    "mflux_weight_loading": "Metadata, key and layout adaptation for the same packed Q8 source weights",
+    "resolution": [
+      1024,
+      1024
+    ],
+    "steps": 8,
+    "seed": 42,
+    "prompt": "A red ceramic teapot on a white tabletop, soft side lighting, no text.",
+    "cache_policy": "system",
+    "runs": [
+      {
+        "trial": 1,
+        "mode": "native-w8a8-prefetch",
+        "image_seconds": 27.21629941603169,
+        "process_peak_bytes": 1902822168,
+        "system_disk_read_bytes": 15541579776,
+        "weight_cache_initial_bytes": 0,
+        "weight_cache_peak_bytes": 15160278790,
+        "peak_system_memory_pressure_level": 1,
+        "system_swap_start_bytes": 7516454912.0,
+        "system_swap_end_bytes": 7516454912.0,
+        "rgb_sha256": "5c879e416db893f7d73acb53570273610140ea1adbc24153d6b04794cf5590ac",
+        "mlx_peak_bytes": 1763747884
+      },
+      {
+        "trial": 1,
+        "mode": "mflux-low-ram",
+        "image_seconds": 34.7478134999983,
+        "process_peak_bytes": 9692863376,
+        "system_disk_read_bytes": 16994648064,
+        "weight_cache_initial_bytes": 0,
+        "weight_cache_peak_bytes": 16822645755,
+        "peak_system_memory_pressure_level": 1,
+        "system_swap_start_bytes": 7516454912.0,
+        "system_swap_end_bytes": 7516454912.0,
+        "rgb_sha256": "a5b079328db360f322f2a99428cacd3c486cde30cb7bf4f13ca0c0dd6d24b6a9",
+        "mlx_peak_bytes": 8620172166
+      },
+      {
+        "trial": 2,
+        "mode": "mflux-low-ram",
+        "image_seconds": 33.60086887492798,
+        "process_peak_bytes": 9696156608,
+        "system_disk_read_bytes": 16954245120,
+        "weight_cache_initial_bytes": 0,
+        "weight_cache_peak_bytes": 16827577339,
+        "peak_system_memory_pressure_level": 1,
+        "system_swap_start_bytes": 7516454912.0,
+        "system_swap_end_bytes": 7516454912.0,
+        "rgb_sha256": "a5b079328db360f322f2a99428cacd3c486cde30cb7bf4f13ca0c0dd6d24b6a9",
+        "mlx_peak_bytes": 8620173958
+      },
+      {
+        "trial": 2,
+        "mode": "native-w8a8-prefetch",
+        "image_seconds": 25.245958790997975,
+        "process_peak_bytes": 1902805784,
+        "system_disk_read_bytes": 15744233472,
+        "weight_cache_initial_bytes": 0,
+        "weight_cache_peak_bytes": 15160278790,
+        "peak_system_memory_pressure_level": 1,
+        "system_swap_start_bytes": 7516454912.0,
+        "system_swap_end_bytes": 7508066304.0,
+        "rgb_sha256": "5c879e416db893f7d73acb53570273610140ea1adbc24153d6b04794cf5590ac",
+        "mlx_peak_bytes": 1763731500
+      },
+      {
+        "trial": 3,
+        "mode": "native-w8a8-prefetch",
+        "image_seconds": 25.575521957944147,
+        "process_peak_bytes": 1926808320,
+        "system_disk_read_bytes": 15287144448,
+        "weight_cache_initial_bytes": 0,
+        "weight_cache_peak_bytes": 15160278790,
+        "peak_system_memory_pressure_level": 1,
+        "system_swap_start_bytes": 7508066304.0,
+        "system_swap_end_bytes": 7508066304.0,
+        "rgb_sha256": "5c879e416db893f7d73acb53570273610140ea1adbc24153d6b04794cf5590ac",
+        "mlx_peak_bytes": 1791289388
+      },
+      {
+        "trial": 3,
+        "mode": "mflux-low-ram",
+        "image_seconds": 35.79450312501285,
+        "process_peak_bytes": 9697401768,
+        "system_disk_read_bytes": 17035001856,
+        "weight_cache_initial_bytes": 0,
+        "weight_cache_peak_bytes": 16441294848,
+        "peak_system_memory_pressure_level": 1,
+        "system_swap_start_bytes": 7508066304.0,
+        "system_swap_end_bytes": 7499677696.0,
+        "rgb_sha256": "a5b079328db360f322f2a99428cacd3c486cde30cb7bf4f13ca0c0dd6d24b6a9",
+        "mlx_peak_bytes": 8620172166
+      }
+    ],
+    "interrupted_trial": {
+      "mode": "mflux-default-cli-memory-policy",
+      "status": "stopped_on_critical_system_memory_pressure",
+      "denoise_steps_completed": 8,
+      "image_seconds": null,
+      "peak_system_memory_pressure_level": 4,
+      "system_swap_start_bytes": 7432568832.0,
+      "system_swap_end_bytes": 11720657469.44
+    }
+  },
+  "z_image_turbo": {
+    "source_weights": "mflux-community/z-image-turbo-mflux-q4@f427e257d8e6ffa03edd4d9ac554a05809da456c",
+    "resolution": [
+      512,
+      512
+    ],
+    "steps": 9,
+    "seed": 42,
+    "prompt": "A small red ceramic teapot on a wooden table in warm daylight, studio photograph.",
+    "source_sha256": {
+      "streaming.py": "ae0e7d321a87ef0b33263eecc235bfef4f95518bbf938223ebb7b206ed42e77e",
+      "api.py": "761cfe01a02977a208ffcccdafd326a9335af8eee3d3e7a0e28418440d5a3809",
+      "adapters/z_image.py": "9e78be4147ba013d75c8c97aa3b69b5a3c369cf4d18910a0be43979ce445cc79"
+    },
+    "runs": [
+      {
+        "trial": 1,
+        "mode": "mflux",
+        "image_and_png_seconds": 8.76772212504875,
+        "process_peak_bytes": 11958378344,
+        "mlx_peak_bytes": 6737083348,
+        "system_disk_read_bytes": 5793173504,
+        "process_disk_read_bytes": 5784481792,
+        "weight_cache_initial_bytes": 0,
+        "weight_cache_peak_bytes": 5768452988,
+        "system_swap_start_bytes": 7499677696.0,
+        "system_swap_end_bytes": 7499677696.0,
+        "rgb_sha256": "0eafe0c48396f70a9ce2ffa28e06b9c5af287a343bd3385d6c4731a83d9ca083",
+        "cache_bypass_verified": false
+      },
+      {
+        "trial": 1,
+        "mode": "project-prefetch-system",
+        "image_and_png_seconds": 8.848551917006262,
+        "process_peak_bytes": 2462582464,
+        "mlx_peak_bytes": 1489897861,
+        "system_disk_read_bytes": 5790810112,
+        "process_disk_read_bytes": 5780135936,
+        "weight_cache_initial_bytes": 0,
+        "weight_cache_peak_bytes": 5768452988,
+        "system_swap_start_bytes": 7499677696.0,
+        "system_swap_end_bytes": 7491289088.0,
+        "rgb_sha256": "0eafe0c48396f70a9ce2ffa28e06b9c5af287a343bd3385d6c4731a83d9ca083",
+        "cache_bypass_verified": false
+      },
+      {
+        "trial": 1,
+        "mode": "project-prefetch-uncached",
+        "image_and_png_seconds": 9.27577512501739,
+        "process_peak_bytes": 2986149856,
+        "mlx_peak_bytes": 1540092489,
+        "system_disk_read_bytes": 30547066880,
+        "process_disk_read_bytes": 30471786496,
+        "weight_cache_initial_bytes": 0,
+        "weight_cache_peak_bytes": 0,
+        "system_swap_start_bytes": 7482900480.0,
+        "system_swap_end_bytes": 7449346048.0,
+        "rgb_sha256": "0eafe0c48396f70a9ce2ffa28e06b9c5af287a343bd3385d6c4731a83d9ca083",
+        "cache_bypass_verified": true,
+        "stage_reads": {
+          "text": {
+            "aligned_bytes": 2220697444,
+            "physical_bytes": 2220699648
+          },
+          "dit": {
+            "aligned_bytes": 28139458603,
+            "physical_bytes": 28139524096
+          },
+          "vae": {
+            "aligned_bytes": 99981506,
+            "physical_bytes": 99983360
+          }
+        }
+      },
+      {
+        "trial": 2,
+        "mode": "project-prefetch-system",
+        "image_and_png_seconds": 8.852598499972373,
+        "process_peak_bytes": 2472822392,
+        "mlx_peak_bytes": 1489897865,
+        "system_disk_read_bytes": 5794381824,
+        "process_disk_read_bytes": 5780037632,
+        "weight_cache_initial_bytes": 0,
+        "weight_cache_peak_bytes": 5768452988,
+        "system_swap_start_bytes": 7449346048.0,
+        "system_swap_end_bytes": 7440957440.0,
+        "rgb_sha256": "0eafe0c48396f70a9ce2ffa28e06b9c5af287a343bd3385d6c4731a83d9ca083",
+        "cache_bypass_verified": false
+      },
+      {
+        "trial": 2,
+        "mode": "project-prefetch-uncached",
+        "image_and_png_seconds": 8.76987887499854,
+        "process_peak_bytes": 2971273136,
+        "mlx_peak_bytes": 1540092489,
+        "system_disk_read_bytes": 30478802944,
+        "process_disk_read_bytes": 30471786496,
+        "weight_cache_initial_bytes": 0,
+        "weight_cache_peak_bytes": 0,
+        "system_swap_start_bytes": 7440957440.0,
+        "system_swap_end_bytes": 7440957440.0,
+        "rgb_sha256": "0eafe0c48396f70a9ce2ffa28e06b9c5af287a343bd3385d6c4731a83d9ca083",
+        "cache_bypass_verified": true,
+        "stage_reads": {
+          "text": {
+            "aligned_bytes": 2220697444,
+            "physical_bytes": 2220699648
+          },
+          "dit": {
+            "aligned_bytes": 28139458603,
+            "physical_bytes": 28139524096
+          },
+          "vae": {
+            "aligned_bytes": 99981506,
+            "physical_bytes": 99983360
+          }
+        }
+      },
+      {
+        "trial": 2,
+        "mode": "mflux",
+        "image_and_png_seconds": 8.303539833053946,
+        "process_peak_bytes": 11681455760,
+        "mlx_peak_bytes": 6737073748,
+        "system_disk_read_bytes": 5783515136,
+        "process_disk_read_bytes": 5780033536,
+        "weight_cache_initial_bytes": 0,
+        "weight_cache_peak_bytes": 5768452988,
+        "system_swap_start_bytes": 7440957440.0,
+        "system_swap_end_bytes": 7440957440.0,
+        "rgb_sha256": "0eafe0c48396f70a9ce2ffa28e06b9c5af287a343bd3385d6c4731a83d9ca083",
+        "cache_bypass_verified": false
+      },
+      {
+        "trial": 3,
+        "mode": "project-prefetch-uncached",
+        "image_and_png_seconds": 9.219487208058126,
+        "process_peak_bytes": 2975942696,
+        "mlx_peak_bytes": 1540092357,
+        "system_disk_read_bytes": 30477787136,
+        "process_disk_read_bytes": 30471790592,
+        "weight_cache_initial_bytes": 0,
+        "weight_cache_peak_bytes": 0,
+        "system_swap_start_bytes": 7440957440.0,
+        "system_swap_end_bytes": 7432568832.0,
+        "rgb_sha256": "0eafe0c48396f70a9ce2ffa28e06b9c5af287a343bd3385d6c4731a83d9ca083",
+        "cache_bypass_verified": true,
+        "stage_reads": {
+          "text": {
+            "aligned_bytes": 2220697444,
+            "physical_bytes": 2220699648
+          },
+          "dit": {
+            "aligned_bytes": 28139458603,
+            "physical_bytes": 28139524096
+          },
+          "vae": {
+            "aligned_bytes": 99981506,
+            "physical_bytes": 99983360
+          }
+        }
+      },
+      {
+        "trial": 3,
+        "mode": "mflux",
+        "image_and_png_seconds": 8.246740457951091,
+        "process_peak_bytes": 11750858576,
+        "mlx_peak_bytes": 6737075668,
+        "system_disk_read_bytes": 5781848064,
+        "process_disk_read_bytes": 5780041728,
+        "weight_cache_initial_bytes": 0,
+        "weight_cache_peak_bytes": 5768452988,
+        "system_swap_start_bytes": 7432568832.0,
+        "system_swap_end_bytes": 7432568832.0,
+        "rgb_sha256": "0eafe0c48396f70a9ce2ffa28e06b9c5af287a343bd3385d6c4731a83d9ca083",
+        "cache_bypass_verified": false
+      },
+      {
+        "trial": 3,
+        "mode": "project-prefetch-system",
+        "image_and_png_seconds": 8.65754475002177,
+        "process_peak_bytes": 2495940408,
+        "mlx_peak_bytes": 1489897865,
+        "system_disk_read_bytes": 5789814784,
+        "process_disk_read_bytes": 5780045824,
+        "weight_cache_initial_bytes": 0,
+        "weight_cache_peak_bytes": 5768452988,
+        "system_swap_start_bytes": 7432568832.0,
+        "system_swap_end_bytes": 7432568832.0,
+        "rgb_sha256": "0eafe0c48396f70a9ce2ffa28e06b9c5af287a343bd3385d6c4731a83d9ca083",
+        "cache_bypass_verified": false
+      }
+    ],
+    "integration_streaming_comparison": {
+      "source_sha256": {
+        "streaming.py": "ae0e7d321a87ef0b33263eecc235bfef4f95518bbf938223ebb7b206ed42e77e",
+        "api.py": "761cfe01a02977a208ffcccdafd326a9335af8eee3d3e7a0e28418440d5a3809",
+        "adapters/z_image.py": "ede19142e803b2774bdc0ab8dc625fe58b16d769de414b19cbe30f412a8985f2"
+      },
+      "runs": [
+        {
+          "trial": 1,
+          "mode": "project-sync-uncached",
+          "image_and_png_seconds": 13.128216249984689,
+          "process_peak_bytes": 2744633096,
+          "mlx_peak_bytes": 1219564890,
+          "system_disk_read_bytes": 30496092160,
+          "process_disk_read_bytes": 30369480704,
+          "weight_cache_initial_bytes": 0,
+          "weight_cache_peak_bytes": 0,
+          "system_swap_start_bytes": 4338483200.0,
+          "system_swap_end_bytes": 4338483200.0,
+          "rgb_sha256": "0eafe0c48396f70a9ce2ffa28e06b9c5af287a343bd3385d6c4731a83d9ca083",
+          "cache_bypass_verified": true,
+          "stage_reads": {
+            "text": {
+              "aligned_bytes": 2220697444,
+              "physical_bytes": 2220699648
+            },
+            "dit": {
+              "aligned_bytes": 28037156907,
+              "physical_bytes": 28037222400
+            },
+            "vae": {
+              "aligned_bytes": 99981506,
+              "physical_bytes": 99983360
+            }
+          }
+        },
+        {
+          "trial": 1,
+          "mode": "project-prefetch-uncached",
+          "image_and_png_seconds": 8.569058916997164,
+          "process_peak_bytes": 2971092960,
+          "mlx_peak_bytes": 1540092489,
+          "system_disk_read_bytes": 30489182208,
+          "process_disk_read_bytes": 30471782400,
+          "weight_cache_initial_bytes": 0,
+          "weight_cache_peak_bytes": 0,
+          "system_swap_start_bytes": 4338483200.0,
+          "system_swap_end_bytes": 4338483200.0,
+          "rgb_sha256": "0eafe0c48396f70a9ce2ffa28e06b9c5af287a343bd3385d6c4731a83d9ca083",
+          "cache_bypass_verified": true,
+          "stage_reads": {
+            "text": {
+              "aligned_bytes": 2220697444,
+              "physical_bytes": 2220699648
+            },
+            "dit": {
+              "aligned_bytes": 28139458603,
+              "physical_bytes": 28139524096
+            },
+            "vae": {
+              "aligned_bytes": 99981506,
+              "physical_bytes": 99983360
+            }
+          }
+        },
+        {
+          "trial": 2,
+          "mode": "project-sync-uncached",
+          "image_and_png_seconds": 13.291298584081233,
+          "process_peak_bytes": 2774501200,
+          "mlx_peak_bytes": 1219564875,
+          "system_disk_read_bytes": 30398013440,
+          "process_disk_read_bytes": 30369480704,
+          "weight_cache_initial_bytes": 0,
+          "weight_cache_peak_bytes": 0,
+          "system_swap_start_bytes": 4338483200.0,
+          "system_swap_end_bytes": 4338483200.0,
+          "rgb_sha256": "0eafe0c48396f70a9ce2ffa28e06b9c5af287a343bd3385d6c4731a83d9ca083",
+          "cache_bypass_verified": true,
+          "stage_reads": {
+            "text": {
+              "aligned_bytes": 2220697444,
+              "physical_bytes": 2220699648
+            },
+            "dit": {
+              "aligned_bytes": 28037156907,
+              "physical_bytes": 28037222400
+            },
+            "vae": {
+              "aligned_bytes": 99981506,
+              "physical_bytes": 99983360
+            }
+          }
+        },
+        {
+          "trial": 2,
+          "mode": "project-prefetch-uncached",
+          "image_and_png_seconds": 8.509894334012643,
+          "process_peak_bytes": 2971011064,
+          "mlx_peak_bytes": 1540092357,
+          "system_disk_read_bytes": 30479237120,
+          "process_disk_read_bytes": 30471782400,
+          "weight_cache_initial_bytes": 0,
+          "weight_cache_peak_bytes": 0,
+          "system_swap_start_bytes": 4338483200.0,
+          "system_swap_end_bytes": 4338483200.0,
+          "rgb_sha256": "0eafe0c48396f70a9ce2ffa28e06b9c5af287a343bd3385d6c4731a83d9ca083",
+          "cache_bypass_verified": true,
+          "stage_reads": {
+            "text": {
+              "aligned_bytes": 2220697444,
+              "physical_bytes": 2220699648
+            },
+            "dit": {
+              "aligned_bytes": 28139458603,
+              "physical_bytes": 28139524096
+            },
+            "vae": {
+              "aligned_bytes": 99981506,
+              "physical_bytes": 99983360
+            }
+          }
+        },
+        {
+          "trial": 3,
+          "mode": "project-sync-uncached",
+          "image_and_png_seconds": 12.886919790995307,
+          "process_peak_bytes": 2743027464,
+          "mlx_peak_bytes": 1219564875,
+          "system_disk_read_bytes": 30380535808,
+          "process_disk_read_bytes": 30369488896,
+          "weight_cache_initial_bytes": 0,
+          "weight_cache_peak_bytes": 0,
+          "system_swap_start_bytes": 4338483200.0,
+          "system_swap_end_bytes": 4338483200.0,
+          "rgb_sha256": "0eafe0c48396f70a9ce2ffa28e06b9c5af287a343bd3385d6c4731a83d9ca083",
+          "cache_bypass_verified": true,
+          "stage_reads": {
+            "text": {
+              "aligned_bytes": 2220697444,
+              "physical_bytes": 2220699648
+            },
+            "dit": {
+              "aligned_bytes": 28037156907,
+              "physical_bytes": 28037222400
+            },
+            "vae": {
+              "aligned_bytes": 99981506,
+              "physical_bytes": 99983360
+            }
+          }
+        },
+        {
+          "trial": 3,
+          "mode": "project-prefetch-uncached",
+          "image_and_png_seconds": 8.513800541986711,
+          "process_peak_bytes": 2969716752,
+          "mlx_peak_bytes": 1540092489,
+          "system_disk_read_bytes": 30473957376,
+          "process_disk_read_bytes": 30471782400,
+          "weight_cache_initial_bytes": 0,
+          "weight_cache_peak_bytes": 0,
+          "system_swap_start_bytes": 4338483200.0,
+          "system_swap_end_bytes": 4338483200.0,
+          "rgb_sha256": "0eafe0c48396f70a9ce2ffa28e06b9c5af287a343bd3385d6c4731a83d9ca083",
+          "cache_bypass_verified": true,
+          "stage_reads": {
+            "text": {
+              "aligned_bytes": 2220697444,
+              "physical_bytes": 2220699648
+            },
+            "dit": {
+              "aligned_bytes": 28139458603,
+              "physical_bytes": 28139524096
+            },
+            "vae": {
+              "aligned_bytes": 99981506,
+              "physical_bytes": 99983360
+            }
+          }
+        }
+      ]
+    }
+  }
+}

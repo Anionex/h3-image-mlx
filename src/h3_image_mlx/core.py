@@ -1,11 +1,9 @@
 """H3 Image inference primitives. Metal GEMM from ddalcu/mlx-serve @ 9191fbdf."""
 
-import fcntl
 import json
+import mmap
 import os
-import struct
 import time
-from concurrent.futures import ThreadPoolExecutor
 from contextvars import ContextVar
 from functools import cache
 from pathlib import Path
@@ -13,11 +11,19 @@ from pathlib import Path
 import mlx.core as mx
 import numpy as np
 
+from .streaming import (
+    Prefetch, ReadMeter, aligned_storage, enable_uncached, read_aligned as _read_owned,
+    read_buffered, read_header,
+)
+
 ROOT = Path(__file__).resolve().parent
 KERNELS = ROOT / "kernels"
 backend = ContextVar("h3_backend", default="portable")
 legacy_int8_reads = ContextVar("h3_legacy_int8_reads", default=False)
 m5_resident = ContextVar("h3_m5_resident", default=False)
+uncached_weights = ContextVar("h3_uncached_weights", default=False)
+stream_overlap = ContextVar("h3_stream_overlap", default=None)
+stage_weight_metrics = ContextVar("h3_stage_weight_metrics", default=None)
 
 
 @cache
@@ -37,6 +43,15 @@ H4 = np.ones((4, 4), dtype=np.float32)
 np.fill_diagonal(H4[:, ::-1], -1)
 H256 = mx.array(np.kron(np.kron(H4, H4), np.kron(H4, H4)) / 16)
 DTYPES = {"I8": "i1", "U8": "u1", "F16": "<f2", "BF16": "<u2", "F32": "<f4", "I64": "<i8"}
+# Zero-copy weights: see align.py.
+PAGE = 16384
+MX_DTYPES = {"I8": mx.int8, "U8": mx.uint8, "F16": mx.float16, "BF16": mx.bfloat16, "F32": mx.float32,
+             "I64": mx.int64}
+
+
+def page_aligned(header, start):
+    """True for a file written by align.py: every tensor starts on a 16 KiB page."""
+    return (header.get("__metadata__") or {}).get("h3_aligned") == str(PAGE) and start % PAGE == 0
 
 
 def flag(name):
@@ -78,45 +93,77 @@ def w8a8(x, weight, scale):
     return y
 
 
-def _read_owned(fd, length, offset):
-    """Read a tensor into owned storage using complete pages up to EOF."""
-    if not length:
-        return np.empty(0, dtype=np.uint8)
-    page = os.sysconf("SC_PAGESIZE")
-    skip = offset % page
-    aligned_length = (skip + length + page - 1) // page * page
-    allocation = np.empty(aligned_length + page - 1, dtype=np.uint8)
-    start = (-allocation.ctypes.data) % page
-    data = allocation[start:start + aligned_length]
-    done = 0
-    while done < skip + length:
-        end = min(done + 8 * 1024**2, aligned_length)
-        got = os.preadv(fd, [data[done:end]], offset - skip + done)
-        if not got:
-            raise EOFError("Unexpected end of weight file")
-        done += got
-    return data[skip:skip + length]
-
-
 class Weights:
     """Read individual tensors so a streaming stage can release each block."""
 
     def __init__(self, path, resident=False):
-        self.file = open(path, "rb")
-        (length,) = struct.unpack("<Q", self.file.read(8))
-        self.start = 8 + length
-        self.header = json.loads(self.file.read(length))
-        self.direct_reads = (m5_resident.get() or legacy_int8_reads.get()) and hasattr(os, "preadv")
+        self.uncached = uncached_weights.get() or bool(flag("H3_NOCACHE"))
+        self.file = open(path, "rb", buffering=0)
+        self.meter = ReadMeter()
+        try:
+            if self.uncached:
+                enable_uncached(self.file)
+            self.header, self.start = read_header(
+                self.file, self.read_aligned if self.uncached else self.read_buffered,
+            )
+        except BaseException:
+            self.file.close()
+            raise
+        self.direct_reads = self.uncached or (
+            (m5_resident.get() or legacy_int8_reads.get()) and hasattr(os, "preadv")
+        )
         self.resident = resident
         self.cache = {}
         self.int8_calls = 0
         self.validated_projections = set()
-        # Opt-in knobs. None of them changes a single weight byte or the op graph.
-        self.pool = ThreadPoolExecutor(1) if flag("H3_PREFETCH") else None
-        self.pending = {}
+        self.prefetch = None
+        self.groups = {}
         self.stats = dict(read_s=0.0, read_bytes=0, convert_s=0.0, wait_s=0.0)
         self.lora = None  # optional second Weights holding lora_A / lora_B / alpha per projection
+        # H3_ZERO_COPY=1 on a page-aligned file: tensors are views of one read-only mapping; Metal reads the page
+        # cache directly (no copy, no prefetch thread), and the OS may drop the pages when memory is needed.
+        self.mapped = None
+        if not self.uncached and flag("H3_ZERO_COPY") and page_aligned(self.header, self.start):
+            self.mapped = mmap.mmap(self.file.fileno(), 0, prot=mmap.PROT_READ)
         self.alphas = {}
+        if flag("H3_PREFETCH"):
+            self.start_prefetch()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        self.close()
+
+    def close(self):
+        if self.file.closed:
+            return
+        if self.prefetch is not None:
+            self.prefetch.close()
+        if self.lora is not None:
+            self.lora.close()
+        metrics = stage_weight_metrics.get()
+        if metrics is not None:
+            metrics["weight_read_bytes"] += self.stats["read_bytes"]
+            for key, value in self.meter.snapshot().items():
+                metrics["weight_io"][key] += value
+            if self.prefetch is not None:
+                metrics["prefetch_peak_bytes"] = max(
+                    metrics["prefetch_peak_bytes"], self.prefetch.peak_reserved,
+                )
+        self.release()
+        self.mapped = None
+        self.file.close()
+
+    def read_aligned(self, fd, length, offset):
+        return _read_owned(fd, length, offset, meter=self.meter)
+
+    def read_buffered(self, fd, length, offset):
+        return read_buffered(fd, length, offset, meter=self.meter)
+
+    def start_prefetch(self):
+        if self.prefetch is None and self.mapped is None:
+            self.prefetch = Prefetch(1 << 30)
 
     def delta(self, prefix, x):
         """LoRA side path for one projection: x @ A.T @ B.T * alpha / rank, or None.
@@ -133,40 +180,50 @@ class Weights:
             self.alphas[key] = float(alpha) / a.shape[0]
         low = x.astype(mx.float32) @ a.astype(mx.float32).T
         return (low @ b.astype(mx.float32).T) * self.alphas[key]
-        if flag("H3_NOCACHE"):
-            fcntl.fcntl(self.file.fileno(), fcntl.F_NOCACHE, 1)
 
     def release(self):
         self.cache.clear()
 
     def ahead(self, group, keep=()):
         """Start reading one block's tensors on a worker thread (raw bytes only)."""
-        for name in [g for g in self.pending if g != group and g not in keep]:
-            del self.pending[name]
-        if not self.pool or group in self.pending:
+        if self.prefetch is None:
             return
-        spans = [
-            (key, *spec["data_offsets"])
-            for key, spec in self.header.items()
-            if key.startswith(group + ".")
-            and key not in self.cache
-            and "adaln_proj" not in key
-            and not key.endswith((".comfy_quant", ".config"))
-        ]
+        self.prefetch.retain((group, *keep))
+        if self.prefetch.future(group) is not None:
+            return
+        if group not in self.groups:
+            self.groups[group] = [
+                (key, *spec["data_offsets"])
+                for key, spec in self.header.items()
+                if key.startswith(group + ".")
+                and "adaln_proj" not in key
+                and not key.endswith((".comfy_quant", ".config"))
+            ]
+        spans = [(key, a, b) for key, a, b in self.groups[group] if key not in self.cache]
         fd, start = self.file.fileno(), self.start
+        read = self.read_aligned if self.direct_reads else self.read_buffered
+        size = sum(aligned_storage(b - a, start + a) if self.direct_reads else b - a for _, a, b in spans)
 
         def job():
             t = time.perf_counter()
-            read = _read_owned if self.direct_reads else os.pread
             out = {key: read(fd, b - a, start + a) for key, a, b in spans}
             return out, time.perf_counter() - t
 
-        self.pending[group] = self.pool.submit(job)
+        self.prefetch.submit(group, size, job)
 
     def _read(self, key, row=None):
         spec = self.header[key]
         a, b = spec["data_offsets"]
         shape = spec["shape"]
+        if self.mapped is not None and row is None and b > a:
+            t = time.perf_counter()
+            padded = (b - a + PAGE - 1) // PAGE * PAGE
+            raw = np.frombuffer(self.mapped, np.uint8, padded, self.start + a)
+            data = mx.from_dlpack(raw)[: b - a]
+            if spec["dtype"] != "U8":
+                data = data.view(MX_DTYPES[spec["dtype"]])
+            self.stats["convert_s"] += time.perf_counter() - t
+            return data.reshape(shape)
         if row is not None:
             stride = (b - a) // shape[0]
             a += int(row) * stride
@@ -175,9 +232,14 @@ class Weights:
         buf = None
         t = time.perf_counter()
         future = None
-        if self.pending and row is None:
-            future = next((f for group, f in self.pending.items() if key.startswith(group + ".")), None)
-        if future:
+        if self.prefetch is not None and row is None:
+            # DiT blocks and text layers use the same numbered dot-separated prefix.
+            parts = key.split(".")
+            for index in range(1, len(parts) - 1):
+                if parts[index].isdigit():
+                    future = self.prefetch.future(".".join(parts[:index + 1]))
+                    break
+        if future is not None:
             fetched, seconds = future.result()
             buf = fetched.pop(key, None)
             if "counted" not in fetched:
@@ -185,13 +247,14 @@ class Weights:
                 self.stats["read_s"] += seconds
             self.stats["wait_s"] += time.perf_counter() - t
         if buf is None:
-            read = _read_owned if self.direct_reads and b - a >= 65536 else os.pread
+            aligned = self.uncached or (self.direct_reads and b - a >= 65536)
+            read = self.read_aligned if aligned else self.read_buffered
             buf = read(self.file.fileno(), b - a, self.start + a)
             self.stats["read_s"] += time.perf_counter() - t
         self.stats["read_bytes"] += len(buf)
         t = time.perf_counter()
         shaped = np.frombuffer(buf, DTYPES[spec["dtype"]]).reshape(shape)
-        data = mx.from_dlpack(shaped) if isinstance(buf, np.ndarray) else mx.array(shaped)
+        data = mx.from_dlpack(shaped) if isinstance(buf, np.ndarray) and shaped.size else mx.array(shaped)
         if spec["dtype"] == "BF16":
             data = data.view(mx.bfloat16)
         self.stats["convert_s"] += time.perf_counter() - t
@@ -210,9 +273,8 @@ class Weights:
         if w.dtype == mx.int8:
             if prefix not in self.validated_projections:
                 a, b = self.header[prefix + ".comfy_quant"]["data_offsets"]
-                metadata = json.loads(
-                    os.pread(self.file.fileno(), b - a, self.start + a)
-                )
+                read = self.read_aligned if self.uncached else self.read_buffered
+                metadata = json.loads(bytes(read(self.file.fileno(), b - a, self.start + a)))
                 if metadata != {
                     "format": "int8_tensorwise",
                     "convrot": True,

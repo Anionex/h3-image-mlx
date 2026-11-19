@@ -119,7 +119,6 @@ tokenizer.json
 
 `fetch` checks existing files and downloads missing ones from ModelScope. If you already have the three weight files and tokenizer, it downloads just the 1,826-byte VAE configuration. For Hugging Face, add `--source huggingface`. To check the files against the [SHA-256 manifest](../src/h3_image_mlx/weights.json), run `h3-image-mlx verify --models ./models`.
 
-
 ### Embedding the core in a desktop worker
 
 `generate_result` returns a PIL image and model execution metrics. References
@@ -134,3 +133,11 @@ Frozen Python hosts should call `h3_image_mlx.runtime.dispatch_frozen_stage()`
 in their executable entry point before host initialization and exit when it
 returns true. The library owns the internal stage arguments. Package the core
 modules, distribution metadata, and bundled resources with the frozen host.
+
+## Zero-copy weights (optional)
+
+`h3-image-mlx align --models ./models` rewrites the DiT and the text encoder as page-aligned copies (`*.aligned16k.safetensors`; every tensor starts on a 16 KiB page, the tensor bytes are copied unchanged and verified) and removes the originals unless you pass `--keep-original`. `verify` and generation accept the aligned copies in place of the pinned files.
+
+With `H3_ZERO_COPY=1`, the stages map the aligned files read-only instead of reading them into new buffers: Metal reads the weights from the page cache, the text and DiT stages start faster, and the weights do not count toward the process footprint (macOS can drop the pages when it needs the memory). Outputs are byte-identical.
+
+`H3_GPU_BUDGET_MB=<MB>` lets the DiT stage keep a larger MLX buffer cache (up to about 0.5 MB per token) inside that budget, instead of the default 96 MB. At larger sizes the small cache makes MLX allocate new buffers for most operations. Outputs are byte-identical.
