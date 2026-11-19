@@ -45,14 +45,13 @@ def check_models(directory, *, hashes=False, precision="int8"):
     directory = Path(directory).expanduser().resolve()
     for index, entry in enumerate(manifest_for(precision)["files"]):
         path = directory / entry["path"]
-        if index in ALIGNABLE and component_file(directory, index, precision) != path:
-            from .align import is_aligned, read_header
+        if index in ALIGNABLE:
+            from .align import check_aligned
 
             aligned = component_file(directory, index, precision)
-            meta = read_header(aligned)[0].get("__metadata__") or {}
-            if not is_aligned(aligned) or meta.get("h3_source") != path.name:
-                raise ValueError(f"Not a page-aligned copy of {path.name}: {aligned}")
-            continue  # sizes differ by design; tensor bytes were verified when aligning
+            if aligned != path:
+                check_aligned(aligned, path, entry["sha256"] if hashes else None)
+                continue
         if not path.is_file():
             raise FileNotFoundError(f"Missing model file: {path}. Run h3-image-mlx fetch --models '{directory}' --precision {precision} to complete this directory.")
         if path.stat().st_size != entry["bytes"]:
