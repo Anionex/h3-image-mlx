@@ -103,6 +103,10 @@ Lightning, DMD2 and Turbo-adapter presets fix CFG to 1 and clear the negative pr
 
 The uncached option selects a read policy; the benchmark runner additionally checks file residency and physical reads before accepting a low-memory result. A cold start alone is insufficient. Read [BENCHMARKS](../BENCHMARKS.md) for measured conditions. Historical cached speed numbers must not be read as minimum-machine-memory requirements.
 
+## Shared MLX denoiser
+
+Install the `mflux` extra from this checkout alongside the native runtime to try the shared block executor. Select `--qwen-dit-execution stream-overlap` or `QwenOptions(dit_execution="stream-overlap")` for the complete eight-step text-to-image profile. This mode streams the original Q8 DiT shards directly, uses the checkpoint sigma schedule, and keeps prompt encoding and VAE decoding in the native workers. `stream-sync` uses the same model computation with synchronous block reads for comparison. `--memory-mode micro-fast --weight-cache uncached` requests aligned reads in all three stages.
+
 ## Build the optional runtime
 
 The source revision and patch digest are in `native/source.json`. Starting from that revision of `ddalcu/mlx-serve`, apply `native/qwen-runtime.patch`, initialize its pinned submodules, and follow that repository's source-build prerequisites (Xcode and pinned Zig/MLX). Build and bundle with:
@@ -114,7 +118,7 @@ python -m build --wheel packages/qwen-runtime
 
 An already-built source tree can omit `--build`. The bundler checks its source patch against the pinned digest, collects the dylib dependency closure and Metal resource, rewrites local library paths, signs the copies, and includes license notices plus per-file hashes. It does not modify source binaries or installed applications. `native/aligned_nocache.c` supplies the optional uncached reader. The runtime wheel contains no model weights.
 
-Uncached reads currently require W8A8, `micro` / `micro-fast`, and default eight-step plain text-to-image. Editing, LoRA, private pipes, the portable backend and other modes reject this option until their read paths are verified.
+Native DiT execution supports aligned uncached reads with W8A8, `micro` or `micro-fast`, and the complete eight-step text-to-image profile.
 
 
 ## Reusing a resident native worker

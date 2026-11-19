@@ -169,6 +169,7 @@ M5/M6 select W8A8 Metal TensorOps by default; M1–M4 use the portable MLX backe
 | Document | Contents |
 | --- | --- |
 | [Usage guide](docs/USAGE.md) | CLI parameters, reference editing, Python API and existing weights |
+| [DiT and flow matching](docs/FLOW_MATCHING.md) | Shared block execution and local image, sound-effect, and speech adapters |
 | [Performance guide](docs/PERFORMANCE.md) | Recommended streaming switches, hardware modes, embedding cache and profiling |
 | [Benchmarks](BENCHMARKS.md) | Measurements, environments and source JSON |
 | [Validation notes](VALIDATION.md) | Completed checks and remaining hardware coverage |

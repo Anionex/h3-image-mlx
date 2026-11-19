@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "h3-image-mlx"
 version = "0.1.0a10"
-description = "Local H3 and Qwen Image generation and editing with MLX on Apple Silicon"
+description = "Local image and audio inference with MLX on Apple Silicon"
 readme = "README.md"
 requires-python = ">=3.11"
 license = "Apache-2.0 AND MIT"
@@ -20,6 +20,9 @@ dependencies = ["mlx>=0.32.3,<0.33", "numpy>=1.26", "Pillow>=10", "tokenizers>=0
 
 [project.optional-dependencies]
 qwen = ["h3-image-mlx-qwen-runtime==0.1.0a2"]
+mflux = ["mflux==0.24.0"]
+speech = ["mlx-audio[llm]==0.6.1", "soundfile>=0.12"]
+sound-effects = ["mlx-lm==0.32.2", "ftfy>=6.3,<7", "regex", "soundfile>=0.12", "tqdm"]
 
 [project.urls]
 Source = "https://github.com/Anionex/h3-image-mlx"

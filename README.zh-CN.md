@@ -164,6 +164,7 @@ M5/M6 默认选择 W8A8 Metal TensorOps，M1–M4 使用通用 MLX 后端。需�
 | 文档 | 内容 |
 | --- | --- |
 | [使用指南](docs/USAGE.zh-CN.md) | 命令行参数、参考图编辑、Python API 与已有权重 |
+| [DiT 与 Flow Matching](docs/FLOW_MATCHING.md) | 共用的分块执行器、生图、音效及语音模型接入 |
 | [性能调优](docs/PERFORMANCE.zh-CN.md) | 推荐的分块加速开关、硬件模式、编码缓存与性能分析 |
 | [实测数据](BENCHMARKS.md) | 耗时、内存、测试环境与原始 JSON |
 | [验收记录](VALIDATION.md) | 已完成检查与待测硬件范围 |

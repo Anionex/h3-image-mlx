@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Sequence
 
 from PIL import Image
+
 from ._subprocess import Cancelled, run_worker
 from .api import GenerationResult
 from .models import check_models, manifest_for, model_paths, text_file
@@ -46,6 +47,7 @@ def generate_result(
     precision: str = "int8",
     private: bool = False,
     overlap_streaming: bool | None = None,
+    weight_cache: str = "system",
     on_progress=None,
     cancel=None,
 ) -> GenerationResult:
@@ -59,6 +61,8 @@ def generate_result(
         raise ValueError("Seed must be a nonnegative integer")
     if backend not in ("auto", "portable", "w8a8") or dit_mode not in ("auto", "stream", "resident"):
         raise ValueError("Unknown compute backend or DiT mode")
+    if weight_cache not in ("system", "uncached"):
+        raise ValueError("weight_cache must be system or uncached")
     manifest_for(precision)
     if precision == "bf16" and backend == "w8a8":
         raise ValueError("W8A8 requires INT8 weights; use --backend auto or portable with BF16")
@@ -78,11 +82,11 @@ def generate_result(
         work = Path(tmp)
         args = dict(prompt=prompt, models=str(directory), width=width, height=height, seed=seed,
                     backend=backend, dit_mode=dit_mode, precision=precision,
-                    overlap_streaming=overlap_streaming)
+                    overlap_streaming=overlap_streaming, weight_cache=weight_cache)
         encoded = [dict(data=base64.b64encode(ref).decode()) if isinstance(ref, bytes) else str(ref)
                    for ref in refs]
         stages = ["text", *(["references"] if refs else []), "dit", "vae"]
-        cached = None if private else embedding_cache(directory, prompt, refs, backend, precision)
+        cached = None if private or weight_cache == "uncached" else embedding_cache(directory, prompt, refs, backend, precision)
         if cached and cached.is_file():
             shutil.copy(cached, work / "embedding.safetensors")
             stages.remove("text")
@@ -110,6 +114,7 @@ def generate_result(
                 model="h3", seed=seed, stages=metrics,
                 sample_sigmas=next(m.get("sample_sigmas") for m in metrics if m["stage"] == "dit"),
                 backend=metrics[-1].get("backend", backend),
+                weight_cache=metrics[-1].get("weight_cache", weight_cache),
                 dit_mode=next(m.get("dit_mode", dit_mode) for m in metrics if m["stage"] == "dit"),
                 worker_peak_bytes=max(m.get("peak_bytes", 0) for m in metrics),
                 mlx_peak_bytes=max(m.get("mlx_peak_bytes", 0) for m in metrics),

@@ -80,7 +80,11 @@ def decode_tiles(w, z):
 
 
 def decode(path, latent, stats):
-    w = Weights(path, True)
+    with Weights(path, True) as weights:
+        return _decode(weights, latent, stats)
+
+
+def _decode(w, latent, stats):
     if "latents_mean" in w.header:  # P-H3-Image stores its latent statistics in the checkpoint
         stats = {key: w[key].astype(mx.float32) for key in ("latents_mean", "latents_std")}
     z = latent.transpose(1, 2, 0) * mx.array(stats["latents_std"]) + mx.array(

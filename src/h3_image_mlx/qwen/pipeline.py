@@ -8,8 +8,10 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 import tempfile
 import time
+from importlib.util import find_spec
 from pathlib import Path
 
 import numpy as np
@@ -55,6 +57,17 @@ def validate(prompt, width, height, seed, references, o):
         raise ValueError(f"Unknown memory mode: {o.memory_mode}")
     if o.weight_cache not in ("system", "uncached"):
         raise ValueError("weight_cache must be system or uncached")
+    if o.dit_execution not in ("native", "stream-sync", "stream-overlap"):
+        raise ValueError(f"Unknown Qwen DiT execution mode: {o.dit_execution}")
+    if o.dit_execution != "native":
+        if (
+            references or o.loras or o.private or o.transparent or o.profile != "complete"
+            or o.sample_sigmas is not None or o.negative_prompt or o.guidance_scale != 1
+            or o.steps != 8
+        ):
+            raise ValueError("Streamed MLX Qwen DiT requires the complete eight-step text-to-image profile")
+        if o.memory_mode == "resident" or o.prepared or o.prepared_candidates:
+            raise ValueError("Streamed MLX Qwen DiT reads the original Q8 pack in a streaming memory mode")
     if (o.prepared or o.prepared_candidates) and not o.prepare_weights:
         raise ValueError("prepared and prepare_weights=False conflict")
     if o.profile not in assets.PROFILES:
@@ -160,6 +173,12 @@ def generate(
     if cancel is not None and cancel.is_set():
         raise Cancelled("Generation cancelled")
     validate(prompt, width, height, seed, references, o)
+    streamed_dit = o.dit_execution != "native"
+    if streamed_dit:
+        if session is not None or backend == "w8a8" or getattr(sys, "frozen", False):
+            raise ValueError("Streamed MLX Qwen DiT requires the Python runtime and packed Q8 execution")
+        if find_spec("mflux") is None:
+            raise RuntimeError("Streamed MLX Qwen DiT requires the optional MFLUX package")
     model = assets.check(models)
     if backend not in ("auto", "portable", "w8a8"):
         raise ValueError("Unknown compute backend")
@@ -170,7 +189,7 @@ def generate(
 
     selected = select_backend(backend, chip)
     if o.weight_cache == "uncached" and (
-        selected != "w8a8"
+        (not streamed_dit and selected != "w8a8")
         or o.memory_mode not in ("micro", "micro-fast")
         or references
         or o.loras
@@ -182,7 +201,8 @@ def generate(
         or o.guidance_scale != 1
     ):
         raise ValueError(
-            "Uncached reads currently require staged W8A8 Turbo text-to-image in micro or micro-fast mode"
+            "Uncached reads currently require staged Turbo text-to-image in micro or micro-fast mode "
+            "and W8A8 for native DiT execution"
         )
     native_backend = "w8a8" if selected == "w8a8" else "packed"
     cache = (
@@ -256,9 +276,18 @@ def generate(
                              total=body["steps"]))
         env = dict(os.environ)
         env.pop("SHENGTU_LIGHTNING_AUTO_ADAPTER", None)
+        use_mlx = streamed_dit and stage == "dit"
+        cmd = command(stage, source, output, blocks)
+        if use_mlx:
+            cmd = [sys.executable, "-m", "h3_image_mlx.qwen.streaming_dit",
+                   model, source, output, width, height, seed]
+            if o.dit_execution == "stream-overlap":
+                cmd.append("--overlap")
+            if o.weight_cache == "uncached":
+                cmd.append("--uncached")
         if o.auto_strength:
             env["SHENGTU_LIGHTNING_AUTO_ADAPTER"] = paths[0]
-        if o.weight_cache == "uncached":
+        if o.weight_cache == "uncached" and not use_mlx:
             library = binary.parent / "lib/aligned_nocache.dylib"
             if not library.is_file():
                 raise FileNotFoundError(
@@ -275,7 +304,7 @@ def generate(
                 IMAGE_MLX_UNCACHED_ROOTS="\n".join(map(str, roots)),
             )
         out, metric = run_worker(
-            command(stage, source, output, blocks),
+            cmd,
             input_bytes=body_bytes,
             timeout=o.timeout,
             cancel=cancel,
@@ -285,7 +314,7 @@ def generate(
         metric["stage"] = stage
         return out, metric
 
-    if selected == "w8a8" and o.prepare_weights and not o.prepared:
+    if not streamed_dit and selected == "w8a8" and o.prepare_weights and not o.prepared:
         for candidate in o.prepared_candidates:
             path = Path(candidate).expanduser().resolve()
             if not all((path / f"block-{i:02d}.safetensors").is_file() for i in range(32)):
@@ -296,7 +325,7 @@ def generate(
                 continue
             prepared = path
             break
-    if selected == "w8a8" and o.prepare_weights and prepared is None:
+    if not streamed_dit and selected == "w8a8" and o.prepare_weights and prepared is None:
         prepared = (
             Path(o.prepared).expanduser().resolve()
             if o.prepared
@@ -377,7 +406,8 @@ def generate(
         image,
         dict(
             model="qwen-image-2.1-turbo",
-            backend=selected,
+            backend="mlx-q8" if streamed_dit else selected,
+            dit_execution=o.dit_execution,
             memory_mode=o.memory_mode,
             profile=o.profile,
             steps=body["steps"],
