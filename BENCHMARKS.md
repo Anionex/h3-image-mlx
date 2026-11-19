@@ -243,6 +243,25 @@ A close-up product photograph of one bright yellow enamel teapot with a black ar
 
 The earlier `benchmarks/raw/` and `benchmarks/community/` JSON files remain unchanged. The current same-machine comparison uses the controlled exports linked above.
 
+## Qwen and Z-Image compared with MFlux
+
+On an M5 Pro with 48 GiB of unified memory, the native Qwen path took **26.4% less time** than MFlux low-ram. For Z-Image with system caching enabled on both sides, this project's streaming path took **0.55 s longer** and used **79.1% less peak process memory** than MFlux. All nine Z-Image outputs matched pixel for pixel.
+
+November 19, 2026 · macOS 26.6 · MLX 0.32.4 · project revision `baa6376` · MFlux 0.24.0. Each row summarizes three interleaved runs with seed 42 and independent cold APFS weight clones. System caching was allowed where indicated. Peak process footprint is the highest lifetime physical footprint of any worker across the runs. Weight cache is peak sampled file residency. Both memory columns use decimal GB.
+
+| Model and workload | Execution path | Weight cache policy | Median | Three-run range | Peak process footprint | Peak weight cache |
+| --- | --- | --- | ---: | ---: | ---: | ---: |
+| Qwen Image 2.1 Turbo, 1024×1024, 8 steps | Project native W8A8 prefetch | System | 25.576 s | 25.246–27.216 s | 1.927 GB | 15.160 GB |
+| Qwen Image 2.1 Turbo, 1024×1024, 8 steps | MFlux low-ram | System | 34.748 s | 33.601–35.795 s | 9.697 GB | 16.828 GB |
+| Z-Image Turbo Q4, 512×512, 9 steps | MFlux | System | 8.304 s | 8.247–8.768 s | 11.958 GB | 5.768 GB |
+| Z-Image Turbo Q4, 512×512, 9 steps | Project streaming with prefetch | System | 8.849 s | 8.658–8.853 s | 2.496 GB | 5.768 GB |
+| Z-Image Turbo Q4, 512×512, 9 steps | Project streaming with prefetch | Strict uncached | 9.219 s | 8.770–9.276 s | 2.986 GB | 0 B |
+
+- **Qwen** timing covers model loading through the returned image. Both engines start from the same Q8 checkpoint. The project reuses prepared W8A8 weights with native runtime `0.1.0a2`, and MFlux loads the packed Q8 weights through a format adapter. In a separate attempt with MFlux's default CLI memory policy, the monitor stopped the run after denoising when system memory pressure reached the critical level. That attempt produced no complete timing.
+- **Z-Image** timing covers model loading through saving the PNG. All runs used the same MFlux Q4 checkpoint. The strict runs had zero sampled weight-file residency and physical reads covered at least 95% of aligned bytes per stage and system-wide. The earlier 13.128 s and 8.514 s medians came from switching the same integration-time adapter from synchronous streaming to prefetch with uncached reads.
+
+[Per-run measurements, checkpoint sources, prompts and the interrupted trial](benchmarks/controlled/2026-11-19-mflux/runs.json)
+
 ## Qwen Image 2.1 Turbo uncached
 
 November 14, 2026; M5 Pro MacBook, 48 GB; Python 3.13, main package `0.1.0a5.dev0` and standalone native runtime `0.1.0a1`, both installed from wheels. Q8 model files and prepared W8A8 DiT were reused. No App or HTTP server is involved. Eight Turbo steps, seed 42, `micro-fast`; text encoding, DiT and VAE run in fresh isolated processes for every image.

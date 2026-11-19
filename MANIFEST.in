@@ -2,8 +2,10 @@ include scripts/merge_lora_int8.py
 include scripts/build_qwen_runtime.py
 include docs/FLOW_MATCHING.md
 include docs/QWEN.md
+include BENCHMARKS.md
 include benchmarks/h3_streaming.py
 include benchmarks/qwen/memory.py
+include benchmarks/controlled/2026-11-19-mflux/runs.json
 recursive-include native *
 recursive-include packages/qwen-runtime *.py *.toml *.in *.md
 prune packages/qwen-runtime/build

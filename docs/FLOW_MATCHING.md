@@ -10,6 +10,8 @@ The library stages inference so model weights can be released at the end of each
 | MOSS-SoundEffect v2.0 | Converted MOSS MLX BF16 or affine-quantized checkpoint | Text, paired CFG denoising, and DAC decoder. The original full-context solver supplies the latents. |
 | Ming-3.0-TTS 0.5B | MLX Audio checkpoint | Selective loading and layer-by-layer waveform decoding. The compact DiTAR stays in memory for repeated flow-matching calls. |
 
+See the [same-machine Qwen and Z-Image benchmarks](../BENCHMARKS.md#qwen-and-z-image-compared-with-mflux) for latency, process footprint and weight-cache residency against MFlux 0.24.0.
+
 ## Installation
 
 Use an Apple Silicon Mac and a Python version supported by the selected dependencies. MFlux 0.24.0 and MLX Audio 0.6.1 are the adapter versions used for validation.
