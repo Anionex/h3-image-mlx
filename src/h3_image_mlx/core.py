@@ -75,8 +75,10 @@ def w8a8(x, weight, scale):
         bm, bn = (32, 64) if rows <= 32 else (64, 128)
         bk = 256
     else:
-        bm = 128 if rows < 8192 else 64
-        bn, bk = 8192 // bm, 64
+        # Tile sweep at the DiT shapes on an M5 Ultra: 64x128 output tiles are the fastest or within 3% for every
+        # projection (the 1046-row QKV GEMM: 128x64 82 TOPS, 2.94 ms; 64x128 143 TOPS, 1.69 ms), and K steps of 32
+        # win from about 2000 rows up. The int32 sums are exact, so every tiling gives the same bytes.
+        bm, bn, bk = 64, 128, (64 if rows < 2048 else 32)
     (y,) = tensorops_kernel()(
         inputs=[xq, weight, xs, scale.reshape(-1)],
         template=[("BM", bm), ("BN", bn), ("BK", bk), ("T", x.dtype)],
