@@ -1,8 +1,13 @@
+// The last row and column tiles are moved up and left to end at M and N, so every slice lies inside xq and wq
+// (needs M >= BM and N >= BN; tensorops_matmul pads smaller operands). The epilogue stores only rows from m_lo
+// and columns from n_lo on, so the overlap with the previous tile is computed twice but stored once.
 const int K = xq_shape[1];
 const int M = xq_shape[0];
 const int N = wq_shape[0];
-const int m0 = int(threadgroup_position_in_grid.y) * BM;
-const int n0 = int(threadgroup_position_in_grid.x) * BN;
+const int m_lo = int(threadgroup_position_in_grid.y) * BM;
+const int n_lo = int(threadgroup_position_in_grid.x) * BN;
+const int m0 = min(m_lo, M - BM);
+const int n0 = min(n_lo, N - BN);
 constexpr auto desc = matmul2d_descriptor(BM, BN, BK, false, true, false, matmul2d_descriptor::mode::multiply_accumulate);
 matmul2d<desc, execution_simdgroups<4>> op;
 tensor<device int8_t, dextents<int, 2>, tensor_inline> A((device int8_t*)xq, dextents<int, 2>(K, M));
