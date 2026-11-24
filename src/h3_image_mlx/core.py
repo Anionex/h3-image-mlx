@@ -66,7 +66,6 @@ def rotate_quantize(x):
 
 def w8a8(x, weight, scale):
     rows = x.shape[0]
-    n = weight.shape[0]
     xq, xs = rotate_quantize(x)
     if backend.get() == "portable":
         from ._portable import portable_matmul
@@ -79,15 +78,27 @@ def w8a8(x, weight, scale):
         # projection (the 1046-row QKV GEMM: 128x64 82 TOPS, 2.94 ms; 64x128 143 TOPS, 1.69 ms), and K steps of 32
         # win from about 2000 rows up. The int32 sums are exact, so every tiling gives the same bytes.
         bm, bn, bk = 64, 128, (64 if rows < 2048 else 32)
+    return tensorops_matmul(xq, weight, xs, scale.reshape(-1), x.dtype, bm, bn, bk)
+
+
+def tensorops_matmul(xq, wq, xs, ws, dtype, bm, bn, bk):
+    """(xq @ wq.T) * xs[:, None] * ws on BM x BN tiles. The kernel shifts the last tiles to end at M and N, so an
+    operand smaller than one tile is padded with zero rows here and the padding is cut from the result."""
+    rows, n = xq.shape[0], wq.shape[0]
+    if rows < bm:
+        xq, xs = mx.pad(xq, ((0, bm - rows), (0, 0))), mx.pad(xs, (0, bm - rows))
+    if n < bn:
+        wq, ws = mx.pad(wq, ((0, bn - n), (0, 0))), mx.pad(ws, (0, bn - n))
+    m_pad, n_pad = xq.shape[0], wq.shape[0]
     (y,) = tensorops_kernel()(
-        inputs=[xq, weight, xs, scale.reshape(-1)],
-        template=[("BM", bm), ("BN", bn), ("BK", bk), ("T", x.dtype)],
-        grid=((n + bn - 1) // bn * 128, (rows + bm - 1) // bm, 1),
+        inputs=[xq, wq, xs, ws],
+        template=[("BM", bm), ("BN", bn), ("BK", bk), ("T", dtype)],
+        grid=((n_pad + bn - 1) // bn * 128, (m_pad + bm - 1) // bm, 1),
         threadgroup=(128, 1, 1),
-        output_shapes=[(rows, n)],
-        output_dtypes=[x.dtype],
+        output_shapes=[(m_pad, n_pad)],
+        output_dtypes=[dtype],
     )
-    return y
+    return y[:rows, :n] if (m_pad, n_pad) != (rows, n) else y
 
 
 def _read_owned(fd, length, offset):
